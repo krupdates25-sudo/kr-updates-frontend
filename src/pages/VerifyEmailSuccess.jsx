@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Loader, ArrowRight, AlertCircle } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const VerifyEmailSuccess = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const VerifyEmailSuccess = () => {
         localStorage.setItem('authToken', token);
 
         // Fetch user profile to get full user data
-        const response = await fetch('http://localhost:5000/api/v1/auth/me', {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',

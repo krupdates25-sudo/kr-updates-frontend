@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api/v1/auth', // Updated to match backend routes
+  baseURL: `${API_BASE_URL}/auth`, // Updated to match backend routes
   timeout: 10000,
   withCredentials: true, // Important for cookies
   headers: {
@@ -183,7 +184,7 @@ const authService = {
     try {
       // Use the users API endpoint for profile updates
       const response = await axios.patch(
-        'http://localhost:5000/api/v1/users/profile/me',
+        `${API_BASE_URL}/users/profile/me`,
         profileData,
         {
           headers: {
@@ -210,7 +211,7 @@ const authService = {
   async changePassword(passwordData) {
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/v1/users/change-password',
+        `${API_BASE_URL}/users/change-password`,
         passwordData,
         {
           headers: {
@@ -231,7 +232,7 @@ const authService = {
   async getUserStats() {
     try {
       const response = await axios.get(
-        'http://localhost:5000/api/v1/users/stats/me',
+        `${API_BASE_URL}/users/stats/me`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('authToken')}`,
@@ -282,23 +283,12 @@ const authService = {
     }
   },
 
-  // Resend verification email
-  async resendVerification(email) {
-    try {
-      const response = await api.post('/resend-verification', { email });
-      return response.data;
-    } catch (error) {
-      console.error('Resend verification error:', error);
-      throw error;
-    }
-  },
-
   // Get public user profile by ID
   async getUserProfile(userId) {
     try {
       // Use users endpoint for public profile
       const usersApi = axios.create({
-        baseURL: 'http://localhost:5000/api/v1/users',
+        baseURL: `${API_BASE_URL}/users`,
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',

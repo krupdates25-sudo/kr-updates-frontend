@@ -19,6 +19,7 @@ import {
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const WhatsAppIntegration = () => {
   const { user } = useAuth();
@@ -69,7 +70,7 @@ const WhatsAppIntegration = () => {
       setLoading(true);
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        'http://localhost:5000/api/v1/users/admin/all',
+        `${API_BASE_URL}/users/admin/all`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -137,7 +138,7 @@ const WhatsAppIntegration = () => {
       };
 
       const response = await fetch(
-        'http://localhost:5000/api/v1/whatsapp/send',
+        `${API_BASE_URL}/whatsapp/send`,
         {
           method: 'POST',
           headers: {

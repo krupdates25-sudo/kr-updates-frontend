@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { ApiCache } from '../utils/debounce';
-
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+import { API_BASE_URL } from '../config/api';
 
 // Create cache instances for different types of data
 const postsCache = new ApiCache(100, 2 * 60 * 1000); // 2 minutes for posts

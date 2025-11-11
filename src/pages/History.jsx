@@ -49,6 +49,7 @@ import {
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const History = () => {
   const { user } = useAuth();
@@ -87,8 +88,8 @@ const History = () => {
       // Use different endpoint for admin vs regular users
       const endpoint =
         user && user.role === 'admin'
-          ? `http://localhost:5000/api/v1/activities/all?${queryParams}`
-          : `http://localhost:5000/api/v1/activities/my-activities?${queryParams}`;
+          ? `${API_BASE_URL}/activities/all?${queryParams}`
+          : `${API_BASE_URL}/activities/my-activities?${queryParams}`;
 
       const response = await fetch(endpoint, {
         headers: {
@@ -156,7 +157,7 @@ const History = () => {
       // For now, only show user's own analytics even for admin
       // TODO: Add admin-wide analytics endpoint
       const response = await fetch(
-        `http://localhost:5000/api/v1/activities/my-stats?period=${dateFilter}`,
+        `${API_BASE_URL}/activities/my-stats?period=${dateFilter}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -192,7 +193,7 @@ const History = () => {
       setDeleteLoading(activityId);
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        `http://localhost:5000/api/v1/activities/my-activities/${activityId}`,
+        `${API_BASE_URL}/activities/my-activities/${activityId}`,
         {
           method: 'DELETE',
           headers: {

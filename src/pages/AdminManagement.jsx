@@ -25,6 +25,7 @@ import {
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const AdminManagement = () => {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ const AdminManagement = () => {
       setLoading(true);
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        'http://localhost:5000/api/v1/users/admin/all',
+        `${API_BASE_URL}/users/admin/all`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -161,7 +162,7 @@ const AdminManagement = () => {
       setActionLoading(true);
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        'http://localhost:5000/api/v1/users/create-subadmin',
+        `${API_BASE_URL}/users/create-subadmin`,
         {
           method: 'POST',
           headers: {
@@ -208,7 +209,7 @@ const AdminManagement = () => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/v1/users/${selectedUser._id}`,
+        `${API_BASE_URL}/users/${selectedUser._id}`,
         {
           method: 'PATCH',
           headers: {
@@ -255,7 +256,7 @@ const AdminManagement = () => {
       setActionLoading(true);
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        `http://localhost:5000/api/v1/users/${userId}`,
+        `${API_BASE_URL}/users/${userId}`,
         {
           method: 'DELETE',
           headers: {
@@ -288,7 +289,7 @@ const AdminManagement = () => {
       setActionLoading(true);
       const token = localStorage.getItem('authToken');
       const response = await fetch(
-        `http://localhost:5000/api/v1/users/${userId}/publishing-permission`,
+        `${API_BASE_URL}/users/${userId}/publishing-permission`,
         {
           method: 'PATCH',
           headers: {
