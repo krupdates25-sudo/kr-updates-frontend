@@ -174,13 +174,13 @@ const BottomNavigation = () => {
   };
 
   const renderNavItem = (item, isMain = false) => {
-    const Icon = item.icon;
-    const isActive = activeTab === item.id;
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
     const isMoreButton = item.id === 'more';
 
-    return (
-      <button
-        key={item.id}
+            return (
+              <button
+                key={item.id}
         onClick={() => {
           if (isMoreButton) {
             setIsExpanded(!isExpanded);
@@ -194,30 +194,30 @@ const BottomNavigation = () => {
             : 'w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700'
         } ${
           isActive || (isMoreButton && isExpanded)
-            ? 'text-blue-600 dark:text-blue-400'
+                      ? 'text-blue-600 dark:text-blue-400'
             : 'text-gray-600 dark:text-gray-400'
-        }`}
-      >
+                  }`}
+                >
         {isMoreButton && isExpanded ? (
           <X className={`${isMain ? 'w-5 h-5 mb-1' : 'w-6 h-6 mb-1.5'}`} />
         ) : (
-          <Icon
+                  <Icon
             className={`${isMain ? 'w-5 h-5 mb-1' : 'w-6 h-6 mb-1.5'} ${
-              isActive ? 'text-blue-600 dark:text-blue-400' : ''
-            }`}
-          />
+                      isActive ? 'text-blue-600 dark:text-blue-400' : ''
+                    }`}
+                  />
         )}
         <span className={`${isMain ? 'text-xs' : 'text-sm'} font-medium text-center leading-tight truncate w-full`}>
-          {item.label}
-        </span>
+                    {item.label}
+                  </span>
         {(isActive || (isMoreButton && isExpanded)) && isMain && (
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
         )}
         {isActive && !isMain && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 dark:bg-blue-400 rounded-r-full" />
-        )}
-      </button>
-    );
+                  )}
+                </button>
+              );
   };
 
   return (
@@ -239,7 +239,7 @@ const BottomNavigation = () => {
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
             </div>
-            
+
             {/* Menu Header */}
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -278,8 +278,8 @@ const BottomNavigation = () => {
             {/* Main 3 Navigation Items - No gaps */}
             {mainNavItems.map((item) => renderNavItem(item, true))}
           </div>
-        </div>
-      </nav>
+      </div>
+    </nav>
 
       {/* Add CSS for slide-up animation */}
       <style>{`

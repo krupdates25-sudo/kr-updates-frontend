@@ -1108,35 +1108,35 @@ const PostPage = () => {
                   </div>
                 ) : (
                   breakingNews.map((item, idx, array) => (
-                    <div
+                  <div
                       key={item._id || idx}
-                      className={`p-3 sm:p-4 hover:bg-red-50 dark:hover:bg-red-900/10 cursor-pointer transition-colors ${
-                        idx !== array.length - 1
-                          ? 'border-b border-gray-200 dark:border-gray-700'
-                          : ''
-                      }`}
+                    className={`p-3 sm:p-4 hover:bg-red-50 dark:hover:bg-red-900/10 cursor-pointer transition-colors ${
+                      idx !== array.length - 1
+                        ? 'border-b border-gray-200 dark:border-gray-700'
+                        : ''
+                    }`}
                       onClick={() => navigate(`/breaking-news/${item._id}`)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="text-base font-bold text-red-600 dark:text-red-400 flex-shrink-0">
-                          {idx + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
-                            {item.title}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs">
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-base font-bold text-red-600 dark:text-red-400 flex-shrink-0">
+                        {idx + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs">
                             <span className="px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-medium">
                               {item.category}
                             </span>
-                          </div>
                         </div>
                       </div>
                     </div>
+                  </div>
                   ))
-                )}
-              </div>
-            </div>
+                        )}
+                      </div>
+                      </div>
 
           </aside>
         </div>

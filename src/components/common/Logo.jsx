@@ -29,13 +29,12 @@ const Logo = ({ size = 'md', className = '' }) => {
     );
   }
 
-  // Fallback to text logo (only if no image is available)
+  // KRUPDATES text logo with KRUP in black and DATES in blue
   return (
     <div className={`flex items-center ${className}`}>
-      <h1
-        className={`font-bold text-gray-900 dark:text-white ${textSizes[size]}`}
-      >
-        {settings?.siteName || 'newsfeed'}
+      <h1 className={`font-bold ${textSizes[size]} tracking-tight`}>
+        <span className="text-gray-900 dark:text-white">KRUP</span>
+        <span className="text-blue-600 dark:text-blue-400">DATES</span>
       </h1>
     </div>
   );

@@ -358,7 +358,7 @@ const Header = ({ onSidebarToggle }) => {
     if (path === '/profile') return 'Profile';
     if (path === '/ads') return 'Ad Management';
     if (path.startsWith('/admin')) return 'Admin Panel';
-    return 'KR Updates';
+    return 'KRUPDATES';
   };
 
   return (
@@ -385,13 +385,13 @@ const Header = ({ onSidebarToggle }) => {
           {/* Mobile: Search and Notifications on Left */}
           <div className="lg:hidden flex items-center gap-2">
             {/* Search Icon Button */}
-            <button
-              onClick={() => setIsSearchModalOpen(true)}
+          <button
+            onClick={() => setIsSearchModalOpen(true)}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5 text-gray-600" />
-            </button>
+            aria-label="Search"
+          >
+            <Search className="w-5 h-5 text-gray-600" />
+          </button>
 
             {/* Notifications */}
             <div className="relative">

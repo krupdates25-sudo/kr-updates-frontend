@@ -175,7 +175,7 @@ export default function ogPlugin() {
                       params.set('f', 'auto');
                       params.set('q', 'auto');
                       urlObj.search = params.toString();
-                      imageUrl = urlObj.toString();
+                    imageUrl = urlObj.toString();
                       console.log('[OG Plugin] ⚠️ Using query params (no cloud name found):', imageUrl.substring(0, 100) + '...');
                     }
                     
@@ -299,7 +299,7 @@ export default function ogPlugin() {
           }
         } else {
           // Not a bot request or not a post URL, continue normally
-          next();
+        next();
         }
       });
     }
