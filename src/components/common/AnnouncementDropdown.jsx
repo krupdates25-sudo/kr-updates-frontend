@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   X,
@@ -22,6 +23,7 @@ const AnnouncementDropdown = ({
   unreadCount,
   onUnreadCountChange,
 }) => {
+  const navigate = useNavigate();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -164,12 +166,12 @@ const AnnouncementDropdown = ({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-gray-500/50 lg:bg-transparent" onClick={onClose} />
 
-      {/* Dropdown */}
-      <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 max-h-[80vh] overflow-hidden">
+      {/* Mobile Sidebar / Desktop Dropdown */}
+      <div className="fixed lg:absolute inset-y-0 right-0 lg:inset-auto lg:right-0 lg:mt-2 w-full sm:w-96 lg:w-96 bg-gray-500/50 lg:bg-white lg:dark:bg-gray-800 lg:border lg:border-gray-200 lg:dark:border-gray-700 lg:rounded-lg lg:shadow-xl z-50 lg:max-h-[80vh] overflow-hidden flex flex-col lg:animate-none animate-slide-in-right">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 lg:bg-gray-50 lg:dark:bg-gray-700/50 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <h3 className="font-semibold text-gray-800 dark:text-gray-200">
@@ -201,7 +203,7 @@ const AnnouncementDropdown = ({
         </div>
 
         {/* Content */}
-        <div className="max-h-96 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto lg:max-h-96">
           {loading && announcements.length === 0 ? (
             <div className="p-6 text-center">
               <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2"></div>
@@ -231,7 +233,7 @@ const AnnouncementDropdown = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="py-2">
               {/* Unread announcements */}
               {unreadAnnouncements.map((announcement) => {
                 const IconComponent = getAnnouncementIcon(
@@ -246,10 +248,10 @@ const AnnouncementDropdown = ({
                 return (
                   <div
                     key={announcement._id}
-                    className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                    className={`m-3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all ${
                       !announcement.isRead
-                        ? 'bg-blue-50/30 dark:bg-blue-900/10'
-                        : ''
+                        ? 'border-l-4 border-blue-500'
+                        : 'border border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     <div className="flex gap-3">
@@ -260,8 +262,8 @@ const AnnouncementDropdown = ({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm flex-1">
                             {announcement.title}
                           </h4>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -291,11 +293,11 @@ const AnnouncementDropdown = ({
                           </div>
                         </div>
 
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                           {announcement.message}
                         </p>
 
-                        <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                             <Clock className="w-3 h-3" />
                             <span>{formatTimeAgo(announcement.createdAt)}</span>
@@ -314,15 +316,31 @@ const AnnouncementDropdown = ({
 
                           {announcement.actionUrl &&
                             announcement.actionText && (
-                              <a
-                                href={announcement.actionUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                onClick={() => {
+                                  // Handle post review URLs - extract post ID
+                                  // Backend sends /post/:id format
+                                  if (announcement.actionUrl.includes('/post/')) {
+                                    const postId = announcement.actionUrl.split('/post/')[1];
+                                    // Navigate to post details page
+                                    navigate(`/post/${postId}`);
+                                    onClose();
+                                  } else if (announcement.actionUrl.includes('/posts/')) {
+                                    // Handle legacy /posts/ format
+                                    const postId = announcement.actionUrl.split('/posts/')[1];
+                                    navigate(`/post/${postId}`);
+                                    onClose();
+                                  } else {
+                                    // For other URLs, use navigation
+                                    navigate(announcement.actionUrl);
+                                    onClose();
+                                  }
+                                }}
                                 className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-1"
                               >
                                 {announcement.actionText}
                                 <ExternalLink className="w-3 h-3" />
-                              </a>
+                              </button>
                             )}
                         </div>
                       </div>
@@ -345,7 +363,7 @@ const AnnouncementDropdown = ({
                 return (
                   <div
                     key={announcement._id}
-                    className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors opacity-75"
+                    className="m-3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all opacity-75 border border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex gap-3">
                       <div
@@ -355,8 +373,8 @@ const AnnouncementDropdown = ({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm flex-1">
                             {announcement.title}
                           </h4>
                           <span
@@ -368,11 +386,11 @@ const AnnouncementDropdown = ({
                           </span>
                         </div>
 
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                           {announcement.message}
                         </p>
 
-                        <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
                             <Clock className="w-3 h-3" />
                             <span>{formatTimeAgo(announcement.createdAt)}</span>
@@ -384,15 +402,26 @@ const AnnouncementDropdown = ({
 
                           {announcement.actionUrl &&
                             announcement.actionText && (
-                              <a
-                                href={announcement.actionUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                onClick={() => {
+                                  if (announcement.actionUrl.includes('/post/')) {
+                                    const postId = announcement.actionUrl.split('/post/')[1];
+                                    navigate(`/post/${postId}`);
+                                    onClose();
+                                  } else if (announcement.actionUrl.includes('/posts/')) {
+                                    const postId = announcement.actionUrl.split('/posts/')[1];
+                                    navigate(`/post/${postId}`);
+                                    onClose();
+                                  } else {
+                                    navigate(announcement.actionUrl);
+                                    onClose();
+                                  }
+                                }}
                                 className="text-xs text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 font-medium flex items-center gap-1"
                               >
                                 {announcement.actionText}
                                 <ExternalLink className="w-3 h-3" />
-                              </a>
+                              </button>
                             )}
                         </div>
                       </div>
@@ -404,6 +433,26 @@ const AnnouncementDropdown = ({
           )}
         </div>
       </div>
+
+      {/* Add CSS for slide-in animation */}
+      <style>{`
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out;
+        }
+        @media (min-width: 1024px) {
+          .animate-slide-in-right {
+            animation: none;
+          }
+        }
+      `}</style>
     </>
   );
 };

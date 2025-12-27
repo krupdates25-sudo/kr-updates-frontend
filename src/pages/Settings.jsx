@@ -230,7 +230,7 @@ const Settings = () => {
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         <main className="flex-1 p-4 md:p-6 lg:p-8">
-          <div className="max-w-5xl mx-auto">
+          <div className="w-full">
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">

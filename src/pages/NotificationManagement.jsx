@@ -254,43 +254,44 @@ const NotificationManagement = () => {
   const selectedUsersCount = sendToAll ? users.length : selectedUsers.length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white">
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
+        activeTab="admin-notifications"
+        onTabChange={() => {}}
       />
 
-      <div className="lg:pl-64">
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="lg:ml-72 w-full">
+        <Header onSidebarToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-                  <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    Notification Management
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Send email notifications to users about new posts
-                  </p>
-                </div>
+        <div className="w-full max-w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+                <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  Notification Management
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Send email notifications to users about new posts
+                </p>
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Select Post */}
-              <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-blue-500" />
-                  Select Post
-                </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full max-w-full">
+            {/* Select Post */}
+            <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full min-w-0">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+                <Target className="w-5 h-5 text-blue-500" />
+                Select Post
+              </h2>
 
-                {loading ? (
+              {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -341,16 +342,16 @@ const NotificationManagement = () => {
                     ))}
                   </div>
                 )}
-              </div>
+            </div>
 
-              {/* Notification Settings */}
-              <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-purple-500" />
-                  Email Notification
-                </h2>
+            {/* Notification Settings */}
+            <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full min-w-0">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-purple-500" />
+                Email Notification
+              </h2>
 
-                {selectedPost ? (
+              {selectedPost ? (
                   <div className="space-y-6">
                     {/* AI Content Generation */}
                     <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
@@ -574,10 +575,9 @@ const NotificationManagement = () => {
                     </p>
                   </div>
                 )}
-              </div>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

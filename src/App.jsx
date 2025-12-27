@@ -12,10 +12,13 @@ import ProfilePage from './pages/ProfilePage';
 import AdminManagement from './pages/AdminManagement';
 import PostsManagement from './pages/PostsManagement';
 import BreakingNewsManagement from './pages/BreakingNewsManagement';
+import CreateBreakingNews from './pages/CreateBreakingNews';
+import BreakingNewsPage from './pages/BreakingNewsPage';
+import TrendingManagement from './pages/TrendingManagement';
 import WhatsAppIntegration from './pages/WhatsAppIntegration';
 import History from './pages/History';
 // import Trending from './pages/Trending'; // Commented out as trending functionality is disabled
-import Bookmarks from './pages/Bookmarks';
+// import Bookmarks from './pages/Bookmarks'; // Removed - bookmarks page disabled
 import AdManagement from './pages/AdManagement';
 import AnnouncementManagement from './pages/AnnouncementManagement';
 import NotificationManagement from './pages/NotificationManagement';
@@ -27,6 +30,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import { AdProvider } from './contexts/AdContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import './App.css';
 
@@ -110,7 +114,8 @@ function App() {
       <AuthProvider>
         <SettingsProvider>
           <SocketProvider>
-            <Router>
+            <AdProvider>
+              <Router>
               <div className="App">
                 <Routes>
                   {/* Public routes */}
@@ -159,6 +164,9 @@ function App() {
                   {/* Post page route */}
                   <Route path="/post/:slug" element={<PostPage />} />
 
+                  {/* Breaking News page route */}
+                  <Route path="/breaking-news/:id" element={<BreakingNewsPage />} />
+
                   {/* Current user profile route */}
                   <Route
                     path="/profile"
@@ -205,6 +213,31 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/admin/breaking-news/create"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <CreateBreakingNews />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/breaking-news/edit/:id"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <CreateBreakingNews />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/admin/trending"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <TrendingManagement />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   <Route
                     path="/admin/integrations"
@@ -245,15 +278,15 @@ function App() {
                   }
                 /> */}
 
-                  {/* Bookmarks route */}
-                  <Route
+                  {/* Bookmarks route - Removed */}
+                  {/* <Route
                     path="/bookmarks"
                     element={
                       <ProtectedRoute>
                         <Bookmarks />
                       </ProtectedRoute>
                     }
-                  />
+                  /> */}
 
                   {/* Ad Management route */}
                   <Route
@@ -299,7 +332,8 @@ function App() {
                   <Route path="*" element={<Navigate to="/auth" replace />} />
                 </Routes>
               </div>
-            </Router>
+              </Router>
+            </AdProvider>
           </SocketProvider>
         </SettingsProvider>
       </AuthProvider>

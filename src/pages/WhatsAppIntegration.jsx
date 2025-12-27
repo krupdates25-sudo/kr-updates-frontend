@@ -278,7 +278,7 @@ const WhatsAppIntegration = () => {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="max-w-7xl mx-auto space-y-6"
+              className="w-full space-y-6"
             >
               {/* Stats Cards */}
               <motion.div

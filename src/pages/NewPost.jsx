@@ -1,17 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Save,
   Eye,
-  Upload,
   Tag,
   Hash,
   Calendar,
-  Globe,
-  Lock,
   Sparkles,
   Image as ImageIcon,
   FileText,
@@ -21,24 +16,27 @@ import {
   Lightbulb,
   RefreshCw,
   Video,
+  User,
 } from 'lucide-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
 import CloudinaryUpload from '../components/common/CloudinaryUpload';
 import postService from '../services/postService';
 import aiService from '../services/aiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const NewPost = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
+    title: '', // This will be renamed to 'heading' in the UI
+    description: '', // New field for short subheading
     content: '',
     excerpt: '',
+    reporterName: '', // Reporter name (News by)
     category: '',
     tags: [],
     featuredImage: null,
@@ -81,33 +79,9 @@ const NewPost = () => {
     'Opinion',
   ];
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
-  };
+  // Removed heavy animations for performance
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4 },
-    },
-  };
-
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -120,9 +94,9 @@ const NewPost = () => {
         [field]: '',
       }));
     }
-  };
+  }, [errors]);
 
-  const handleAddTag = () => {
+  const handleAddTag = useCallback(() => {
     if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
       setFormData((prev) => ({
         ...prev,
@@ -130,14 +104,14 @@ const NewPost = () => {
       }));
       setCurrentTag('');
     }
-  };
+  }, [currentTag, formData.tags]);
 
-  const handleRemoveTag = (tagToRemove) => {
+  const handleRemoveTag = useCallback((tagToRemove) => {
     setFormData((prev) => ({
       ...prev,
       tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
-  };
+  }, []);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -207,11 +181,11 @@ const NewPost = () => {
     }
   };
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = 'Heading is required';
     }
 
     if (!formData.content.trim()) {
@@ -224,27 +198,34 @@ const NewPost = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData.title, formData.content, formData.category]);
 
   const handleSave = async (status = 'draft') => {
     if (!validateForm()) return;
+
+    // IMPORTANT: Non-admin users (moderator, sub-admin) cannot publish
+    // Force status to 'draft' if user is not admin
+    const finalStatus = user?.role === 'admin' ? status : 'draft';
 
     setIsLoading(true);
     try {
       const postData = {
         ...formData,
-        status,
-        publishedAt: status === 'published' ? new Date().toISOString() : null,
+        status: finalStatus,
+        publishedAt: finalStatus === 'published' ? new Date().toISOString() : null,
       };
 
       await postService.createPost(postData);
 
       // Show success message
-      alert(
-        `Post ${
-          status === 'published' ? 'published' : 'saved as draft'
-        } successfully!`
-      );
+      const successMessage = 
+        finalStatus === 'published'
+          ? 'Post published successfully!'
+          : user?.role === 'admin'
+          ? 'Post saved as draft successfully!'
+          : 'Post saved as draft and submitted for review. Admin will review and publish it.';
+      
+      alert(successMessage);
       navigate('/dashboard');
     } catch (error) {
       console.error('Error saving post:', error);
@@ -260,7 +241,7 @@ const NewPost = () => {
   // AI Handler Functions
   const handleGenerateContent = async () => {
     if (!formData.title.trim() || !formData.category) {
-      alert('Please enter a title and select a category first!');
+      alert('Please enter a heading and select a category first!');
       return;
     }
 
@@ -338,7 +319,7 @@ const NewPost = () => {
 
   const handleSuggestTags = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
-      alert('Please enter a title and some content first!');
+      alert('Please enter a heading and some content first!');
       return;
     }
 
@@ -375,113 +356,82 @@ const NewPost = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-300 relative">
-      {/* Glassmorphism overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-        }}
-      />
-
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={handleSidebarToggle}
-        activeTab="new-post"
-        onTabChange={() => {}}
-      />
-
-      {/* Main Content Area */}
-      <div className="lg:ml-72 relative z-10">
-        {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
-
-        {/* Main Content */}
-        <main className="min-h-screen">
+    <PageLayout activeTab="new-post" contentClassName="bg-gray-50" defaultSidebarOpen={false}>
+      <div className="min-h-screen">
           {/* Page Header */}
           <div className="bg-white border-b border-gray-200">
-            <div className="px-6 py-6">
+            <div className="px-4 sm:px-6 py-4 sm:py-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => navigate('/dashboard')}
-                    className="p-3 rounded-xl bg-white/90 backdrop-blur-md border border-white/20 hover:bg-white transition-all duration-200 group"
-                    style={{ boxShadow: '0 4px 20px rgba(87, 85, 254, 0.1)' }}
+                    className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
-                    <ArrowLeft className="w-5 h-5 text-gray-600 group-hover:text-purple-600 transition-colors" />
+                    <ArrowLeft className="w-5 h-5 text-gray-600" />
                   </button>
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                       Create New Post
                     </h1>
-                    <p className="text-gray-600 mt-1">
+                    <p className="text-gray-600 mt-1 text-sm sm:text-base">
                       Share your thoughts with the world
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={() => setShowPreview(!showPreview)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-white/20 hover:bg-white transition-all duration-200"
-                    style={{ boxShadow: '0 4px 20px rgba(87, 85, 254, 0.1)' }}
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm sm:text-base"
                   >
                     <Eye className="w-4 h-4" />
-                    {showPreview ? 'Edit' : 'Preview'}
+                    <span className="hidden sm:inline">{showPreview ? 'Edit' : 'Preview'}</span>
                   </button>
 
                   <button
                     onClick={handleSaveDraft}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-white/20 hover:bg-white transition-all duration-200 disabled:opacity-50"
-                    style={{ boxShadow: '0 4px 20px rgba(87, 85, 254, 0.1)' }}
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm sm:text-base"
                   >
                     <Save className="w-4 h-4" />
-                    Save Draft
+                    <span className="hidden sm:inline">Save Draft</span>
+                    <span className="sm:hidden">Draft</span>
                   </button>
 
-                  <button
-                    onClick={handlePublish}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 px-6 py-2 rounded-xl text-white font-semibold transition-all duration-200 disabled:opacity-50 hover:shadow-lg"
-                    style={{
-                      background: 'linear-gradient(135deg, #5755FE, #6B5AFF)',
-                      boxShadow: '0 4px 20px rgba(87, 85, 254, 0.3)',
-                    }}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {isLoading ? 'Publishing...' : 'Publish'}
-                  </button>
+                  {/* Only show Publish button for Admin users */}
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={handlePublish}
+                      disabled={isLoading}
+                      className="flex items-center gap-2 px-4 sm:px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      {isLoading ? 'Publishing...' : 'Publish'}
+                    </button>
+                  )}
+                  
+                  {/* Show info message for non-admin users */}
+                  {user?.role !== 'admin' && (
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs sm:text-sm">
+                      <span>Posts require admin approval</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Content Area */}
-          <div className="px-6 py-6">
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="max-w-7xl mx-auto"
-            >
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8">
+            <div className="w-full">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
                 {/* Main Content */}
-                <motion.div
-                  variants={itemVariants}
-                  className="xl:col-span-2 space-y-6"
-                >
-                  {/* Title */}
-                  <div
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
+                <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+                  {/* Heading */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-3">
                       <FileText className="w-4 h-4 inline mr-2" />
-                      Post Title
+                      Heading
                     </label>
                     <input
                       type="text"
@@ -489,13 +439,8 @@ const NewPost = () => {
                       onChange={(e) =>
                         handleInputChange('title', e.target.value)
                       }
-                      placeholder="Enter your post title... (Hindi/English supported)"
-                      className="w-full text-2xl font-bold border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none"
-                      style={{
-                        fontFamily:
-                          '"Inter", "Noto Sans Devanagari", sans-serif',
-                        lineHeight: '1.2',
-                      }}
+                      placeholder="Enter your post heading..."
+                      className="w-full text-xl sm:text-2xl font-bold border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
                     />
                     {errors.title && (
                       <p className="text-red-500 text-sm mt-2">
@@ -504,13 +449,30 @@ const NewPost = () => {
                     )}
                   </div>
 
+                  {/* Description (Short Subheading) */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      <FileText className="w-4 h-4 inline mr-2" />
+                      Description (Short Subheading)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.description}
+                      onChange={(e) =>
+                        handleInputChange('description', e.target.value)
+                      }
+                      placeholder="Enter a short description or subheading..."
+                      className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
+                      maxLength={200}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      {formData.description.length}/200 characters
+                    </p>
+                  </div>
+
                   {/* Rich Text Editor */}
-                  <motion.div
-                    variants={itemVariants}
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
                       <label className="block text-sm font-semibold text-gray-700">
                         <Hash className="w-4 h-4 inline mr-2" />
                         Content
@@ -523,21 +485,21 @@ const NewPost = () => {
                           disabled={
                             aiLoading || !formData.title || !formData.category
                           }
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Generate content based on title and category"
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Generate content based on heading and category"
                         >
                           {aiLoading ? (
                             <RefreshCw className="w-3 h-3 animate-spin" />
                           ) : (
                             <Wand2 className="w-3 h-3" />
                           )}
-                          AI Generate
+                          <span className="hidden sm:inline">AI Generate</span>
                         </button>
 
                         <button
                           onClick={handleImproveContent}
                           disabled={aiLoading || !formData.content.trim()}
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Improve existing content"
                         >
                           {aiLoading ? (
@@ -545,7 +507,7 @@ const NewPost = () => {
                           ) : (
                             <Brain className="w-3 h-3" />
                           )}
-                          AI Improve
+                          <span className="hidden sm:inline">AI Improve</span>
                         </button>
                       </div>
                     </div>
@@ -554,22 +516,18 @@ const NewPost = () => {
                       onChange={(content) =>
                         handleInputChange('content', content)
                       }
-                      placeholder="Start writing your amazing post... (Hindi/English/Mixed languages supported) or use AI to generate content!"
+                      placeholder="Start writing your amazing post..."
                     />
                     {errors.content && (
                       <p className="text-red-500 text-sm p-4">
                         {errors.content}
                       </p>
                     )}
-                  </motion.div>
+                  </div>
 
                   {/* Excerpt */}
-                  <motion.div
-                    variants={itemVariants}
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                       <label className="block text-sm font-semibold text-gray-700">
                         <FileText className="w-4 h-4 inline mr-2" />
                         Excerpt (Optional)
@@ -578,7 +536,7 @@ const NewPost = () => {
                       <button
                         onClick={handleGenerateExcerpt}
                         disabled={aiLoading || !formData.content.trim()}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-md hover:from-green-600 hover:to-emerald-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Generate excerpt from content"
                       >
                         {aiLoading ? (
@@ -594,32 +552,48 @@ const NewPost = () => {
                       onChange={(e) =>
                         handleInputChange('excerpt', e.target.value)
                       }
-                      placeholder="Brief description of your post... or generate with AI"
+                      placeholder="Brief description of your post..."
                       rows={3}
-                      className="w-full border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none"
-                      style={{
-                        fontFamily:
-                          '"Inter", "Noto Sans Devanagari", sans-serif',
-                      }}
+                      className="w-full border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
                     />
-                  </motion.div>
-                </motion.div>
+                  </div>
+
+                  {/* Reporter Name (News by) - Admin only */}
+                  {user?.role === 'admin' && (
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        <User className="w-4 h-4 inline mr-2" />
+                        Reporter Name (News by)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.reporterName}
+                        onChange={(e) =>
+                          handleInputChange('reporterName', e.target.value)
+                        }
+                        placeholder="Enter reporter name (optional)..."
+                        maxLength={100}
+                        className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
+                      />
+                      <p className="text-xs text-gray-500 mt-2">
+                        {formData.reporterName.length}/100 characters - Leave empty to use author name
+                      </p>
+                    </div>
+                  )}
+                </div>
 
                 {/* Sidebar */}
-                <motion.div variants={itemVariants} className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Featured Media (Image or Video) with Tabs */}
-                  <div
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                     {/* Tabs */}
-                    <div className="flex gap-2 mb-4 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <div className="flex gap-2 mb-4 p-1 bg-gray-100 rounded-lg">
                       <button
                         onClick={() => handleMediaTypeChange('image')}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                           mediaType === 'image'
-                            ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
                         <ImageIcon className="w-4 h-4 inline mr-2" />
@@ -627,10 +601,10 @@ const NewPost = () => {
                       </button>
                       <button
                         onClick={() => handleMediaTypeChange('video')}
-                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                           mediaType === 'video'
-                            ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
                         <Video className="w-4 h-4 inline mr-2" />
@@ -657,10 +631,7 @@ const NewPost = () => {
                   </div>
 
                   {/* Category */}
-                  <div
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-4">
                       <Hash className="w-4 h-4 inline mr-2" />
                       Category
@@ -673,11 +644,7 @@ const NewPost = () => {
                           handleInputChange('category', e.target.value)
                         }
                         placeholder="Enter custom category or select from suggestions below..."
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                        style={{
-                          fontFamily:
-                            '"Inter", "Noto Sans Devanagari", sans-serif',
-                        }}
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                       />
                       <div className="text-xs text-gray-500 mb-2">
                         Popular categories:
@@ -690,7 +657,7 @@ const NewPost = () => {
                             onClick={() =>
                               handleInputChange('category', category)
                             }
-                            className="px-3 py-1 text-xs bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 rounded-full transition-colors"
+                            className="px-3 py-1 text-xs bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 rounded-full transition-colors"
                           >
                             {category}
                           </button>
@@ -705,11 +672,8 @@ const NewPost = () => {
                   </div>
 
                   {/* Tags */}
-                  <div
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                       <label className="block text-sm font-semibold text-gray-700">
                         <Tag className="w-4 h-4 inline mr-2" />
                         Tags
@@ -722,7 +686,7 @@ const NewPost = () => {
                           !formData.title ||
                           !formData.content.trim()
                         }
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-md hover:from-orange-600 hover:to-red-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1 px-2 py-1 text-xs bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="AI suggest relevant tags"
                       >
                         {aiLoading ? (
@@ -741,11 +705,11 @@ const NewPost = () => {
                         onChange={(e) => setCurrentTag(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Add tags..."
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <button
                         onClick={handleAddTag}
-                        className="w-full px-6 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-medium"
+                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                       >
                         Add Tag
                       </button>
@@ -754,30 +718,25 @@ const NewPost = () => {
                     {formData.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
                         {formData.tags.map((tag, index) => (
-                          <motion.span
+                          <span
                             key={index}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                           >
                             {tag}
                             <button
                               onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 text-purple-500 hover:text-purple-700"
+                              className="ml-1 text-blue-500 hover:text-blue-700"
                             >
                               ×
                             </button>
-                          </motion.span>
+                          </span>
                         ))}
                       </div>
                     )}
                   </div>
 
                   {/* Advanced Settings */}
-                  <div
-                    className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
-                    style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
-                  >
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                     <button
                       onClick={() =>
                         setShowAdvancedSettings(!showAdvancedSettings)
@@ -788,86 +747,36 @@ const NewPost = () => {
                         <Settings className="w-4 h-4 inline mr-2" />
                         Advanced Settings
                       </span>
-                      <motion.div
-                        animate={{ rotate: showAdvancedSettings ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      <span className={`transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`}>
                         ▼
-                      </motion.div>
+                      </span>
                     </button>
 
-                    <AnimatePresence>
-                      {showAdvancedSettings && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="space-y-6"
-                        >
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                              <Calendar className="w-4 h-4 inline mr-2" />
-                              Publish Date
-                            </label>
-                            <input
-                              type="datetime-local"
-                              value={formData.publishedAt}
-                              onChange={(e) =>
-                                handleInputChange('publishedAt', e.target.value)
-                              }
-                              className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-700"
-                              style={{
-                                colorScheme: 'light',
-                              }}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                              Visibility
-                            </label>
-                            <div className="space-y-3">
-                              <label className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                                <input
-                                  type="radio"
-                                  name="visibility"
-                                  value="public"
-                                  checked={formData.status !== 'private'}
-                                  onChange={() =>
-                                    handleInputChange('status', 'draft')
-                                  }
-                                  className="mr-3 text-purple-600 focus:ring-purple-500"
-                                />
-                                <Globe className="w-4 h-4 mr-2 text-green-600" />
-                                <span className="font-medium">Public</span>
-                              </label>
-                              <label className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                                <input
-                                  type="radio"
-                                  name="visibility"
-                                  value="private"
-                                  checked={formData.status === 'private'}
-                                  onChange={() =>
-                                    handleInputChange('status', 'private')
-                                  }
-                                  className="mr-3 text-purple-600 focus:ring-purple-500"
-                                />
-                                <Lock className="w-4 h-4 mr-2 text-red-600" />
-                                <span className="font-medium">Private</span>
-                              </label>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {showAdvancedSettings && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                            <Calendar className="w-4 h-4 inline mr-2" />
+                            Publish Date
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={formData.publishedAt}
+                            onChange={(e) =>
+                              handleInputChange('publishedAt', e.target.value)
+                            }
+                            className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </motion.div>
+                </div>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </main>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

@@ -225,7 +225,7 @@ const UserProfile = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="max-w-7xl mx-auto px-6 py-8"
+            className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8"
           >
             {/* Profile Header */}
             <motion.div

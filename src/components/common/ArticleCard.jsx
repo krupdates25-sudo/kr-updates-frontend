@@ -1,117 +1,30 @@
 import {
-  Heart,
-  MessageCircle,
-  Share2,
-  Bookmark,
-  MoreHorizontal,
   Clock,
-  TrendingUp,
-  User,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useSocket } from '../../contexts/SocketContext';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/postService';
-import useLike from '../../hooks/useLike';
 
 const ArticleCard = ({
   article,
-  onLike,
   onBookmark,
   onShare,
   showRank,
   showTrendingScore,
 }) => {
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [shareCount, setShareCount] = useState(
-    article?.shareCount ?? article?.shares ?? 0
-  );
-  const { socket } = useSocket();
   const { user } = useAuth();
-
-  // Use the custom like hook with confetti effects
-  const {
-    isLiked,
-    likeCount,
-    setLikeCount,
-    isLoading,
-    handleLike: defaultHandleLike,
-  } = useLike(
-    article?._id || article?.id,
-    article?.isLiked || false, // Use the isLiked status from backend
-    article?.likeCount ?? article?.likes ?? 0
-  );
-
-  // Use passed onLike or default like handler
-  const handleLikeClick = onLike || defaultHandleLike;
-
-  // Socket.IO event listeners for real-time updates
-  useEffect(() => {
-    if (!socket || !article) return;
-
-    const postId = article._id || article.id;
-
-    const handleLikeUpdate = (data) => {
-      if (data.postId === postId) {
-        setLikeCount(data.likeCount);
-      }
-    };
-
-    const handleShareUpdate = (data) => {
-      if (data.postId === postId) {
-        setShareCount(data.shareCount);
-      }
-    };
-
-    // Register event listeners
-    socket.on('likeUpdate', handleLikeUpdate);
-    socket.on('shareUpdate', handleShareUpdate);
-
-    // Cleanup event listeners
-    return () => {
-      socket.off('likeUpdate', handleLikeUpdate);
-      socket.off('shareUpdate', handleShareUpdate);
-    };
-  }, [socket, article._id, article.id, setLikeCount]);
+  const navigate = useNavigate();
 
   const handleCardClick = () => {
-    // Dispatch event to open modal in parent component
-    const openModalEvent = new CustomEvent('openPostModal', {
-      detail: {
-        postId: article._id || article.id,
-        post: article,
-      },
-    });
-    window.dispatchEvent(openModalEvent);
-  };
-
-  const handleBookmark = (e) => {
-    e.preventDefault();
-    if (onBookmark) {
-      onBookmark();
-    } else {
-      setIsBookmarked(!isBookmarked);
+    // Navigate directly to post details page
+    // Always use slug if available, otherwise use MongoDB _id (ensure it's a string)
+    const postSlug = article.slug || String(article._id || article.id || '');
+    if (!postSlug) {
+      console.error('No valid post identifier found:', article);
+      return;
     }
-  };
-
-  const handleShare = (e) => {
-    e.preventDefault();
-    if (onShare) {
-      onShare();
-    } else {
-      // Default share functionality
-    }
-  };
-
-  const handleAuthorClick = (e) => {
-    e.stopPropagation(); // Prevent opening the modal when clicking author
-
-    // Simple debug to verify we have the correct author ID
-    console.log('Author ID:', article.author?._id || article.author?.id);
-    console.log('Post ID:', article._id || article.id);
+    navigate(`/post/${postSlug}`);
   };
 
   const formatDate = (dateString) => {
@@ -146,24 +59,71 @@ const ArticleCard = ({
   return (
     <>
       <article
-        className="bg-white dark:bg-gray-800 rounded-xl border overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer h-[500px] flex flex-col hover:-translate-y-1"
-        style={{ borderColor: '#5755FE20' }}
+        className="bg-white dark:bg-gray-800 rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col select-none"
+        style={{ 
+          borderColor: '#e5e7eb',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          WebkitTouchCallout: 'none'
+        }}
         onClick={handleCardClick}
+        onContextMenu={(e) => {
+          // Allow context menu on buttons
+          if (e.target.closest('button')) return;
+          e.preventDefault();
+          return false;
+        }}
+        onCopy={(e) => {
+          // Allow copying from buttons
+          if (e.target.closest('button')) return;
+          e.preventDefault();
+          return false;
+        }}
+        onCut={(e) => {
+          // Allow cutting from buttons
+          if (e.target.closest('button')) return;
+          e.preventDefault();
+          return false;
+        }}
+        onSelectStart={(e) => {
+          // Allow selection on buttons
+          if (e.target.closest('button')) return;
+          e.preventDefault();
+          return false;
+        }}
+        data-protected-content
       >
         {/* Featured Media (Image or Video) */}
         {(article.featuredImage?.url ||
           article.featuredVideo?.url ||
           article.image) && (
           <div
-            className="h-48 overflow-hidden flex-shrink-0 relative"
-            style={{ backgroundColor: '#5755FE08' }}
+            className="h-28 sm:h-32 md:h-36 overflow-hidden flex-shrink-0 relative bg-white flex items-center justify-center p-1.5 sm:p-2"
           >
             {article.featuredVideo?.url ? (
               <video
                 src={article.featuredVideo.url}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-contain select-none"
+                style={{ 
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  pointerEvents: 'none',
+                  WebkitUserDrag: 'none',
+                  userDrag: 'none'
+                }}
                 muted
                 playsInline
+                draggable="false"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
+                onDragStart={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
                 poster={
                   article.featuredVideo.thumbnail || article.featuredImage?.url
                 }
@@ -172,8 +132,24 @@ const ArticleCard = ({
               <img
                 src={article.featuredImage?.url || article.image}
                 alt={article.featuredImage?.alt || article.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-contain select-none"
+                style={{ 
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  pointerEvents: 'none',
+                  WebkitUserDrag: 'none',
+                  userDrag: 'none'
+                }}
                 loading="lazy"
+                draggable="false"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
+                onDragStart={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
                 onError={(e) => {
                   // Fallback to placeholder image if the main image fails to load
                   e.target.src =
@@ -193,7 +169,6 @@ const ArticleCard = ({
                 Video
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
         )}
 
@@ -202,17 +177,14 @@ const ArticleCard = ({
           !article.featuredVideo?.url &&
           !article.image && (
             <div
-              className="h-48 overflow-hidden flex-shrink-0 relative flex items-center justify-center"
-              style={{ backgroundColor: '#5755FE08' }}
+              className="h-28 sm:h-32 md:h-36 overflow-hidden flex-shrink-0 relative flex items-center justify-center bg-white"
             >
-              <div className="text-center p-6">
+              <div className="text-center p-4">
                 <div
-                  className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: '#5755FE20' }}
+                  className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center bg-gray-100"
                 >
                   <svg
-                    className="w-8 h-8"
-                    style={{ color: '#5755FE' }}
+                    className="w-6 h-6 text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -223,162 +195,65 @@ const ArticleCard = ({
                     />
                   </svg>
                 </div>
-                <p className="text-sm font-medium" style={{ color: '#5755FE' }}>
+                <p className="text-xs font-medium text-gray-500">
                   {article.category || 'Article'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">No image available</p>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
           )}
 
         {/* Content */}
-        <div className="p-5 flex-1 flex flex-col">
-          {/* Rank and Trending Score */}
-          {(showRank || showTrendingScore) && (
-            <div className="flex items-center justify-between mb-3">
-              {showRank && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">
-                    #{showRank}
-                  </div>
-                </div>
-              )}
-              {showTrendingScore && (
-                <div className="flex items-center space-x-1 text-xs text-orange-600">
-                  <TrendingUp className="w-3 h-3" />
-                  <span className="font-medium">
-                    {Math.round(showTrendingScore)} pts
-                  </span>
-                </div>
-              )}
-            </div>
+        <div className="p-2.5 sm:p-3 flex-1 flex flex-col">
+          {/* Category Tag */}
+          {article.category && (
+            <span className="px-1.5 sm:px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 mb-1.5 sm:mb-2 w-fit">
+              {article.category}
+            </span>
           )}
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {article.tags?.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="px-2.5 py-1 text-xs font-medium rounded-full hover:bg-purple-100 transition-colors cursor-pointer"
-                style={{ backgroundColor: '#5755FE15', color: '#5755FE' }}
-              >
-                #{tag}
-              </span>
-            ))}
-            {article.tags?.length > 3 && (
-              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                +{article.tags.length - 3}
-              </span>
-            )}
-          </div>
-
-          {/* Title */}
-          <h2
-            className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 transition-colors"
-            style={{ '&:hover': { color: '#5755FE' } }}
+          {/* Title (Heading) */}
+          <h2 
+            className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2 leading-tight select-none"
+            style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
           >
-            {article.title}
+            {article.title || article.heading}
           </h2>
 
-          {/* Description */}
+          {/* Subheading (Description) */}
           {article.description && (
-            <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed text-sm flex-1 max-w-prose mx-auto">
+            <p 
+              className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 sm:mb-2 line-clamp-2 leading-snug select-none"
+              style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+            >
               {article.description}
             </p>
           )}
 
           {/* Meta info */}
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" style={{ color: '#5755FE' }} />
-                <span>{article.readTime || '5 min read'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp
-                  className="w-3.5 h-3.5"
-                  style={{ color: '#5755FE' }}
-                />
-                <span>{formatDate(article.publishedAt || new Date())}</span>
-              </div>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2">
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <Clock className="w-3 h-3" />
+              <span className="text-xs">{article.readTime?.split(' ')[0] || '5'}m</span>
             </div>
+            <span className="text-xs">•</span>
+            <span className="text-xs">{formatDate(article.publishedAt || new Date())}</span>
+          </div>
 
-            {article.category && (
-              <span
-                className="px-2 py-1 text-xs font-semibold rounded-full"
-                style={{ backgroundColor: '#5755FE20', color: '#5755FE' }}
+          {/* Actions - Only Delete Button */}
+          <div className="flex items-center justify-end mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
+            {user?.role === 'admin' && (
+              <button
+                onClick={handleDelete}
+                className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                title="Delete post"
               >
-                {article.category}
-              </span>
+                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end mt-auto">
-            {/* Action buttons */}
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={handleLikeClick}
-                disabled={isLoading}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  isLiked
-                    ? 'text-red-500 bg-red-50 hover:bg-red-100 shadow-sm'
-                    : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
-                } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
-              >
-                <Heart
-                  className={`w-4 h-4 ${isLiked ? 'fill-current' : ''} ${
-                    isLoading ? 'animate-pulse' : ''
-                  }`}
-                />
-              </button>
-
-              <button
-                onClick={handleBookmark}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  isBookmarked
-                    ? 'shadow-sm'
-                    : 'text-gray-500 hover:bg-purple-50'
-                }`}
-                style={
-                  isBookmarked
-                    ? { color: '#5755FE', backgroundColor: '#5755FE15' }
-                    : {}
-                }
-              >
-                <Bookmark
-                  className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`}
-                />
-              </button>
-
-              <button
-                onClick={handleShare}
-                className="p-2 rounded-lg text-gray-500 hover:bg-purple-50 transition-all duration-200"
-                style={{ '&:hover': { color: '#5755FE' } }}
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-
-              {/* Admin delete button */}
-              {user?.role === 'admin' && (
-                <button
-                  onClick={handleDelete}
-                  className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
-                  title="Delete post"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-
-              <button className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Engagement stats */}
-          <div
+          {/* Engagement stats - REMOVED (likes, comments) */}
+          {/* <div
             className="flex items-center gap-4 mt-4 pt-3 border-t"
             style={{ borderColor: '#5755FE20' }}
           >
@@ -406,7 +281,6 @@ const ArticleCard = ({
               <span className="font-medium">{shareCount}</span>
             </div>
 
-            {/* Quality indicator */}
             <div className="ml-auto flex items-center gap-1">
               <Sparkles
                 className="w-3.5 h-3.5"
@@ -419,7 +293,7 @@ const ArticleCard = ({
                 Premium
               </span>
             </div>
-          </div>
+          </div> */}
         </div>
       </article>
     </>

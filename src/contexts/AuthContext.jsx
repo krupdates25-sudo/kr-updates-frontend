@@ -36,12 +36,30 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('authToken');
       const cachedUser = localStorage.getItem('user');
+      const tokenExpiry = localStorage.getItem('tokenExpiry');
+
+      // Check if token has expired (7 days)
+      if (tokenExpiry) {
+        const expiryTime = parseInt(tokenExpiry, 10);
+        if (Date.now() > expiryTime) {
+          // Token expired, clear everything
+          console.log('Token expired, clearing auth data');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('tokenExpiry');
+          setUser(null);
+          setIsInitialized(true);
+          return;
+        }
+      }
 
       if (token && cachedUser) {
         try {
           const parsedUser = JSON.parse(cachedUser);
           if (parsedUser && typeof parsedUser === 'object') {
-            // User is already set in useState initializer - no action needed
+            // User is already set in useState initializer - ensure it's persisted
+            setUser(parsedUser);
+            localStorage.setItem('user', JSON.stringify(parsedUser)); // Re-save to ensure persistence
           } else {
             throw new Error('Invalid user data');
           }
@@ -49,17 +67,37 @@ export const AuthProvider = ({ children }) => {
           console.warn('Invalid cached user data, clearing:', parseError);
           localStorage.removeItem('authToken');
           localStorage.removeItem('user');
+          localStorage.removeItem('tokenExpiry');
           setUser(null);
         }
       } else if (token && !cachedUser) {
-        // Token without user data - invalid state
-        localStorage.removeItem('authToken');
-        setUser(null);
+        // Token without user data - try to fetch user profile
+        const fetchUserProfile = async () => {
+          try {
+            const response = await authService.getProfile();
+            if (response?.data?.user) {
+              const userData = response.data.user;
+              setUser(userData);
+              localStorage.setItem('user', JSON.stringify(userData));
+            } else {
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('tokenExpiry');
+              setUser(null);
+            }
+          } catch (error) {
+            console.warn('Failed to fetch user profile:', error);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('tokenExpiry');
+            setUser(null);
+          }
+        };
+        fetchUserProfile();
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiry');
       setUser(null);
     } finally {
       setIsInitialized(true);
@@ -89,6 +127,8 @@ export const AuthProvider = ({ children }) => {
 
       if (userData) {
         setUser(userData);
+        // Persist user data to localStorage for 7-day session
+        localStorage.setItem('user', JSON.stringify(userData));
         console.log('User set in context:', userData);
       } else {
         // Try to get user from localStorage as fallback

@@ -1,20 +1,16 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Header from '../components/layout/Header';
+import PageLayout from '../components/layout/PageLayout';
 import ArticleCard from '../components/common/ArticleCard';
-import PostModal from '../components/common/PostModal';
-import RateLimitMonitor from '../components/common/RateLimitMonitor';
-import LoadMoreButton, {
-  LoadingSkeleton,
-} from '../components/common/LoadMoreButton';
+// import PostModal from '../components/common/PostModal'; // Commented out - posts now navigate directly to details page
+import { useAuth } from '../contexts/AuthContext';
+import { LoadingSkeleton } from '../components/common/LoadMoreButton';
 import { useSocket } from '../contexts/SocketContext';
 import AdContainer from '../components/common/AdContainer';
+import BreakingNewsBanner from '../components/common/BreakingNewsBanner';
 
 import usePagination from '../hooks/usePagination';
 import {
-  Filter,
-  SortAsc,
   Plus,
   Search,
   Clock,
@@ -24,75 +20,57 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import postService from '../services/postService';
-import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, refreshProfile } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('feed');
   const [sortBy, setSortBy] = useState('latest');
   const [filterBy, setFilterBy] = useState('all');
-  const { joinPost, leavePost } = useSocket();
-  const [selectedPostId, setSelectedPostId] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const { joinPost, leavePost, socket, connected } = useSocket();
+  // PostModal removed - posts now navigate directly to details page
+  // const [selectedPostId, setSelectedPostId] = useState(null);
+  // const [selectedPost, setSelectedPost] = useState(null);
+  // const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
   // Refresh user data when component mounts to get latest permissions
-  useEffect(() => {
-    if (user) {
-      console.log('🔄 Dashboard: Refreshing user profile on mount');
-      refreshProfile().catch(console.warn);
-    }
-  }, [user, refreshProfile]);
+  // Removed automatic refresh to prevent multiple API calls
+  // Profile is already loaded from AuthContext on app initialization
 
+  // PostModal removed - posts now navigate directly to details page
   // Handle search navigation from Header
   useEffect(() => {
     console.log('Dashboard - Location state changed:', location.state);
 
-    if (location.state?.openPostModal && location.state?.postId) {
-      console.log(
-        'Dashboard - Opening post modal for ID:',
-        location.state.postId
-      );
-      setSelectedPostId(location.state.postId);
-      setIsPostModalOpen(true);
-      // Clear the state to prevent reopening on refresh
-      navigate(location.pathname, { replace: true });
+    // Navigate to post details page if postId is provided
+    if (location.state?.postId) {
+      const postSlug = location.state.postSlug || String(location.state.postId || '');
+      if (postSlug) {
+        navigate(`/post/${postSlug}`, { replace: true });
+      }
+      return;
     }
 
     if (location.state?.filterCategory) {
       setFilterBy(location.state.filterCategory);
       // Clear the state to prevent re-filtering on refresh
-      navigate(location.pathname, { replace: true });
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate, location.pathname]);
+  }, [location.state, navigate]);
 
-  // Handle custom event for opening post modal when already on dashboard
+  // Handle custom event for category filter
   useEffect(() => {
-    const handleOpenPostModal = (event) => {
-      console.log('Dashboard - Opening modal for post:', event.detail.postId);
-      setSelectedPostId(event.detail.postId);
-      setSelectedPost(event.detail.post);
-      setIsPostModalOpen(true);
-    };
-
     const handleSetCategoryFilter = (event) => {
       setFilterBy(event.detail.category);
     };
 
-    window.addEventListener('openPostModal', handleOpenPostModal);
     window.addEventListener('setCategoryFilter', handleSetCategoryFilter);
 
     return () => {
-      window.removeEventListener('openPostModal', handleOpenPostModal);
       window.removeEventListener('setCategoryFilter', handleSetCategoryFilter);
     };
   }, []);
-
-  // Debug modal state
-  console.log('Dashboard - Modal state:', { isPostModalOpen, selectedPostId });
 
   // Check if user can create posts
   const canCreatePosts = useMemo(() => {
@@ -316,13 +294,47 @@ const Dashboard = () => {
     }
   }, [articles, joinPost, leavePost]);
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  // Listen for real-time updates on posts (likes, comments, shares, trending status)
+  useEffect(() => {
+    if (socket && connected) {
+      const handlePostUpdate = (data) => {
+        console.log('Post updated:', data);
+        // Refresh posts when they're updated
+        if (activeTab === 'feed' || activeTab === 'trending') {
+          refresh();
+        }
+      };
+
+      const handlePostCreated = (data) => {
+        console.log('New post created:', data);
+        // Refresh posts when new ones are created
+        if (activeTab === 'feed') {
+          refresh();
+        }
+      };
+
+      const handleTrendingUpdate = (data) => {
+        console.log('Trending posts updated:', data);
+        // Refresh trending posts
+        if (activeTab === 'trending') {
+          refresh();
+        }
+      };
+
+      socket.on('postUpdated', handlePostUpdate);
+      socket.on('postCreated', handlePostCreated);
+      socket.on('trendingUpdated', handleTrendingUpdate);
+
+      return () => {
+        socket.off('postUpdated', handlePostUpdate);
+        socket.off('postCreated', handlePostCreated);
+        socket.off('trendingUpdated', handleTrendingUpdate);
+      };
+    }
+  }, [socket, connected, activeTab, refresh]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    setSidebarOpen(false); // Close sidebar on mobile after selection
   };
 
   const getPageTitle = () => {
@@ -372,112 +384,119 @@ const Dashboard = () => {
     });
   }, [articles, filterBy, sortBy]);
 
+  // Content protection - prevent copying
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      // Allow context menu on buttons and interactive elements
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent context menu on article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleCopy = (e) => {
+      // Allow copying from inputs and textareas
+      if (e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent copying from article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleCut = (e) => {
+      // Allow cutting from inputs and textareas
+      if (e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent cutting from article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleSelectStart = (e) => {
+      // Allow selection in inputs and textareas
+      if (e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent text selection on article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Prevent Ctrl+A (Select All), Ctrl+C (Copy), Ctrl+X (Cut) on article content
+      if (e.target.closest('[data-protected-content]')) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'c' || e.key === 'x')) {
+          e.preventDefault();
+          return false;
+        }
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('cut', handleCut);
+    document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('cut', handleCut);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={handleSidebarToggle}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+    <PageLayout activeTab={activeTab} onTabChange={handleTabChange}>
+      {/* Main Content */}
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8">
+        {/* Loading Skeleton for initial load */}
+        {loading && <LoadingSkeleton />}
 
-      {/* Main Content Area */}
-      <div className="lg:ml-72 relative z-10">
-        {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
+        {/* Breaking News Banner - Show at top of feed */}
+        {activeTab === 'feed' && <BreakingNewsBanner />}
 
-        {/* Main Content */}
-        <main className="min-h-screen">
-          {/* Page Header */}
-          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-8">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div className="flex-1">
-                  <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    {getPageTitle()}
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300 text-lg">
-                    Discover the latest articles and insights from the community
-                  </p>
-                </div>
+        {/* Top Ad - Always show */}
+        <div className="mb-4 sm:mb-6 w-full">
+          <AdContainer
+            position="top"
+            postIndex={0}
+            className="w-full"
+          />
+        </div>
 
-                {/* New Post Button */}
-                {canCreatePosts && (
-                  <button
-                    onClick={() => navigate('/new-post')}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-                  >
-                    <Plus className="w-5 h-5" />
-                    <span>Create Post</span>
-                  </button>
-                )}
-
-                {/* Filters and Sort */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="relative">
-                    <select
-                      value={filterBy}
-                      onChange={(e) => setFilterBy(e.target.value)}
-                      className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-                    >
-                      <option value="all">All Categories</option>
-                      <option value="development">Development</option>
-                      <option value="design">Design</option>
-                      <option value="industry">Industry</option>
-                      <option value="security">Security</option>
-                      <option value="data science">Data Science</option>
-                    </select>
-                    <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" />
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-                    >
-                      <option value="latest">Latest</option>
-                      <option value="popular">Most Popular</option>
-                      <option value="comments">Most Discussed</option>
-                    </select>
-                    <SortAsc className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Articles Section with Load More */}
-          <div>
-            {/* Loading Skeleton for initial load */}
-            {loading && <LoadingSkeleton />}
-
-            {/* Articles Grid */}
-            {!loading && filteredAndSortedArticles.length > 0 && (
-              <div className="px-6 py-8">
-                {/* Ads Banner at top */}
-                <div className="mb-4 sm:mb-8 px-2 sm:px-0">
-                  <AdContainer
-                    position="top"
-                    postIndex={0}
-                    className="col-span-full"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Articles Grid */}
+        {!loading && filteredAndSortedArticles.length > 0 && (
+          <>
+            <div 
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4"
+              data-protected-content
+              style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+            >
                   {filteredAndSortedArticles.map((article, index) => (
                     <div
                       key={article.id}
                       className="group animate-fade-in-up"
                       style={{ animationDelay: `${index * 100}ms` }}
+                      data-protected-content
                     >
                       <ArticleCard
                         article={article}
-                        onLike={(postId) => {
-                          // Handle like functionality
-                          console.log('Like post:', postId);
-                        }}
                         onBookmark={(postId) => {
                           // Handle bookmark functionality
                           console.log('Bookmark post:', postId);
@@ -491,30 +510,19 @@ const Dashboard = () => {
                   ))}
                 </div>
 
-                {/* Ads Banner at bottom */}
-                {filteredAndSortedArticles.length > 6 && (
-                  <div className="mt-4 sm:mt-6 px-2 sm:px-0">
+                {/* Middle Ad - Show after 4+ articles */}
+                {filteredAndSortedArticles.length >= 4 && (
+                  <div className="mt-6 sm:mt-8">
                     <AdContainer
-                      position="bottom"
-                      postIndex={filteredAndSortedArticles.length}
-                      className="col-span-full"
+                      position="middle"
+                      postIndex={Math.floor(filteredAndSortedArticles.length / 2)}
+                      className="w-full"
                     />
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Load More Button */}
-            <LoadMoreButton
-              loading={loading}
-              loadingMore={loadingMore}
-              hasMore={hasMore}
-              error={error}
-              totalCount={totalCount}
-              loadedCount={loadedCount}
-              onLoadMore={loadMore}
-              onRetry={refresh}
-            />
+              </>
+            )}
 
             {/* Empty State */}
             {!loading &&
@@ -533,28 +541,8 @@ const Dashboard = () => {
                   </p>
                 </div>
               )}
-          </div>
-        </main>
       </div>
-
-      {/* Rate Limit Monitor for Admins */}
-      <RateLimitMonitor />
-
-      {/* Post Modal for search results */}
-      {isPostModalOpen && selectedPostId && (
-        <PostModal
-          isOpen={isPostModalOpen}
-          onClose={() => {
-            console.log('Dashboard - Closing post modal');
-            setIsPostModalOpen(false);
-            setSelectedPostId(null);
-            setSelectedPost(null);
-          }}
-          postId={selectedPostId}
-          post={selectedPost}
-        />
-      )}
-    </div>
+    </PageLayout>
   );
 };
 

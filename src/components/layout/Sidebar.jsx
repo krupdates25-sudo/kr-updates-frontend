@@ -39,11 +39,11 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
 
   // Check user permissions
   const isAdmin = user?.role === 'admin';
-
-  // Debug: Log user object to see canPublish field
-  console.log('Sidebar - User object:', user);
-  console.log('Sidebar - User canPublish:', user?.canPublish);
-  console.log('Sidebar - User role:', user?.role);
+  const isModerator = user?.role === 'moderator';
+  
+  // On mobile, sidebar should only be visible for Admin and Moderator
+  // Regular users should use bottom navigation instead
+  const shouldShowSidebarOnMobile = isAdmin || isModerator;
 
   // More robust permission check
   const canCreatePosts = useMemo(() => {
@@ -96,13 +96,14 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
     //   count: null,
     //   path: '/trending',
     // },
-    {
-      id: 'bookmarks',
-      label: 'Bookmarks',
-      icon: Bookmark,
-      count: null,
-      path: '/bookmarks',
-    },
+    // Bookmarks page removed
+    // {
+    //   id: 'bookmarks',
+    //   label: 'Bookmarks',
+    //   icon: Bookmark,
+    //   count: null,
+    //   path: '/bookmarks',
+    // },
     {
       id: 'history',
       label: 'History',
@@ -156,23 +157,29 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
       path: '/admin/breaking-news',
     },
     {
+      id: 'admin-trending',
+      label: 'Trending Posts',
+      icon: TrendingUp,
+      path: '/admin/trending',
+    },
+    {
       id: 'admin-announcements',
       label: 'Announcements',
       icon: Bell,
       path: '/announcements',
     },
-    {
-      id: 'admin-notifications',
-      label: 'Notifications',
-      icon: Bell,
-      path: '/notifications',
-    },
-    {
-      id: 'admin-integrations',
-      label: 'Integrations',
-      icon: MessageSquare,
-      path: '/admin/integrations',
-    },
+    // {
+    //   id: 'admin-notifications',
+    //   label: 'Notifications',
+    //   icon: Bell,
+    //   path: '/notifications',
+    // },
+    // {
+    //   id: 'admin-integrations',
+    //   label: 'Integrations',
+    //   icon: MessageSquare,
+    //   path: '/admin/integrations',
+    // },
   ];
 
   const renderNavItem = (item) => {
@@ -239,33 +246,36 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Desktop overlay when sidebar is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="hidden lg:block fixed inset-0 bg-gray-800/50 z-40"
           onClick={onToggle}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Completely hidden on mobile (lg+), toggleable on desktop */}
       <div
         className={`
         fixed inset-y-0 left-0 z-50 w-72 
         bg-white dark:bg-gray-800
-        transform transition-transform duration-300 ease-in-out flex flex-col h-screen 
+        transform transition-transform duration-300 ease-in-out flex-col h-screen 
         shadow-xl border-r border-gray-200 dark:border-gray-700
         overflow-hidden
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        hidden lg:flex
+        ${isOpen ? 'lg:translate-x-0' : '-translate-x-full'}
       `}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <Logo size="md" />
           <button
             onClick={onToggle}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Close sidebar"
           >
-            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
 

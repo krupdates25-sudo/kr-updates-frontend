@@ -21,8 +21,7 @@ import {
   Upload,
   ExternalLink,
 } from 'lucide-react';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
 import AdCard from '../components/common/AdCard';
 import CloudinaryUpload from '../components/common/CloudinaryUpload';
 import advertisementService from '../services/advertisementService';
@@ -30,7 +29,6 @@ import { useAuth } from '../contexts/AuthContext';
 
 const AdManagement = () => {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [advertisements, setAdvertisements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -53,7 +51,7 @@ const AdManagement = () => {
     clientEmail: '',
     clientPhone: '',
     adType: 'banner',
-    position: 'random',
+    position: 'top',
     priority: 1,
     duration: 30,
     budget: 100,
@@ -357,20 +355,10 @@ const AdManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        activeTab="ads"
-      />
-
-      <div className="lg:ml-72">
-        <Header onSidebarToggle={() => setSidebarOpen(!sidebarOpen)} />
-
-        <main className="min-h-screen">
+    <PageLayout activeTab="ads">
           {/* Page Header */}
           <div className="bg-white border-b border-gray-200">
-            <div className="px-6 py-8">
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
                   <div className="flex items-center gap-4 mb-3">
@@ -403,7 +391,7 @@ const AdManagement = () => {
 
           {/* Dashboard Stats (Admin Only) */}
           {user?.role === 'admin' && dashboardStats && (
-            <div className="px-6 py-6 bg-white border-b border-gray-200">
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 bg-white border-b border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                   <div className="flex items-center justify-between">
@@ -462,7 +450,7 @@ const AdManagement = () => {
           )}
 
           {/* Filters */}
-          <div className="px-6 py-4 bg-white border-b border-gray-200">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 bg-white border-b border-gray-200">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -512,7 +500,7 @@ const AdManagement = () => {
           </div>
 
           {/* Advertisement List */}
-          <div className="px-6 py-6">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6">
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -587,8 +575,6 @@ const AdManagement = () => {
               </div>
             )}
           </div>
-        </main>
-      </div>
 
       {/* Create/Edit Advertisement Modal */}
       {showCreateForm && (
@@ -717,28 +703,6 @@ const AdManagement = () => {
                 )}
               </div>
 
-              {/* Click URL */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Click URL *
-                </label>
-                <input
-                  type="url"
-                  name="clickUrl"
-                  value={formData.clickUrl}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    formErrors.clickUrl ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="https://example.com"
-                />
-                {formErrors.clickUrl && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {formErrors.clickUrl}
-                  </p>
-                )}
-              </div>
-
               {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -793,7 +757,6 @@ const AdManagement = () => {
                   >
                     <option value="banner">Banner</option>
                     <option value="card">Card</option>
-                    <option value="sidebar">Sidebar</option>
                     <option value="popup">Popup</option>
                   </select>
                 </div>
@@ -808,7 +771,6 @@ const AdManagement = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
-                    <option value="random">Random</option>
                     <option value="top">Top</option>
                     <option value="middle">Middle</option>
                     <option value="bottom">Bottom</option>
@@ -996,7 +958,7 @@ const AdManagement = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };
 

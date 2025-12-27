@@ -25,24 +25,19 @@ import {
   MessageCircle,
   BookOpen,
   TrendingUp,
-  Palette,
-  Monitor,
-  Sun,
-  Moon,
+  // Palette, Monitor, Sun, Moon - Removed, always using light theme
   Check,
   X,
   AlertCircle,
 } from 'lucide-react';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+// import { useTheme } from '../contexts/ThemeContext'; // Removed - always using light theme
 import authService from '../services/authService';
 
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
-  const { theme: currentTheme, setTheme } = useTheme();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // const { theme: currentTheme, setTheme } = useTheme(); // Removed - always using light theme
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -81,7 +76,7 @@ const ProfilePage = () => {
   });
 
   const [preferences, setPreferences] = useState({
-    theme: 'system',
+    // theme removed - always using light theme
     notifications: {
       email: true,
       push: true,
@@ -145,7 +140,7 @@ const ProfilePage = () => {
       });
 
       setPreferences({
-        theme: user.theme || 'system',
+        // theme removed - always using light theme
         notifications: {
           email: user.notifications?.email ?? true,
           push: user.notifications?.push ?? true,
@@ -175,9 +170,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -206,25 +198,16 @@ const ProfilePage = () => {
   };
 
   const handlePreferenceChange = (category, field, value) => {
-    if (category === 'theme' && typeof field === 'string' && !value) {
-      // Handle theme change directly
-      console.log('Setting theme to:', field);
-      setTheme(field); // Apply theme immediately
-      setPreferences((prev) => ({
-        ...prev,
-        theme: field,
-      }));
-    } else {
-      // Handle nested preference changes
-      console.log('Setting preference:', category, field, value);
-      setPreferences((prev) => ({
-        ...prev,
-        [category]: {
-          ...prev[category],
-          [field]: value,
-        },
-      }));
-    }
+    // Theme handling removed - always using light theme
+    // Handle nested preference changes
+    console.log('Setting preference:', category, field, value);
+    setPreferences((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [field]: value,
+      },
+    }));
   };
 
   const handleSavePersonalInfo = async () => {
@@ -684,32 +667,9 @@ const ProfilePage = () => {
       exit="exit"
       className="space-y-8"
     >
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Theme Preference
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { value: 'light', label: 'Light', icon: Sun },
-            { value: 'dark', label: 'Dark', icon: Moon },
-            { value: 'system', label: 'System', icon: Monitor },
-          ].map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => handlePreferenceChange('theme', value)}
-              className={`p-4 border-2 rounded-lg transition-all ${
-                currentTheme === value
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                  : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
-              }`}
-            >
-              <Icon className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-              <span className="block text-sm font-medium text-gray-900">
-                {label}
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* Theme Preference section removed - always using light theme */}
+      <div className="text-center py-8 text-gray-500">
+        <p>Application is set to light theme only.</p>
       </div>
 
       <div className="flex justify-end">
@@ -1022,20 +982,12 @@ const ProfilePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header onSidebarToggle={handleSidebarToggle} />
-      <Sidebar isOpen={sidebarOpen} onToggle={handleSidebarToggle} />
-
-      <main
-        className={`transition-all duration-300 ${
-          sidebarOpen ? 'ml-64' : 'ml-0'
-        }`}
-      >
+    <PageLayout activeTab="profile">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="max-w-7xl mx-auto px-6 py-8"
+          className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8"
         >
           {/* Header */}
           <motion.div variants={itemVariants} className="mb-8">
@@ -1120,8 +1072,7 @@ const ProfilePage = () => {
             </motion.div>
           </div>
         </motion.div>
-      </main>
-    </div>
+    </PageLayout>
   );
 };
 

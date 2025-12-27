@@ -33,27 +33,9 @@ const LoadMoreButton = ({
     );
   }
 
-  // End of content state
+  // End of content state - Don't show anything when reached end
   if (!hasMore && loadedCount > 0 && !loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-6">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          You've reached the end!
-        </h3>
-        <p className="text-gray-600 text-center">
-          {totalCount > 0
-            ? `You've seen all ${totalCount} posts.`
-            : "That's all for now."}{' '}
-          Check back later for new content.
-        </p>
-        <div className="mt-4 text-sm text-gray-500">
-          {loadedCount > 0 && `Loaded ${loadedCount} posts`}
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Show Load More button

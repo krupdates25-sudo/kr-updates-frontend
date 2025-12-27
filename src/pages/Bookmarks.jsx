@@ -14,9 +14,14 @@ import {
 import postService from '../services/postService';
 import Sidebar from '../components/layout/Sidebar';
 import Header from '../components/layout/Header';
-import PostModal from '../components/common/PostModal';
+import BottomNavigation from '../components/layout/BottomNavigation';
+// import PostModal from '../components/common/PostModal'; // Commented out - posts now navigate directly to details page
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Bookmarks = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,9 +30,10 @@ const Bookmarks = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedPostId, setSelectedPostId] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  // PostModal removed - posts now navigate directly to details page
+  // const [selectedPostId, setSelectedPostId] = useState(null);
+  // const [selectedPost, setSelectedPost] = useState(null);
+  // const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBookmarksFromAPI();
@@ -88,11 +94,11 @@ const Bookmarks = () => {
         await navigator.share({
           title: post.title,
           text: post.excerpt,
-          url: window.location.origin + `/post/${post.slug}`,
+          url: window.location.origin + `/post/${post.slug || String(post._id || '')}`,
         });
       } else {
         await navigator.clipboard.writeText(
-          window.location.origin + `/post/${post.slug}`
+          window.location.origin + `/post/${post.slug || String(post._id || '')}`
         );
         alert('Link copied to clipboard!');
       }
@@ -107,10 +113,14 @@ const Bookmarks = () => {
   };
 
   const handlePostClick = (post) => {
-    // Open post in modal
-    setSelectedPostId(post.slug || post._id);
-    setSelectedPost(post);
-    setIsPostModalOpen(true);
+    // Navigate directly to post details page
+    // Always use slug if available, otherwise use MongoDB _id (ensure it's a string)
+    const postSlug = post.slug || String(post._id || post.id || '');
+    if (!postSlug) {
+      console.error('No valid post identifier found:', post);
+      return;
+    }
+    navigate(`/post/${postSlug}`);
   };
 
   const filteredBookmarks = bookmarks.filter(
@@ -147,8 +157,8 @@ const Bookmarks = () => {
 
   if (loading && page === 1) {
     return (
-      <div className="min-h-screen bg-white relative">
-        {/* Sidebar */}
+      <div className="min-h-screen bg-white relative pb-16 lg:pb-0">
+        {/* Sidebar - Only visible on mobile for Admin/Moderator */}
         <Sidebar
           isOpen={sidebarOpen}
           onToggle={handleSidebarToggle}
@@ -156,7 +166,7 @@ const Bookmarks = () => {
         />
 
         {/* Main Content Area */}
-        <div className="lg:ml-72 relative z-10">
+        <div className={`relative z-10 ${shouldShowSidebarOnMobile ? 'lg:ml-72' : 'lg:ml-0'}`}>
           {/* Header */}
           <Header onSidebarToggle={handleSidebarToggle} />
 
@@ -181,8 +191,8 @@ const Bookmarks = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white relative">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-white relative pb-20 lg:pb-0">
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={handleSidebarToggle}
@@ -190,7 +200,7 @@ const Bookmarks = () => {
       />
 
       {/* Main Content Area */}
-      <div className="lg:ml-72 relative z-10">
+      <div className="relative z-10 lg:ml-72">
         {/* Header */}
         <Header onSidebarToggle={handleSidebarToggle} />
 
@@ -198,38 +208,38 @@ const Bookmarks = () => {
         <main className="min-h-screen">
           {/* Page Header */}
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                 <div>
-                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                    <Bookmark className="h-8 w-8 text-blue-600" />
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                    <Bookmark className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-blue-600" />
                     My Bookmarks
                   </h1>
-                  <p className="text-gray-600 mt-1 text-sm lg:text-base">
+                  <p className="text-gray-600 mt-1 text-xs sm:text-sm lg:text-base">
                     {bookmarks.length} saved{' '}
                     {bookmarks.length === 1 ? 'article' : 'articles'}
                   </p>
                 </div>
 
                 {/* Search and Filter */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                     <input
                       type="text"
                       placeholder="Search bookmarks..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
+                      className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
                     />
                   </div>
 
                   <div className="relative">
-                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <Filter className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                      className="pl-8 sm:pl-10 pr-6 sm:pr-8 py-1.5 sm:py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                     >
                       <option value="newest">Newest First</option>
                       <option value="oldest">Oldest First</option>
@@ -243,7 +253,7 @@ const Bookmarks = () => {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-6">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <p className="text-red-800">{error}</p>
@@ -271,7 +281,7 @@ const Bookmarks = () => {
                 )}
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-5 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {sortedBookmarks.map((post) => (
                   <div
                     key={post._id}
@@ -289,7 +299,7 @@ const Bookmarks = () => {
                       </div>
                     )}
 
-                    <div className="p-6">
+                    <div className="p-4 sm:p-5 md:p-6">
                       {/* Category & Date */}
                       <div className="flex items-center justify-between mb-3">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -335,7 +345,8 @@ const Bookmarks = () => {
                       {/* Actions */}
                       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                         <div className="flex items-center space-x-4">
-                          <button
+                          {/* Likes and Comments removed */}
+                          {/* <button
                             onClick={() => handleLike(post._id)}
                             className={`flex items-center space-x-1 text-sm transition-colors ${
                               post.isLiked
@@ -354,7 +365,7 @@ const Bookmarks = () => {
                           <div className="flex items-center space-x-1 text-sm text-gray-600">
                             <MessageCircle className="h-4 w-4" />
                             <span>{post.commentCount ?? 0}</span>
-                          </div>
+                          </div> */}
 
                           <div className="flex items-center space-x-1 text-sm text-gray-600">
                             <Eye className="h-4 w-4" />
@@ -408,8 +419,11 @@ const Bookmarks = () => {
         </main>
       </div>
 
-      {/* Post Modal */}
-      {isPostModalOpen && selectedPostId && (
+      {/* Bottom Navigation - For all users on mobile */}
+      <BottomNavigation />
+
+      {/* Post Modal removed - posts now navigate directly to details page */}
+      {/* {isPostModalOpen && selectedPostId && (
         <PostModal
           isOpen={isPostModalOpen}
           onClose={() => {
@@ -420,7 +434,7 @@ const Bookmarks = () => {
           postId={selectedPostId}
           post={selectedPost}
         />
-      )}
+      )} */}
     </div>
   );
 };

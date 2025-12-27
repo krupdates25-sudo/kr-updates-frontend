@@ -130,11 +130,11 @@ const AdCard = ({
       </div>
 
       {/* Left: Image */}
-      <div className="flex-shrink-0 flex items-center justify-center bg-white md:w-[320px] w-full h-44 sm:h-52 md:h-auto p-0 rounded-t-xl md:rounded-t-none md:rounded-l-xl overflow-hidden">
+      <div className="flex-shrink-0 flex items-center justify-center bg-white md:w-[320px] w-full h-44 sm:h-52 md:h-auto p-2 sm:p-3 rounded-t-xl md:rounded-t-none md:rounded-l-xl overflow-hidden">
         <img
           src={ad.imageUrl}
           alt={ad.title || 'Ad Image'}
-          className="object-cover w-full h-full max-h-44 sm:max-h-52 md:max-h-none rounded-t-xl md:rounded-t-none md:rounded-l-xl"
+          className="object-contain w-full h-full max-h-44 sm:max-h-52 md:max-h-none rounded-t-xl md:rounded-t-none md:rounded-l-xl"
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x200?text=Ad+Image';
           }}

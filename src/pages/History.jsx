@@ -46,14 +46,13 @@ import {
   Minus,
   ExternalLink,
 } from 'lucide-react';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
+import AdContainer from '../components/common/AdContainer';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 
 const History = () => {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activities, setActivities] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -321,9 +320,6 @@ const History = () => {
     return bgColorMap[type] || 'bg-gray-50 border-gray-200';
   };
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   const getTimeAgo = (timestamp) => {
     const now = new Date();
@@ -483,37 +479,23 @@ const History = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={handleSidebarToggle}
-        activeTab="history"
-      />
-
-      {/* Main Content Area */}
-      <div className="lg:ml-72">
-        {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
-
-        {/* Main Content */}
-        <main className="min-h-screen">
+    <PageLayout activeTab="history">
           {/* Page Header */}
           <div className="bg-white border-b border-gray-200">
-            <div className="px-6 py-8">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 lg:gap-6">
                 <div>
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="p-3 bg-blue-600 rounded-lg">
-                      <HistoryIcon className="h-7 w-7 text-white" />
+                  <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3">
+                    <div className="p-2 sm:p-2.5 md:p-3 bg-blue-600 rounded-lg">
+                      <HistoryIcon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       {user && user.role === 'admin'
                         ? 'All User Activities'
                         : 'Activity History'}
                     </h1>
                   </div>
-                  <p className="text-gray-600 text-lg">
+                  <p className="text-gray-600 text-sm sm:text-base md:text-lg">
                     {user && user.role === 'admin'
                       ? 'Monitor and track all platform activities across all users'
                       : 'Comprehensive tracking of all your platform interactions'}
@@ -577,7 +559,7 @@ const History = () => {
           </div>
 
           {/* Filters */}
-          <div className="px-6 py-4 bg-white border-b border-gray-200">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 bg-white border-b border-gray-200">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="relative flex-1">
@@ -632,7 +614,12 @@ const History = () => {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-6">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6">
+            {/* Top Ad */}
+            <div className="mb-4 sm:mb-6">
+              <AdContainer position="top" postIndex={0} />
+            </div>
+
             {viewMode === 'analytics' && (
               <div className="space-y-6">
                 {/* Summary Cards */}
@@ -769,8 +756,9 @@ const History = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {filteredActivities.map((activity) => {
+                  <>
+                    <div className="space-y-3">
+                      {filteredActivities.slice(0, Math.ceil(filteredActivities.length / 2)).map((activity) => {
                       const Icon = activity.icon;
                       const isAdmin = user && user.role === 'admin';
 
@@ -863,14 +851,117 @@ const History = () => {
                         </div>
                       );
                     })}
-                  </div>
+                    </div>
+
+                    {/* Middle Ad - Show in middle of activities */}
+                    {filteredActivities.length >= 4 && (
+                      <div className="my-4 sm:my-6">
+                        <AdContainer position="middle" postIndex={Math.floor(filteredActivities.length / 2)} />
+                      </div>
+                    )}
+
+                    {/* Second half of activities */}
+                    <div className="space-y-3">
+                      {filteredActivities.slice(Math.ceil(filteredActivities.length / 2)).map((activity) => {
+                        const Icon = activity.icon;
+                        const isAdmin = user && user.role === 'admin';
+
+                        return (
+                          <div
+                            key={activity.id}
+                            className={`bg-white rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow ${activity.bgColor}`}
+                          >
+                            <div className="flex items-start space-x-4">
+                              <div className={`p-3 rounded-lg ${activity.bgColor}`}>
+                                <Icon className={`h-5 w-5 ${activity.color}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h3 className="text-sm font-semibold text-gray-900">
+                                      {getActivityTypeLabel(activity.type)}
+                                    </h3>
+                                    {isAdmin && activity.user && (
+                                      <div className="flex items-center space-x-2 mt-1">
+                                        <div className="flex items-center space-x-2 bg-blue-100 px-2 py-1 rounded border border-blue-200">
+                                          <User className="h-3 w-3 text-blue-600" />
+                                          <span className="text-xs font-medium text-blue-800">
+                                            {activity.user.name}
+                                          </span>
+                                        </div>
+                                        {activity.user.email && (
+                                          <span className="text-xs text-gray-500">
+                                            {activity.user.email}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center space-x-3">
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                      {getTimeAgo(activity.timestamp)}
+                                    </span>
+                                    <button
+                                      onClick={() => handleDeleteActivity(activity.id)}
+                                      disabled={deleteLoading === activity.id}
+                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      title="Delete this activity"
+                                    >
+                                      {deleteLoading === activity.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-500 border-t-transparent"></div>
+                                      ) : (
+                                        <Trash2 className="w-3 h-3" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-700 mb-1">
+                                  {activity.description}
+                                </p>
+                                {activity.details && (
+                                  <p className="text-xs text-gray-600 italic bg-gray-50 px-2 py-1 rounded">
+                                    {activity.details}
+                                  </p>
+                                )}
+                                {viewMode === 'detailed' && (
+                                  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                                    <div className="flex items-center space-x-2 bg-gray-50 px-2 py-1 rounded">
+                                      <Monitor className="h-3 w-3 text-gray-500" />
+                                      <span className="text-gray-700">
+                                        {activity.browser} on {activity.os}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 bg-gray-50 px-2 py-1 rounded">
+                                      <Globe className="h-3 w-3 text-gray-500" />
+                                      <span className="text-gray-700">
+                                        {activity.ipAddress}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 bg-gray-50 px-2 py-1 rounded">
+                                      <MapPin className="h-3 w-3 text-gray-500" />
+                                      <span className="text-gray-700">
+                                        {activity.location}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             )}
+
+            {/* Bottom Ad */}
+            <div className="mt-4 sm:mt-6">
+              <AdContainer position="bottom" postIndex={activities.length} />
+            </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </PageLayout>
   );
 };
 

@@ -185,7 +185,27 @@ const postService = {
   // Update post (protected)
   updatePost: async (postId, postData) => {
     try {
-      const response = await api.put(`/posts/${postId}`, postData);
+      const response = await api.patch(`/posts/${postId}`, postData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Publish post (admin only)
+  publishPost: async (postId) => {
+    try {
+      const response = await api.patch(`/posts/${postId}/publish`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Unpublish post (admin only)
+  unpublishPost: async (postId) => {
+    try {
+      const response = await api.patch(`/posts/${postId}/unpublish`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

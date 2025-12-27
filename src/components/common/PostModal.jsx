@@ -186,7 +186,7 @@ const PostModal = ({ isOpen, onClose, postId, post: initialPost }) => {
 
   const handleShare = async (platform = null) => {
     const shareUrl = `${window.location.origin}/post/${
-      post?.slug || post?._id
+      post?.slug || String(post?._id || '')
     }`;
     const shareText = `${post?.title}\n\n${
       post?.excerpt || post?.description
@@ -762,7 +762,7 @@ const PostModal = ({ isOpen, onClose, postId, post: initialPost }) => {
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
             <button
               onClick={() => {
-                const postUrl = `/post/${post?.slug || post?._id}`;
+                const postUrl = `/post/${post?.slug || String(post?._id || '')}`;
                 window.open(postUrl, '_blank');
               }}
               className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-lg flex items-center gap-1"

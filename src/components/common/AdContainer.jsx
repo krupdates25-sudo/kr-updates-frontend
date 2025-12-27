@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Move, X, BarChart3 } from 'lucide-react';
 import AdCard from './AdCard';
-import advertisementService from '../../services/advertisementService';
+import { useAds } from '../../contexts/AdContext';
 
 const AdContainer = ({
   position = 'random',
@@ -11,30 +11,75 @@ const AdContainer = ({
   onRemove,
   className = '',
 }) => {
+  const { fetchAds, getAds, cacheVersion } = useAds();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [draggedAd, setDraggedAd] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const hasFetchedRef = useRef(false);
+  const positionRef = useRef(position);
 
-  const fetchAds = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await advertisementService.getActiveAdvertisements(
-        position,
-        2
-      );
-      setAds(response.data || []);
-    } catch (error) {
-      console.error('Error fetching ads:', error);
-      setAds([]);
-    } finally {
-      setLoading(false);
+  // Update position ref when position changes
+  useEffect(() => {
+    if (positionRef.current !== position) {
+      positionRef.current = position;
+      hasFetchedRef.current = false;
     }
   }, [position]);
 
   useEffect(() => {
-    fetchAds();
-  }, [fetchAds]);
+    let isMounted = true;
+    const cacheKey = `${position}_2`;
+    
+    // Reset fetch flag when position changes
+    if (positionRef.current !== position) {
+      hasFetchedRef.current = false;
+      positionRef.current = position;
+    }
+    
+    const loadAds = async () => {
+      // Check cache first - synchronous check
+      const cached = getAds(position, 2);
+      if (cached.ads.length > 0) {
+        if (isMounted) {
+          setAds(cached.ads);
+          setLoading(false);
+          hasFetchedRef.current = true;
+        }
+        return;
+      }
+
+      // Only fetch if we haven't fetched for this position yet
+      if (!hasFetchedRef.current) {
+        setLoading(true);
+        hasFetchedRef.current = true;
+        
+        try {
+          const result = await fetchAds(position, 2);
+          if (isMounted) {
+            setAds(result.data || []);
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error fetching ads:', error);
+          if (isMounted) {
+            setAds([]);
+            setLoading(false);
+          }
+        }
+      } else if (cached.loading) {
+        // Already fetching, just set loading state
+        setLoading(true);
+      }
+    };
+
+    loadAds();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position]); // Only depend on position, not cacheVersion to prevent excessive re-renders
 
   const handleAdClose = async (adId) => {
     // Remove ad from display (user can manually close ads)
@@ -89,7 +134,8 @@ const AdContainer = ({
       }
 
       // Refresh ads for this container
-      fetchAds();
+      const result = await fetchAds(position, 2);
+      setAds(result.data || []);
     } catch (error) {
       console.error('Error updating ad position:', error);
     }
@@ -108,17 +154,8 @@ const AdContainer = ({
     return 'my-4 sm:my-5'; // Medium spacing in middle
   };
 
-  if (loading) {
-    return (
-      <div className={`${getAdSpacing()} ${className}`}>
-        <div className="bg-gray-100 rounded-lg p-4 animate-pulse">
-          <div className="h-24 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!ads || ads.length === 0) {
+  // Don't show loading skeleton or empty ads - just return null
+  if (loading || !ads || ads.length === 0) {
     return null;
   }
 

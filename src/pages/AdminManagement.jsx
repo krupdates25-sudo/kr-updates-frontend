@@ -22,14 +22,12 @@ import {
   ExternalLink,
   MessageSquare,
 } from 'lucide-react';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 
 const AdminManagement = () => {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -93,10 +91,6 @@ const AdminManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
   };
 
   const handleInputChange = (field, value) => {
@@ -440,90 +434,68 @@ const AdminManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-300 relative">
-      {/* Glassmorphism overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-        }}
-      />
+    <>
+    <PageLayout activeTab="admin-users" hideBottomNav={true}>
+      {/* Main Content */}
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8">
+        {/* Page Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-6 rounded-lg">
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  User Management
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  Create and manage sub-administrators and users
+                </p>
+              </div>
 
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={handleSidebarToggle}
-        activeTab="admin-users"
-        onTabChange={() => {}}
-      />
-
-      {/* Main Content Area */}
-      <div className="lg:ml-72 relative z-10">
-        {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
-
-        {/* Main Content */}
-        <main className="min-h-screen">
-          {/* Page Header */}
-          <div className="bg-white border-b border-gray-200">
-            <div className="px-6 py-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    User Management
-                  </h1>
-                  <p className="text-gray-600 mt-1">
-                    Create and manage sub-administrators and users
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="flex items-center gap-2 px-6 py-2 rounded-xl text-white font-semibold transition-all duration-200 hover:shadow-lg"
-                    style={{
-                      background: 'linear-gradient(135deg, #5755FE, #6B5AFF)',
-                      boxShadow: '0 4px 20px rgba(87, 85, 254, 0.3)',
-                    }}
-                  >
-                    <UserPlus className="w-5 h-5" />
-                    Create Sub-Admin
-                  </button>
-                </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="flex items-center gap-2 px-4 sm:px-6 py-2 rounded-xl text-white font-semibold transition-all duration-200 hover:shadow-lg text-sm sm:text-base"
+                  style={{
+                    background: 'linear-gradient(135deg, #5755FE, #6B5AFF)',
+                    boxShadow: '0 4px 20px rgba(87, 85, 254, 0.3)',
+                  }}
+                >
+                  <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Create Sub-Admin</span>
+                  <span className="sm:hidden">Create</span>
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Content Area */}
-          <div className="px-6 py-6">
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Filters */}
+        {/* Content Area */}
+        <div className="w-full space-y-6">
+          {/* Filters */}
               <div
-                className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6"
+                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6"
                 style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
               >
                 <div className="flex flex-col lg:flex-row gap-4">
                   {/* Search */}
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search users by name or email..."
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                     />
                   </div>
 
                   {/* Role Filter */}
                   <div className="relative">
-                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                     <select
                       value={filterRole}
                       onChange={(e) => setFilterRole(e.target.value)}
-                      className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white min-w-[150px]"
+                      className="pl-9 sm:pl-10 pr-8 py-2 sm:py-3 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white dark:bg-gray-700 w-full sm:min-w-[150px] text-sm sm:text-base"
                     >
                       <option value="all">All Roles</option>
                       <option value="moderator">Moderator</option>
@@ -536,11 +508,11 @@ const AdminManagement = () => {
 
               {/* Users Table */}
               <div
-                className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
                 style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
               >
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-800">
+                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
                     Users ({filteredUsers.length})
                   </h2>
                 </div>
@@ -558,64 +530,68 @@ const AdminManagement = () => {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             User
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                             Role
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
                             Status
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
                             Created
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
                             Last Login
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
                             Publishing
                           </th>
-                          <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {filteredUsers.map((user) => (
                           <tr
                             key={user._id}
-                            className="hover:bg-gray-50 transition-colors"
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4">
                               <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                                  <span className="text-white font-semibold text-sm">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white font-semibold text-xs sm:text-sm">
                                     {user.firstName.charAt(0)}
                                     {user.lastName.charAt(0)}
                                   </span>
                                 </div>
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">
+                                <div className="ml-3 sm:ml-4 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                     {user.firstName} {user.lastName}
                                   </div>
-                                  <div className="text-sm text-gray-500">
+                                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
                                     {user.email}
+                                  </div>
+                                  {/* Show role badge on mobile */}
+                                  <div className="sm:hidden mt-1">
+                                    {getRoleBadge(user.role)}
                                   </div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
                               {getRoleBadge(user.role)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
                               <span
                                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                                   user.isActive
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                                 }`}
                               >
                                 <div
@@ -628,15 +604,15 @@ const AdminManagement = () => {
                                 {user.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
                               {new Date(user.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden xl:table-cell">
                               {user.lastLogin
                                 ? new Date(user.lastLogin).toLocaleDateString()
                                 : 'Never'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
                               <button
                                 onClick={() =>
                                   handleTogglePublishingPermission(
@@ -647,10 +623,10 @@ const AdminManagement = () => {
                                 disabled={
                                   actionLoading || user.role === 'admin'
                                 }
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                                   user.canPublish
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-200'
+                                    : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-200'
                                 } ${
                                   actionLoading || user.role === 'admin'
                                     ? 'opacity-50 cursor-not-allowed'
@@ -667,35 +643,37 @@ const AdminManagement = () => {
                                 {user.canPublish ? (
                                   <>
                                     <CheckCircle className="w-3 h-3 mr-1" />
-                                    Can Publish
+                                    <span className="hidden xl:inline">Can Publish</span>
+                                    <span className="xl:hidden">Can</span>
                                   </>
                                 ) : (
                                   <>
                                     <X className="w-3 h-3 mr-1" />
-                                    Cannot Publish
+                                    <span className="hidden xl:inline">Cannot Publish</span>
+                                    <span className="xl:hidden">Can't</span>
                                   </>
                                 )}
                               </button>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex items-center justify-end gap-2">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div className="flex items-center justify-end gap-1 sm:gap-2">
                                 <button
                                   onClick={() => handleViewDetails(user)}
-                                  className="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                                   title="View Details"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleEditClick(user)}
-                                  className="text-green-600 hover:text-green-800 p-2 rounded-lg hover:bg-green-50 transition-colors"
+                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 p-1.5 sm:p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
                                   title="Edit User"
                                 >
                                   <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteUser(user._id)}
-                                  className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                                   title="Delete User"
                                   disabled={actionLoading}
                                 >
@@ -710,10 +688,9 @@ const AdminManagement = () => {
                   </div>
                 )}
               </div>
-            </div>
           </div>
-        </main>
-      </div>
+        </div>
+    </PageLayout>
 
       {/* Create User Modal */}
       {showCreateForm && (
@@ -1452,7 +1429,7 @@ const AdminManagement = () => {
           {notification.message}
         </div>
       )}
-    </div>
+    </>
   );
 };
 

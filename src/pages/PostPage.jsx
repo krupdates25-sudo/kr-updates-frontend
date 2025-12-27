@@ -1,96 +1,262 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Heart,
-  MessageCircle,
   Share2,
-  Bookmark,
   Clock,
   TrendingUp,
-  Send,
   Tag,
   Calendar,
   Eye,
   Sparkles,
-  Reply,
-  MoreHorizontal,
-  ThumbsUp,
-  ChevronDown,
   ArrowLeft,
-  ExternalLink,
+  User,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
   X,
+  Edit2,
+  Save,
 } from 'lucide-react';
+// Custom share icons from assets
+import whatsappIcon from '../assets/whatsapp.png';
+import facebookIcon from '../assets/facebook.png';
+import linkIcon from '../assets/link.png';
 import postService from '../services/postService';
+import { breakingNewsService } from '../services/breakingNewsService';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import useLike from '../hooks/useLike';
 import AdContainer from '../components/common/AdContainer';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
+import Logo from '../components/common/Logo';
+import { useSettings } from '../contexts/SettingsContext';
 
 const PostPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState('');
-  const [shareCount, setShareCount] = useState(0);
-  const [showShareMenu, setShowShareMenu] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showCommentsMobile, setShowCommentsMobile] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState('');
-  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
-  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
-  const [availableUsers, setAvailableUsers] = useState([]);
   const { user } = useAuth();
-  const { socket, joinPost, leavePost } = useSocket();
-
-  // Use the enhanced like hook
-  const {
-    isLiked,
-    likeCount,
-    setLikeCount,
-    isLoading: likeLoading,
-    handleLike,
-  } = useLike(post?._id, post?.isLiked || false, post?.likeCount || 0);
+  const { settings } = useSettings();
+  const [post, setPost] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [shareCount, setShareCount] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isEditingAuthor, setIsEditingAuthor] = useState(false);
+  const [authorDisplayName, setAuthorDisplayName] = useState('');
+  const [isSavingAuthor, setIsSavingAuthor] = useState(false);
+  const [isEditingReporter, setIsEditingReporter] = useState(false);
+  const [reporterName, setReporterName] = useState('');
+  const [isSavingReporter, setIsSavingReporter] = useState(false);
+  const [similarPosts, setSimilarPosts] = useState([]);
+  const [loadingSimilarPosts, setLoadingSimilarPosts] = useState(false);
+  const [breakingNews, setBreakingNews] = useState([]);
+  const [loadingBreakingNews, setLoadingBreakingNews] = useState(false);
+  const { socket } = useSocket();
+  
+  // Ensure editing state is reset if user is not admin
+  useEffect(() => {
+    if (user?.role !== 'admin' && isEditingAuthor) {
+      setIsEditingAuthor(false);
+    }
+  }, [user?.role, isEditingAuthor]);
 
   useEffect(() => {
-    if (slug) {
+    if (slug && user) {
       fetchPostDetails();
-      fetchComments();
-      // Join the post room for real-time updates
-      if (post?._id) {
-        joinPost(post._id);
+    }
+  }, [slug, user]);
+
+  // Fetch breaking news
+  useEffect(() => {
+    fetchBreakingNews();
+  }, []);
+
+  const fetchBreakingNews = async () => {
+    try {
+      setLoadingBreakingNews(true);
+      const response = await breakingNewsService.getStories();
+      if (response.success && Array.isArray(response.data)) {
+        // Filter only active stories that haven't expired, limit to 5
+        const activeStories = response.data
+          .filter(
+            (story) =>
+              story.isActive &&
+              new Date(story.expiresAt) > new Date()
+          )
+          .sort((a, b) => b.priority - a.priority)
+          .slice(0, 5);
+        setBreakingNews(activeStories);
+      } else {
+        setBreakingNews([]);
       }
+    } catch (error) {
+      console.error('Error fetching breaking news:', error);
+      setBreakingNews([]);
+    } finally {
+      setLoadingBreakingNews(false);
+    }
+  };
+
+  // Content protection - prevent copying
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      // Allow context menu on buttons and interactive elements
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent context menu on article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleCopy = (e) => {
+      // Allow copying from inputs and textareas
+      if (e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent copying from article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleCut = (e) => {
+      // Allow cutting from inputs and textareas
+      if (e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent cutting from article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleSelectStart = (e) => {
+      // Allow selection in inputs and textareas
+      if (e.target.closest('input') || e.target.closest('textarea')) {
+        return;
+      }
+      // Prevent text selection on article content
+      if (e.target.closest('[data-protected-content]')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Prevent Ctrl+A (Select All), Ctrl+C (Copy), Ctrl+X (Cut) on article content
+      if (e.target.closest('[data-protected-content]')) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'c' || e.key === 'x')) {
+          e.preventDefault();
+          return false;
+        }
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('cut', handleCut);
+    document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('cut', handleCut);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Update Open Graph meta tags for sharing previews
+  useEffect(() => {
+    if (!post) return;
+
+    // Use current window location for dynamic URL
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${baseUrl}/post/${post.slug || String(post._id || '')}`;
+    const imageUrl = post.featuredImage?.url || post.featuredVideo?.thumbnail || post.featuredVideo?.url || '';
+    const title = `${post.title} - KR Updates`;
+    const description = post.excerpt || post.description || '';
+
+    const updateMetaTag = (property, content) => {
+      let meta = document.querySelector(`meta[property="${property}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('property', property);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    const updateNameTag = (name, content) => {
+      let meta = document.querySelector(`meta[name="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    updateMetaTag('og:title', title);
+    updateMetaTag('og:description', description);
+    updateMetaTag('og:url', shareUrl);
+    updateMetaTag('og:type', 'article');
+    if (imageUrl) {
+      // Ensure image URL is absolute and properly formatted
+      let finalImageUrl = imageUrl;
+      if (imageUrl.includes('cloudinary.com')) {
+        try {
+          const urlObj = new URL(imageUrl);
+          const params = new URLSearchParams(urlObj.search);
+          // Ensure proper dimensions for OG image
+          if (!params.has('w') && !params.has('h')) {
+            params.set('w', '1200');
+            params.set('h', '630');
+            params.set('c', 'fill');
+            params.set('f', 'auto');
+            params.set('q', 'auto');
+          }
+          urlObj.search = params.toString();
+          finalImageUrl = urlObj.toString();
+        } catch (e) {
+          console.warn('Could not parse image URL:', e);
+        }
+      }
+      
+      updateMetaTag('og:image', finalImageUrl);
+      updateMetaTag('og:image:secure_url', finalImageUrl);
+      updateMetaTag('og:image:url', finalImageUrl);
+      updateMetaTag('og:image:width', '1200');
+      updateMetaTag('og:image:height', '630');
+      updateMetaTag('og:image:type', 'image/jpeg');
+      updateMetaTag('og:image:alt', post.title);
+      
+      // Also set as regular meta tag
+      updateNameTag('image', finalImageUrl);
+    }
+    updateMetaTag('og:site_name', 'KR Updates');
+
+    updateNameTag('twitter:card', 'summary_large_image');
+    updateNameTag('twitter:title', title);
+    updateNameTag('twitter:description', description);
+    if (imageUrl) {
+      updateNameTag('twitter:image', imageUrl);
     }
 
-    return () => {
-      if (post?._id) {
-        // Leave the post room when component unmounts
-        leavePost(post._id);
-      }
-    };
-  }, [slug, post?._id, joinPost, leavePost]);
+    document.title = title;
+  }, [post]);
 
-  // Socket.IO event listeners for real-time updates
   useEffect(() => {
     if (!socket || !post?._id) return;
-
-    const handleLikeUpdate = (data) => {
-      if (data.postId === post._id) {
-        setLikeCount(data.likeCount);
-      }
-    };
-
-    const handleCommentAdded = (data) => {
-      if (data.postId === post._id) {
-        // Add new comment to the list
-        setComments((prev) => [data.comment, ...prev]);
-      }
-    };
 
     const handleShareUpdate = (data) => {
       if (data.postId === post._id) {
@@ -98,66 +264,155 @@ const PostPage = () => {
       }
     };
 
-    // Register event listeners
-    socket.on('likeUpdate', handleLikeUpdate);
-    socket.on('commentAdded', handleCommentAdded);
     socket.on('shareUpdate', handleShareUpdate);
 
-    // Cleanup event listeners
     return () => {
-      socket.off('likeUpdate', handleLikeUpdate);
-      socket.off('commentAdded', handleCommentAdded);
       socket.off('shareUpdate', handleShareUpdate);
     };
-  }, [socket, post?._id, setLikeCount]);
+  }, [socket, post?._id]);
 
-  // Update shareCount when post changes
   useEffect(() => {
     if (post?.shareCount !== undefined) {
       setShareCount(post.shareCount);
     }
   }, [post?.shareCount]);
 
-  // Close share menu when clicking outside
+  // Initialize author display name
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showShareMenu && !event.target.closest('.share-menu-container')) {
-        setShowShareMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showShareMenu]);
+    if (post?.author) {
+      const displayName = post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`;
+      setAuthorDisplayName(displayName);
+    }
+  }, [post?.author, post?.authorDisplayName]);
 
   const fetchPostDetails = async () => {
+    if (!slug) return;
+    
+    setIsLoading(true);
     try {
-      const response = await postService.getPostBySlug(slug);
-      setPost(response.data);
+      let response;
+      
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
+      
+      if (isObjectId) {
+        console.log('Fetching post by ID:', slug);
+        response = await postService.getPostById(slug);
+      } else {
+        console.log('Fetching post by slug:', slug);
+        response = await postService.getPostBySlug(slug);
+      }
+      
+      if (response?.data) {
+        setPost(response.data);
+        console.log('Post fetched successfully:', response.data.title, 'Status:', response.data.status);
+        // Fetch similar posts after current post is loaded
+        fetchSimilarPosts(response.data._id, response.data.slug);
+      } else {
+        throw new Error('Post data not found in response');
+      }
     } catch (error) {
       console.error('Error fetching post details:', error);
-      navigate('/dashboard');
+      setPost(null);
+      
+      if (user?.role !== 'admin') {
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const fetchComments = async () => {
+  const fetchSimilarPosts = async (currentPostId, currentPostSlug) => {
+    if (!currentPostId) return;
+    
+    setLoadingSimilarPosts(true);
     try {
-      const response = await postService.getComments(post?._id);
-      setComments(response.data || []);
+      // Fetch latest posts (we'll exclude current one and take 5)
+      const response = await postService.getAllPosts({ 
+        page: 1, 
+        limit: 10 // Fetch more to ensure we have enough after filtering
+      });
+      
+      // Backend returns: { data: { data: [...posts], pagination: {...} } }
+      const posts = response?.data?.data || response?.data || [];
+      
+      if (Array.isArray(posts) && posts.length > 0) {
+        // Filter out current post by both ID and slug to ensure it's excluded
+        const filtered = posts
+          .filter(p => {
+            const postId = p._id || p.id;
+            const postSlug = p.slug || '';
+            const currentId = currentPostId || '';
+            const currentSlug = currentPostSlug || '';
+            
+            // Exclude if ID matches (checking both string and object comparisons)
+            if (String(postId) === String(currentId) || postId === currentId) {
+              return false;
+            }
+            
+            // Exclude if slug matches (and both are non-empty)
+            if (currentSlug && postSlug && postSlug === currentSlug) {
+              return false;
+            }
+            
+            return true;
+          })
+          .slice(0, 5); // Take first 5 after filtering
+        setSimilarPosts(filtered);
+      } else {
+        setSimilarPosts([]);
+      }
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error('Error fetching similar posts:', error);
+      setSimilarPosts([]);
+    } finally {
+      setLoadingSimilarPosts(false);
     }
   };
 
-  const handleBookmark = async () => {
-    if (!user) return;
+  const handleApprovePost = async () => {
+    if (!user || user.role !== 'admin') return;
+    
+    if (!showApproveConfirm) {
+      setShowApproveConfirm(true);
+      return;
+    }
+
+    setIsApproving(true);
     try {
-      await postService.toggleBookmark(post._id);
-      setIsBookmarked(!isBookmarked);
+      await postService.publishPost(post._id);
+      await fetchPostDetails();
+      setShowApproveConfirm(false);
+      alert('Post approved and published successfully!');
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      console.error('Error approving post:', error);
+      alert(error.response?.data?.message || 'Failed to approve post. Please try again.');
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleRejectPost = async () => {
+    if (!user || user.role !== 'admin') return;
+    
+    const confirmReject = window.confirm(
+      'Are you sure you want to reject this post? It will remain as draft and the author will be notified.'
+    );
+    
+    if (!confirmReject) return;
+
+    setIsRejecting(true);
+    try {
+      await postService.updatePost(post._id, { status: 'draft' });
+      await fetchPostDetails();
+      alert('Post rejected and set back to draft.');
+    } catch (error) {
+      console.error('Error rejecting post:', error);
+      alert(error.response?.data?.message || 'Failed to reject post. Please try again.');
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -172,7 +427,6 @@ const PostPage = () => {
       }
     } catch (trackError) {
       console.error('Failed to track share:', trackError);
-      // Still increment locally even if tracking fails
       setShareCount((prev) => prev + 1);
       setPost((prev) =>
         prev ? { ...prev, shareCount: (prev.shareCount || 0) + 1 } : prev
@@ -180,49 +434,119 @@ const PostPage = () => {
     }
   };
 
-  const handleShare = async (platform = null) => {
-    const shareUrl = `${window.location.origin}/post/${
-      post?.slug || post?._id
-    }`;
-    const shareText = `${post?.title}\n\n${
-      post?.excerpt || post?.description
-    }\n\n`;
+  const handleSaveAuthorName = async () => {
+    // Double-check admin role
+    if (!post || !user || user.role !== 'admin') {
+      alert('Only admins can edit author names.');
+      setIsEditingAuthor(false);
+      return;
+    }
+    
+    // Allow empty string to clear custom display name (will use author's real name)
+    const trimmedName = authorDisplayName ? authorDisplayName.trim() : "";
+    
+    setIsSavingAuthor(true);
+    try {
+      const response = await postService.updatePost(post._id, {
+        authorDisplayName: trimmedName || null, // Send null if empty to clear custom name
+      });
+      
+      // Check response structure - ApiResponse returns { statusCode, data, message, success }
+      if (response && (response.success !== false) && (response.statusCode === 200 || response.statusCode < 400)) {
+        // Refresh post data to get updated authorDisplayName
+        await fetchPostDetails();
+        setIsEditingAuthor(false);
+        // Show success message
+        console.log('Author name updated successfully');
+      } else {
+        throw new Error(response?.message || 'Update failed');
+      }
+    } catch (error) {
+      console.error('Failed to update author name:', error);
+      const errorMessage = error?.message || error?.response?.data?.message || error?.data?.message || 'Failed to update author name. Please try again.';
+      alert(errorMessage);
+      // Reset to original value on error
+      setAuthorDisplayName(post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`);
+    } finally {
+      setIsSavingAuthor(false);
+    }
+  };
 
-    setShowShareMenu(false); // Close menu after selection
+  const handleSaveReporterName = async () => {
+    // Double-check admin role
+    if (!post || !user || user.role !== 'admin') {
+      alert('Only admins can edit reporter names.');
+      setIsEditingReporter(false);
+      return;
+    }
+    
+    // Allow empty string to clear reporter name
+    const trimmedName = reporterName ? reporterName.trim() : "";
+    
+    setIsSavingReporter(true);
+    try {
+      const response = await postService.updatePost(post._id, {
+        reporterName: trimmedName || null, // Send null if empty to clear reporter name
+      });
+      
+      // Check response structure - ApiResponse returns { statusCode, data, message, success }
+      if (response && (response.success !== false) && (response.statusCode === 200 || response.statusCode < 400)) {
+        // Refresh post data to get updated reporterName
+        await fetchPostDetails();
+        setIsEditingReporter(false);
+        console.log('Reporter name updated successfully');
+      } else {
+        throw new Error(response?.message || 'Update failed');
+      }
+    } catch (error) {
+      console.error('Failed to update reporter name:', error);
+      // Extract error message from various possible error structures
+      let errorMessage = 'Failed to update reporter name. Please try again.';
+      
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.response?.data) {
+        // Handle case where error.response.data is the error object itself
+        errorMessage = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : error.response.data.message || JSON.stringify(error.response.data);
+      }
+      
+      alert(errorMessage);
+      // Reset to original value on error
+      setReporterName(post.reporterName || post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`);
+    } finally {
+      setIsSavingReporter(false);
+    }
+  };
+
+  const handleShare = async (platform = null) => {
+    // Use current window location for dynamic URL
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${baseUrl}/post/${
+      post?.slug || String(post?._id || '')
+    }`;
+
+    setShowShareModal(false);
 
     try {
       if (platform === 'whatsapp') {
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
-          shareText + shareUrl
-        )}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
         window.open(whatsappUrl, '_blank');
         await trackShare('whatsapp');
-      } else if (platform === 'twitter') {
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          shareText
-        )}&url=${encodeURIComponent(shareUrl)}`;
-        window.open(twitterUrl, '_blank');
-        await trackShare('twitter');
-      } else if (platform === 'facebook') {
-        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          shareUrl
-        )}`;
-        window.open(facebookUrl, '_blank');
-        await trackShare('facebook');
-      } else if (platform === 'linkedin') {
-        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-          shareUrl
-        )}`;
-        window.open(linkedinUrl, '_blank');
-        await trackShare('linkedin');
       } else if (platform === 'copy') {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
         await trackShare('clipboard');
       } else {
-        // Generic/native share
         const shareData = {
-          title: post?.title,
+          title: `${post?.title} - KR Updates`,
           text: post?.excerpt || post?.description,
           url: shareUrl,
         };
@@ -235,13 +559,13 @@ const PostPage = () => {
           await navigator.share(shareData);
           await trackShare('native_share');
         } else {
-          // Show share menu if native sharing isn't available
-          setShowShareMenu(true);
+          await navigator.clipboard.writeText(shareUrl);
+          alert('Link copied to clipboard!');
+          await trackShare('clipboard_fallback');
         }
       }
     } catch (shareError) {
       console.error('Share failed:', shareError);
-      // Fallback to copy
       try {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
@@ -249,53 +573,6 @@ const PostPage = () => {
       } catch {
         alert(`Share this link: ${shareUrl}`);
       }
-    }
-  };
-
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !user) return;
-    try {
-      await postService.addComment(post._id, {
-        content: newComment.trim(),
-      });
-      // Don't add to comments here - the real-time update will handle it
-      setNewComment('');
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
-  };
-
-  const handleReply = async (commentId) => {
-    if (!replyText.trim() || !user) return;
-    try {
-      const response = await postService.replyToComment(post._id, commentId, {
-        content: replyText.trim(),
-      });
-
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment._id === commentId
-            ? {
-                ...comment,
-                replies: [...(comment.replies || []), response.data],
-              }
-            : comment
-        )
-      );
-      setReplyText('');
-      setReplyingTo(null);
-    } catch (err) {
-      console.error('Error adding reply:', err);
-    }
-  };
-
-  const handleCommentLike = async (commentId) => {
-    if (!user) return;
-    try {
-      await postService.likeComment(post._id, commentId);
-      fetchComments();
-    } catch (error) {
-      console.error('Error liking comment:', error);
     }
   };
 
@@ -314,445 +591,95 @@ const PostPage = () => {
     });
   };
 
-  // Fetch available users for mentions
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // Create user list from comments
-        const userList = [];
-        comments.forEach((comment) => {
-          if (
-            comment.author &&
-            !userList.find((u) => u._id === comment.author._id)
-          ) {
-            userList.push(comment.author);
-          }
-          if (comment.replies) {
-            comment.replies.forEach((reply) => {
-              if (
-                reply.author &&
-                !userList.find((u) => u._id === reply.author._id)
-              ) {
-                userList.push(reply.author);
-              }
-            });
-          }
-        });
-        if (post?.author && !userList.find((u) => u._id === post.author._id)) {
-          userList.push(post.author);
-        }
-        if (user && !userList.find((u) => u._id === user._id)) {
-          userList.push(user);
-        }
-
-        setAvailableUsers(userList);
-      } catch (error) {
-        console.error('Error fetching users for mentions:', error);
-      }
-    };
-
-    if (comments.length > 0 || post?.author) {
-      fetchUsers();
-    }
-  }, [comments, post?.author, user]);
-
-  // Parse mentions from text
-  const parseMentions = (text) => {
-    if (!text) return text;
-    const mentionRegex = /@(\w+)/g;
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = mentionRegex.exec(text)) !== null) {
-      // Add text before mention
-      if (match.index > lastIndex) {
-        parts.push({
-          type: 'text',
-          content: text.substring(lastIndex, match.index),
-        });
-      }
-      // Add mention
-      const username = match[1];
-      const mentionedUser = availableUsers.find(
-        (u) =>
-          u.username?.toLowerCase() === username.toLowerCase() ||
-          `${u.firstName}${u.lastName}`.toLowerCase().replace(/\s/g, '') ===
-            username.toLowerCase()
-      );
-      parts.push({
-        type: 'mention',
-        content: `@${username}`,
-        username: username,
-        user: mentionedUser,
-      });
-      lastIndex = match.index + match[0].length;
-    }
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push({ type: 'text', content: text.substring(lastIndex) });
-    }
-    return parts.length > 0 ? parts : [{ type: 'text', content: text }];
-  };
-
-  // Handle mention input
-  const handleMentionInput = (e, isReply = false) => {
-    const text = e.target.value;
-    const cursorPosition = e.target.selectionStart;
-    const textBeforeCursor = text.substring(0, cursorPosition);
-    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
-
-    if (lastAtIndex !== -1) {
-      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
-      const spaceIndex = textAfterAt.indexOf(' ');
-
-      if (spaceIndex === -1 || textAfterAt.length < 20) {
-        // Show mention dropdown
-        const query =
-          spaceIndex === -1
-            ? textAfterAt
-            : textAfterAt.substring(0, spaceIndex);
-        setMentionQuery(query);
-        setShowMentionDropdown(true);
-
-        // Position dropdown near cursor
-        const textarea = e.target;
-        const rect = textarea.getBoundingClientRect();
-        const lineHeight = 20;
-        const lines = textBeforeCursor.split('\n');
-        const lineNumber = lines.length - 1;
-        setMentionPosition({
-          top: rect.top + lineNumber * lineHeight + 30,
-          left: rect.left + 10,
-        });
-      } else {
-        setShowMentionDropdown(false);
-      }
-    } else {
-      setShowMentionDropdown(false);
-    }
-
-    if (isReply) {
-      setReplyText(text);
-    } else {
-      setNewComment(text);
-    }
-  };
-
-  // Insert mention
-  const insertMention = (selectedUser, isReply = false) => {
-    const username =
-      selectedUser.username ||
-      `${selectedUser.firstName}${selectedUser.lastName}`.replace(/\s/g, '');
-    const mentionText = `@${username} `;
-
-    if (isReply) {
-      const textBeforeCursor = replyText.substring(
-        0,
-        replyText.lastIndexOf('@')
-      );
-      setReplyText(textBeforeCursor + mentionText);
-    } else {
-      const textBeforeCursor = newComment.substring(
-        0,
-        newComment.lastIndexOf('@')
-      );
-      setNewComment(textBeforeCursor + mentionText);
-    }
-
-    setShowMentionDropdown(false);
-    setMentionQuery('');
-  };
-
-  // Filter users for mention dropdown
-  const filteredUsers = availableUsers.filter((u) => {
-    if (!mentionQuery) return true;
-    const username = u.username?.toLowerCase() || '';
-    const fullName = `${u.firstName || ''} ${u.lastName || ''}`.toLowerCase();
-    const query = mentionQuery.toLowerCase();
-    return username.includes(query) || fullName.includes(query);
-  });
-
-  // Helper function to count all comments including nested replies
-  const countAllComments = (commentsList) => {
-    let count = 0;
-    const countRecursive = (comment) => {
-      count++;
-      if (comment.replies && comment.replies.length > 0) {
-        comment.replies.forEach((reply) => countRecursive(reply));
-      }
-    };
-    commentsList.forEach((comment) => countRecursive(comment));
-    return count;
-  };
-
-  const totalCommentCount = countAllComments(comments);
-
-  const CommentComponent = ({ comment, isReply = false, depth = 0 }) => {
-    // Calculate indentation based on depth for visual hierarchy
-    const indentStyle = isReply
-      ? {
-          marginLeft: `${Math.min(1 + depth * 1.5, 8)}rem`,
-          borderLeft: '1px dotted #d1d5db',
-          paddingLeft: '1rem',
-        }
-      : {};
-
+  if (isLoading) {
     return (
-      <div className={`${isReply ? 'mt-2' : ''}`} style={indentStyle}>
-        <div className="p-4 rounded-xl bg-white border border-gray-200 mb-3 shadow-sm">
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-semibold text-xs">
-                {comment.author?.firstName?.charAt(0) || 'U'}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-gray-900 text-sm">
-                    {comment.author?.firstName} {comment.author?.lastName}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatDate(comment.createdAt)}
-                  </span>
-                </div>
-                <button className="p-1 rounded-full hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="w-3 h-3 text-gray-400" />
-                </button>
-              </div>
-
-              <p className="text-gray-800 leading-relaxed mb-2 text-sm break-words">
-                {(() => {
-                  const parts = parseMentions(comment.content);
-                  return parts.map((part, index) => {
-                    if (part.type === 'mention') {
-                      return (
-                        <span
-                          key={index}
-                          className="text-blue-600 font-semibold hover:text-blue-700 cursor-pointer"
-                          title={
-                            part.user
-                              ? `${part.user.firstName} ${part.user.lastName}`
-                              : part.username
-                          }
-                        >
-                          {part.content}
-                        </span>
-                      );
-                    }
-                    return <span key={index}>{part.content}</span>;
-                  });
-                })()}
-              </p>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleCommentLike(comment._id)}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors"
-                >
-                  <ThumbsUp className="w-3 h-3" />
-                  <span>{comment.likeCount || 0}</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setReplyingTo(
-                      replyingTo === comment._id ? null : comment._id
-                    );
-                    // Auto-insert @ mention when replying
-                    if (replyingTo !== comment._id) {
-                      const authorName =
-                        comment.author?.username ||
-                        `${comment.author?.firstName || ''}${
-                          comment.author?.lastName || ''
-                        }`.replace(/\s/g, '');
-                      setReplyText(`@${authorName} `);
-                    } else {
-                      setReplyText('');
-                    }
-                  }}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors"
-                >
-                  <Reply className="w-3 h-3" />
-                  Reply
-                </button>
-              </div>
-
-              {replyingTo === comment._id && (
-                <div className="mt-2 p-2 rounded-lg bg-gray-50 relative">
-                  <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-semibold text-xs">
-                        {user?.firstName?.charAt(0) || 'U'}
-                      </span>
-                    </div>
-                    <div className="flex-1 relative">
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => handleMentionInput(e, true)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            setShowMentionDropdown(false);
-                          }
-                        }}
-                        onBlur={() => {
-                          // Delay to allow clicking on dropdown
-                          setTimeout(() => setShowMentionDropdown(false), 200);
-                        }}
-                        placeholder={`Reply to ${comment.author?.firstName}...`}
-                        className="w-full p-2 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-                        rows="2"
-                      />
-                      {/* Mention Dropdown */}
-                      {showMentionDropdown && replyingTo === comment._id && (
-                        <div
-                          className="absolute z-50 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 max-h-48 overflow-y-auto"
-                          style={{
-                            top: mentionPosition.top,
-                            left: mentionPosition.left,
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                        >
-                          {filteredUsers.length > 0 ? (
-                            filteredUsers.slice(0, 5).map((u) => {
-                              const username =
-                                u.username ||
-                                `${u.firstName}${u.lastName}`.replace(
-                                  /\s/g,
-                                  ''
-                                );
-                              return (
-                                <button
-                                  key={u._id}
-                                  type="button"
-                                  onClick={() => insertMention(u, true)}
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-sm"
-                                >
-                                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-white font-semibold text-xs">
-                                      {u.firstName?.charAt(0) || 'U'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <div className="font-semibold text-gray-900">
-                                      {u.firstName} {u.lastName}
-                                    </div>
-                                    <div className="text-xs text-gray-500">
-                                      @{username}
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })
-                          ) : (
-                            <div className="px-3 py-2 text-sm text-gray-500">
-                              No users found
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex justify-end gap-2 mt-1">
-                        <button
-                          onClick={() => {
-                            setReplyingTo(null);
-                            setReplyText('');
-                            setShowMentionDropdown(false);
-                          }}
-                          className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleReply(comment._id)}
-                          disabled={!replyText.trim()}
-                          className="px-2 py-1 text-xs bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-                        >
-                          Reply
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="space-y-2 mt-3">
-              {comment.replies.map((reply) => (
-                <CommentComponent
-                  key={reply._id}
-                  comment={reply}
-                  isReply={true}
-                  depth={depth + 1}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  if (!post) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading post...</p>
+          <p className="text-gray-600">Loading post...</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        activeTab="feed"
-        onTabChange={() => {}}
-      />
-
-      {/* Main Content Area */}
-      <div className="lg:ml-72 relative z-10">
-        {/* Header */}
-        <Header onSidebarToggle={() => setSidebarOpen(!sidebarOpen)} />
-
-        {/* Back Button */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="px-6 py-4">
+  if (!post) {
+    return (
+      <PageLayout>
+        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Post Not Found</h2>
+            <p className="text-gray-600 mb-6">
+              {user?.role === 'admin' 
+                ? 'The post you are looking for may not exist or may have been deleted.'
+                : 'The post you are looking for does not exist or is not available.'}
+            </p>
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Dashboard</span>
+              Back to Dashboard
             </button>
           </div>
         </div>
+      </PageLayout>
+    );
+  }
 
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          {/* Top Ad */}
-          <div className="mb-4 sm:mb-8 px-2 sm:px-0">
-            <AdContainer position="top" postIndex={0} />
-          </div>
+  return (
+    <PageLayout activeTab="feed">
+      {/* Back Button */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors text-sm sm:text-base"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
+          </button>
+        </div>
+      </div>
 
-          {/* Article Content */}
-          <div className="max-w-6xl mx-auto">
-            {/* Featured Media (Image or Video) */}
+      {/* Main Content */}
+      <div className="w-full px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4">
+        {/* Main Layout: Article + Sidebar */}
+        <div className="flex gap-4 lg:gap-6 xl:gap-8">
+          {/* Article Content - Left Side */}
+          <div className="flex-1 min-w-0">
+            {/* Top Ad */}
+            <div className="mb-4 sm:mb-6">
+              <AdContainer position="top" postIndex={0} />
+            </div>
+            {/* Featured Media */}
             {(post?.featuredImage?.url || post?.featuredVideo?.url) && (
-              <div className="mb-8 rounded-xl overflow-hidden shadow-xl">
+              <div 
+                className="mb-3 sm:mb-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center"
+                data-protected-content
+              >
                 {post?.featuredVideo?.url ? (
                   <video
                     src={post.featuredVideo.url}
                     controls
-                    className="w-full h-auto object-cover"
-                    style={{ maxHeight: '500px', minHeight: '300px' }}
+                    className="w-full h-auto object-contain max-h-[400px] select-none"
+                    style={{ 
+                      minHeight: '250px',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      pointerEvents: 'auto',
+                      WebkitUserDrag: 'none',
+                      userDrag: 'none'
+                    }}
+                    draggable="false"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      return false;
+                    }}
+                    onDragStart={(e) => {
+                      e.preventDefault();
+                      return false;
+                    }}
                     poster={
                       post.featuredVideo.thumbnail || post.featuredImage?.url
                     }
@@ -763,189 +690,302 @@ const PostPage = () => {
                   <img
                     src={post.featuredImage.url}
                     alt={post.title}
-                    className="w-full h-auto object-cover"
-                    style={{ maxHeight: '400px', minHeight: '200px' }}
+                    className="w-full h-auto object-contain max-h-[400px] select-none"
+                    style={{ 
+                      minHeight: '200px',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      pointerEvents: 'auto',
+                      WebkitUserDrag: 'none',
+                      userDrag: 'none'
+                    }}
+                    draggable="false"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      return false;
+                    }}
+                    onDragStart={(e) => {
+                      e.preventDefault();
+                      return false;
+                    }}
                   />
                 )}
               </div>
             )}
 
             {/* Article Header */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8">
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 sm:p-4 md:p-5 mb-3 sm:mb-4"
+              data-protected-content
+              style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+            >
               {/* Category and Tags */}
-              <div className="flex flex-wrap items-center gap-2 mb-6">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                 {post?.category && (
-                  <span className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
+                  <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded-full">
                     {post.category}
                   </span>
                 )}
                 {post?.isFeatured && (
-                  <div className="flex items-center gap-1 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-                    <Sparkles className="w-4 h-4" />
+                  <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                    <Sparkles className="w-3 h-3" />
                     Featured
                   </div>
                 )}
                 {post?.isTrending && (
-                  <div className="flex items-center gap-1 px-3 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                    <TrendingUp className="w-4 h-4" />
+                  <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                    <TrendingUp className="w-3 h-3" />
                     Trending
                   </div>
                 )}
               </div>
 
               {/* Article Title */}
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-6">
+              <h1 
+                className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2 sm:mb-3 select-none"
+                style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+              >
                 {post?.title}
               </h1>
 
+              {/* Subheading */}
+              {post?.subheading && (
+                <p 
+                  className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-3 sm:mb-4 font-medium select-none"
+                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                >
+                  {post.subheading}
+                </p>
+              )}
+
               {/* Metadata */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-1">
+              <div className="flex flex-col gap-3 sm:gap-4 mb-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                {/* Date, Reading Time, Views, Share */}
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
-                    {formatDate(post?.publishedAt || post?.createdAt)}
+                    <span>{formatDate(post?.publishedAt || post?.createdAt)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
-                    {post?.readingTime || 5} min read
+                    <span>{post?.readingTime || 5} min read</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <Eye className="w-4 h-4" />
-                    {post?.viewCount || 0} views
+                    <span>{post?.viewCount || 0} views</span>
+                  </div>
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    aria-label="Share"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
+                  </button>
+                </div>
+                
+                {/* Author and Publisher Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  {/* Author */}
+                  {post?.author && (
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                        <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                            News by:
+                          </span>
+                          {/* Only show edit button to admins */}
+                          {user?.role === 'admin' && (
+                            <button
+                              onClick={() => {
+                                if (user?.role === 'admin') {
+                                  setIsEditingReporter(!isEditingReporter);
+                                  // Initialize reporterName when starting to edit
+                                  if (!isEditingReporter) {
+                                    setReporterName(post.reporterName || post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`);
+                                  }
+                                }
+                              }}
+                              className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                              title="Edit reporter name"
+                              aria-label="Edit reporter name"
+                            >
+                              <Edit2 className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                            </button>
+                          )}
+                        </div>
+                        {/* Only allow editing if user is admin */}
+                        {isEditingReporter && user?.role === 'admin' ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              type="text"
+                              value={reporterName}
+                              onChange={(e) => setReporterName(e.target.value)}
+                              className="text-sm sm:text-base text-gray-900 dark:text-gray-100 font-semibold bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 flex-1"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleSaveReporterName();
+                                } else if (e.key === 'Escape') {
+                                  setIsEditingReporter(false);
+                                  setReporterName(post.reporterName || post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`);
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              onClick={handleSaveReporterName}
+                              disabled={isSavingReporter}
+                              className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                              title="Save"
+                            >
+                              <Save className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsEditingReporter(false);
+                                setReporterName(post.reporterName || post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`);
+                              }}
+                              className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-sm sm:text-base text-gray-900 dark:text-gray-100 font-semibold">
+                              {post.reporterName || post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`}
+                            </span>
+                            {post.author.title && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {post.author.title}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Publisher */}
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                      <div className="text-purple-600 dark:text-purple-400 font-bold text-xs">
+                        {(settings?.siteName || 'KR Updates').substring(0, 2).toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        Publisher
+                      </span>
+                      <span className="text-sm sm:text-base text-gray-900 dark:text-gray-100 font-semibold">
+                        {settings?.siteName || 'KR Updates'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={handleLike}
-                    disabled={likeLoading}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 shadow-lg ${
-                      isLiked
-                        ? 'bg-red-500 text-white hover:bg-red-600'
-                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-500'
-                    } ${likeLoading ? 'opacity-50 cursor-wait' : ''}`}
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${isLiked ? 'fill-current' : ''} ${
-                        likeLoading ? 'animate-pulse' : ''
-                      }`}
-                    />
-                    <span className="text-sm font-medium">{likeCount}</span>
-                  </button>
-
-                  <button
-                    onClick={handleBookmark}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 shadow-lg ${
-                      isBookmarked
-                        ? 'text-purple-600 bg-purple-50'
-                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600'
-                    }`}
-                  >
-                    <Bookmark
-                      className={`w-4 h-4 ${
-                        isBookmarked ? 'fill-current' : ''
-                      }`}
-                    />
-                    <span className="text-sm font-medium">Save</span>
-                  </button>
-
-                  {/* Share Button with Dropdown */}
-                  <div className="relative share-menu-container">
-                    <button
-                      onClick={() => setShowShareMenu(!showShareMenu)}
-                      className="p-3 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 shadow-lg flex items-center gap-2"
-                    >
-                      <Share2 className="w-5 h-5" />
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-
-                    {/* Share Menu */}
-                    {showShareMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                {/* Admin Approval Section */}
+                {user?.role === 'admin' && post?.status === 'draft' && (
+                  <div className="mb-3 p-3 sm:p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-4 h-4 text-yellow-600" />
+                      <h3 className="text-sm sm:text-base font-semibold text-yellow-900">
+                        Post Review Required
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-yellow-800 mb-3">
+                      This post is waiting for your approval. Review the content and decide whether to publish or reject it.
+                    </p>
+                    
+                    {showApproveConfirm ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-yellow-900">
+                          Are you sure you want to approve and publish this post?
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={handleApprovePost}
+                            disabled={isApproving}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+                          >
+                            {isApproving ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Approving...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-4 h-4" />
+                                Yes, Approve & Publish
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setShowApproveConfirm(false)}
+                            disabled={isApproving}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 flex-wrap">
                         <button
-                          onClick={() => handleShare('whatsapp')}
-                          className="w-full px-4 py-2 text-left hover:bg-green-50 text-gray-700 dark:text-gray-300 hover:text-green-600 transition-colors flex items-center gap-3"
+                          onClick={handleApprovePost}
+                          disabled={isApproving || isRejecting}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                         >
-                          <span className="text-green-500">📱</span>
-                          Share on WhatsApp
+                          <CheckCircle className="w-4 h-4" />
+                          Approve & Publish
                         </button>
                         <button
-                          onClick={() => handleShare('twitter')}
-                          className="w-full px-4 py-2 text-left hover:bg-blue-50 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors flex items-center gap-3"
+                          onClick={handleRejectPost}
+                          disabled={isApproving || isRejecting}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
                         >
-                          <span className="text-blue-500">🐦</span>
-                          Share on Twitter
-                        </button>
-                        <button
-                          onClick={() => handleShare('facebook')}
-                          className="w-full px-4 py-2 text-left hover:bg-blue-50 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors flex items-center gap-3"
-                        >
-                          <span className="text-blue-600">📘</span>
-                          Share on Facebook
-                        </button>
-                        <button
-                          onClick={() => handleShare('linkedin')}
-                          className="w-full px-4 py-2 text-left hover:bg-blue-50 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors flex items-center gap-3"
-                        >
-                          <span className="text-blue-700">💼</span>
-                          Share on LinkedIn
-                        </button>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => handleShare('copy')}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-50 text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors flex items-center gap-3"
-                        >
-                          <span>📋</span>
-                          Copy Link
+                          {isRejecting ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Rejecting...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4" />
+                              Reject
+                            </>
+                          )}
                         </button>
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
+                )}
 
-              {/* Engagement Stats */}
-              <div className="flex items-center gap-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-                    {likeCount}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    likes
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-blue-500" />
-                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-                    {totalCommentCount}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    comments
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Share2 className="w-5 h-5 text-green-500" />
-                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-                    {shareCount}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    shares
-                  </span>
-                </div>
               </div>
             </div>
 
+            {/* Middle Ad */}
+            <div className="mb-3 sm:mb-4">
+              <AdContainer position="middle" postIndex={1} />
+            </div>
+
             {/* Article Content */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-700">
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 border border-gray-200 dark:border-gray-700"
+              data-protected-content
+              style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+            >
               {/* Tags */}
               {post?.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-8">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                   {post.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                     >
                       <Tag className="w-3 h-3" />#{tag}
                     </span>
@@ -953,185 +993,268 @@ const PostPage = () => {
                 </div>
               )}
 
-              {/* Article Summary */}
-              {(post?.excerpt || post?.description) && (
-                <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 mb-8 border border-blue-200 dark:border-blue-800">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-blue-600" />
-                    Article Summary
-                  </h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-                    {post.excerpt || post.description}
-                  </p>
-                </div>
-              )}
 
               {/* Main Content */}
-              <div className="prose prose-lg max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-gray-100">
+              <div 
+                className="prose prose-sm sm:prose-base max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-gray-100"
+                data-protected-content
+                style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+              >
                 <div
-                  className="text-gray-800 dark:text-gray-200 leading-relaxed"
+                  className="text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base select-none"
+                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                   dangerouslySetInnerHTML={{
                     __html: post?.content || 'Loading content...',
+                  }}
+                  onContextMenu={(e) => {
+                    if (e.target.closest('button') || e.target.closest('a')) return;
+                    e.preventDefault();
+                    return false;
+                  }}
+                  onCopy={(e) => {
+                    if (e.target.closest('input') || e.target.closest('textarea')) return;
+                    e.preventDefault();
+                    return false;
+                  }}
+                  onCut={(e) => {
+                    if (e.target.closest('input') || e.target.closest('textarea')) return;
+                    e.preventDefault();
+                    return false;
+                  }}
+                  onSelectStart={(e) => {
+                    if (e.target.closest('input') || e.target.closest('textarea')) return;
+                    e.preventDefault();
+                    return false;
                   }}
                 />
               </div>
             </div>
 
-            {/* Mobile Comment Button */}
-            <div className="lg:hidden fixed bottom-6 right-6 z-50">
-              <button
-                onClick={() => setShowCommentsMobile(!showCommentsMobile)}
-                className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-              >
-                <MessageCircle className="w-6 h-6" />
-                <span className="font-semibold">{totalCommentCount}</span>
-              </button>
-            </div>
-
-            {/* Comments Section */}
-            <div
-              className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700 ${
-                showCommentsMobile
-                  ? 'fixed inset-0 z-40 overflow-y-auto lg:static lg:z-auto'
-                  : 'hidden lg:block'
-              }`}
-            >
-              {/* Mobile Header */}
-              {showCommentsMobile && (
-                <div className="flex items-center justify-between mb-6 lg:hidden">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <MessageCircle className="w-6 h-6 text-blue-500" />
-                    Comments ({totalCommentCount})
-                  </h3>
-                  <button
-                    onClick={() => setShowCommentsMobile(false)}
-                    className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-              )}
-
-              <h3 className="hidden lg:flex text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 items-center gap-2">
-                <MessageCircle className="w-6 h-6 text-blue-500" />
-                Comments ({totalCommentCount})
-              </h3>
-
-              {/* Add Comment */}
-              {user && (
-                <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                  <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-semibold text-sm">
-                        {user.firstName?.charAt(0) || 'U'}
-                      </span>
-                    </div>
-                    <div className="flex-1 relative">
-                      <textarea
-                        value={newComment}
-                        onChange={(e) => handleMentionInput(e, false)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            setShowMentionDropdown(false);
-                          }
-                        }}
-                        onBlur={() => {
-                          // Delay to allow clicking on dropdown
-                          setTimeout(() => setShowMentionDropdown(false), 200);
-                        }}
-                        placeholder="Write a thoughtful comment... (Use @ to mention users)"
-                        className="w-full p-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        rows="4"
-                      />
-                      {/* Mention Dropdown */}
-                      {showMentionDropdown && !replyingTo && (
-                        <div
-                          className="absolute z-50 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-48 overflow-y-auto"
-                          style={{
-                            top: mentionPosition.top,
-                            left: mentionPosition.left,
-                          }}
-                          onMouseDown={(e) => e.preventDefault()}
-                        >
-                          {filteredUsers.length > 0 ? (
-                            filteredUsers.slice(0, 5).map((u) => {
-                              const username =
-                                u.username ||
-                                `${u.firstName}${u.lastName}`.replace(
-                                  /\s/g,
-                                  ''
-                                );
-                              return (
-                                <button
-                                  key={u._id}
-                                  type="button"
-                                  onClick={() => insertMention(u, false)}
-                                  onMouseDown={(e) => e.preventDefault()}
-                                  className="w-full px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100"
-                                >
-                                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-white font-semibold text-xs">
-                                      {u.firstName?.charAt(0) || 'U'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <div className="font-semibold">
-                                      {u.firstName} {u.lastName}
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      @{username}
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })
-                          ) : (
-                            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                              No users found
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex justify-end mt-3">
-                        <button
-                          onClick={handleAddComment}
-                          disabled={!newComment.trim()}
-                          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center gap-2"
-                        >
-                          <Send className="w-4 h-4" />
-                          Comment
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Comments List */}
-              <div className="space-y-4">
-                {comments.map((comment) => (
-                  <CommentComponent
-                    key={comment._id}
-                    comment={comment}
-                    depth={0}
-                  />
-                ))}
-              </div>
-
-              {comments.length === 0 && (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                  <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">No comments yet</p>
-                  <p className="text-sm">
-                    Be the first to share your thoughts!
-                  </p>
-                </div>
-              )}
+            {/* Bottom Ad */}
+            <div className="mt-3 sm:mt-4 mb-3 sm:mb-4">
+              <AdContainer position="bottom" postIndex={2} />
             </div>
           </div>
-        </main>
+
+          {/* Right Sidebar - Similar Posts, Breaking News */}
+          <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
+            {/* Similar Posts */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                <h3 className="text-base font-bold text-blue-900 dark:text-blue-100">
+                  Similar Posts
+                </h3>
+              </div>
+              <div>
+                {loadingSimilarPosts ? (
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    Loading...
+                  </div>
+                ) : similarPosts.length > 0 ? (
+                  similarPosts.map((item, idx, array) => {
+                    const postSlug = item.slug || String(item._id || '');
+                    return (
+                      <div
+                        key={item._id || idx}
+                        className={`p-3 sm:p-4 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-colors ${
+                          idx !== array.length - 1
+                            ? 'border-b border-gray-200 dark:border-gray-700'
+                            : ''
+                        }`}
+                        onClick={() => navigate(`/post/${postSlug}`)}
+                      >
+                        <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs">
+                          {item.category && (
+                            <>
+                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
+                                {item.category}
+                              </span>
+                              <span className="text-gray-400 dark:text-gray-500">•</span>
+                            </>
+                          )}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            {item.viewCount || item.views || 0} views
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    No similar posts found
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Breaking News */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+                <h3 className="text-base font-bold text-red-900 dark:text-red-100">
+                  Breaking News
+                </h3>
+              </div>
+              <div>
+                {loadingBreakingNews ? (
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    Loading breaking news...
+                  </div>
+                ) : breakingNews.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    No breaking news available
+                  </div>
+                ) : (
+                  breakingNews.map((item, idx, array) => (
+                    <div
+                      key={item._id || idx}
+                      className={`p-3 sm:p-4 hover:bg-red-50 dark:hover:bg-red-900/10 cursor-pointer transition-colors ${
+                        idx !== array.length - 1
+                          ? 'border-b border-gray-200 dark:border-gray-700'
+                          : ''
+                      }`}
+                      onClick={() => navigate(`/breaking-news/${item._id}`)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-base font-bold text-red-600 dark:text-red-400 flex-shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                            {item.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-medium">
+                              {item.category}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+          </aside>
+        </div>
       </div>
-    </div>
+      
+      {/* Share Modal */}
+      {showShareModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-gray-800/50 backdrop-blur-sm z-50"
+            onClick={() => setShowShareModal(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Share Article
+                </h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                </button>
+              </div>
+
+              {/* Preview Section - Scrollable */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 overflow-y-auto flex-1 min-h-0">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Preview of link preview card (as it will appear on WhatsApp/Facebook):
+                </p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm">
+                  {(post?.featuredImage?.url || post?.featuredVideo?.thumbnail) && (
+                    <div 
+                      className="w-full h-32 bg-gray-100 dark:bg-gray-700 overflow-hidden"
+                      data-protected-content
+                    >
+                      <img
+                        src={post.featuredImage?.url || post.featuredVideo?.thumbnail}
+                        alt={post.title}
+                        className="w-full h-full object-cover select-none"
+                        style={{ 
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          pointerEvents: 'auto',
+                          WebkitUserDrag: 'none',
+                          userDrag: 'none'
+                        }}
+                        draggable="false"
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          return false;
+                        }}
+                        onDragStart={(e) => {
+                          e.preventDefault();
+                          return false;
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="p-3 space-y-2">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">
+                      {post?.title}
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                      {post?.excerpt || post?.description || 'Read the full article on KR Updates'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                      KR Updates
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 break-all pt-1 border-t border-gray-200 dark:border-gray-700">
+                      {`${typeof window !== 'undefined' ? window.location.origin : ''}/post/${post?.slug || String(post?._id || '')}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Share Options */}
+              <div className="p-4 space-y-3 flex-shrink-0">
+                <button
+                  onClick={() => handleShare('whatsapp')}
+                  className="w-full flex items-center justify-center gap-3 p-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 rounded-lg transition-colors border border-green-200 dark:border-green-800"
+                >
+                  <img
+                    src={whatsappIcon}
+                    alt="WhatsApp"
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Share on WhatsApp
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => handleShare('copy')}
+                  className="w-full flex items-center justify-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
+                >
+                  <img
+                    src={linkIcon}
+                    alt="Copy Link"
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Copy Link
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </PageLayout>
   );
 };
 

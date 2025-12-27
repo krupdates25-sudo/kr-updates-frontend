@@ -12,13 +12,24 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Log error details for debugging
+    if (import.meta.env.DEV) {
+      console.group('Error Details');
+      console.error('Error:', error);
+      console.error('Error Info:', errorInfo);
+      console.error('Component Stack:', errorInfo.componentStack);
+      console.groupEnd();
+    }
 
-    // Clear potentially corrupted auth state
-    try {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-    } catch (e) {
-      console.warn('Could not clear localStorage:', e);
+    // Only clear auth state for authentication errors
+    if (error?.message?.includes('auth') || error?.message?.includes('token')) {
+      try {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      } catch (e) {
+        console.warn('Could not clear localStorage:', e);
+      }
     }
   }
 

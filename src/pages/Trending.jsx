@@ -103,11 +103,11 @@ const Trending = () => {
         await navigator.share({
           title: post.title,
           text: post.excerpt,
-          url: window.location.origin + `/post/${post.slug}`,
+          url: window.location.origin + `/post/${post.slug || String(post._id || '')}`,
         });
       } else {
         await navigator.clipboard.writeText(
-          window.location.origin + `/post/${post.slug}`
+          window.location.origin + `/post/${post.slug || String(post._id || '')}`
         );
         alert('Link copied to clipboard!');
       }
@@ -215,7 +215,7 @@ const Trending = () => {
         <main className="min-h-screen">
           {/* Page Header */}
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-6">
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                   <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
@@ -269,7 +269,7 @@ const Trending = () => {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-6">
+          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <p className="text-red-800">{error}</p>

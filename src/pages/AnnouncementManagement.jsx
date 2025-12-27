@@ -18,9 +18,9 @@ import {
   Users,
   TrendingUp,
   BarChart3,
+  X,
 } from 'lucide-react';
-import Header from '../components/layout/Header';
-import Sidebar from '../components/layout/Sidebar';
+import PageLayout from '../components/layout/PageLayout';
 import announcementService from '../services/announcementService';
 
 const AnnouncementManagement = () => {
@@ -35,7 +35,6 @@ const AnnouncementManagement = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -93,10 +92,6 @@ const AnnouncementManagement = () => {
       navigate(location.pathname, { replace: true });
     }
   }, [location.state, navigate, location.pathname]);
-
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   const handleCreateAnnouncement = async (e) => {
     e.preventDefault();
@@ -238,222 +233,201 @@ const AnnouncementManagement = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-300 relative">
-      {/* Glassmorphism overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-        }}
-      />
-
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={handleSidebarToggle}
-        activeTab="admin-announcements"
-      />
-
-      {/* Main Content Area */}
-      <div className="lg:ml-72 relative z-10">
+    <>
+    <PageLayout activeTab="admin-announcements" hideBottomNav={true}>
+      {/* Main Content */}
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Announcement Management
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Create and manage website announcements for your users
+          </p>
+        </div>
 
-        {/* Main Content */}
-        <main className="min-h-screen">
-          <div className="max-w-7xl mx-auto px-6 py-8">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Announcement Management
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Create and manage website announcements for your users
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Total
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {stats.totalAnnouncements || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Active
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {stats.activeAnnouncements || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" />
+              </div>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Inactive
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {stats.inactiveAnnouncements || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Expired
+                </p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {stats.expiredAnnouncements || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              {/* Search */}
+              <div className="relative flex-1 sm:flex-initial">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <input
+                  type="text"
+                  placeholder="Search announcements..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full sm:w-64 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+                />
+              </div>
+
+              {/* Filters */}
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+              >
+                <option value="all">All Types</option>
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="success">Success</option>
+                <option value="error">Error</option>
+                <option value="update">Update</option>
+              </select>
+
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            <button
+              onClick={() => {
+                resetForm();
+                setEditingAnnouncement(null);
+                setShowCreateModal(true);
+              }}
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 text-sm sm:text-base"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Create Announcement</span>
+              <span className="sm:hidden">Create</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Announcements List */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {loading && announcements.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-500 dark:text-gray-400">
+                Loading announcements...
               </p>
             </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Total
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.totalAnnouncements || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Active
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.activeAnnouncements || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center">
-                  <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    <XCircle className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Inactive
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.inactiveAnnouncements || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center">
-                  <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                    <Calendar className="w-6 h-6 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Expired
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.expiredAnnouncements || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          ) : error ? (
+            <div className="p-8 text-center">
+              <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+              <button
+                onClick={fetchAnnouncements}
+                className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+              >
+                Try again
+              </button>
             </div>
-
-            {/* Controls */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Search announcements..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full sm:w-64 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    />
-                  </div>
-
-                  {/* Filters */}
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="info">Info</option>
-                    <option value="warning">Warning</option>
-                    <option value="success">Success</option>
-                    <option value="error">Error</option>
-                    <option value="update">Update</option>
-                  </select>
-
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setEditingAnnouncement(null);
-                    setShowCreateModal(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create Announcement
-                </button>
-              </div>
+          ) : filteredAnnouncements.length === 0 ? (
+            <div className="p-8 text-center">
+              <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-2">
+                No announcements found
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">
+                {searchTerm
+                  ? 'Try adjusting your search terms'
+                  : 'Create your first announcement to get started'}
+              </p>
             </div>
-
-            {/* Announcements List */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-              {loading && announcements.length === 0 ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Loading announcements...
-                  </p>
-                </div>
-              ) : error ? (
-                <div className="p-8 text-center">
-                  <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                  <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-                  <button
-                    onClick={fetchAnnouncements}
-                    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
-                  >
-                    Try again
-                  </button>
-                </div>
-              ) : filteredAnnouncements.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-2">
-                    No announcements found
-                  </p>
-                  <p className="text-gray-400 dark:text-gray-500 text-sm">
-                    {searchTerm
-                      ? 'Try adjusting your search terms'
-                      : 'Create your first announcement to get started'}
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Announcement
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Type & Priority
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Audience
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Reads
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Announcement
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                      Type & Priority
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                      Audience
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                      Status
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
+                      Reads
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {filteredAnnouncements.map((announcement) => {
                         const IconComponent = getTypeIcon(
                           announcement.type,
@@ -467,20 +441,20 @@ const AnnouncementManagement = () => {
                         return (
                           <tr
                             key={announcement._id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                           >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-start gap-3">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4">
+                              <div className="flex items-start gap-2 sm:gap-3">
                                 <div
-                                  className={`p-2 rounded-lg ${colorClasses} flex-shrink-0`}
+                                  className={`p-1.5 sm:p-2 rounded-lg ${colorClasses} flex-shrink-0`}
                                 >
-                                  <IconComponent className="w-4 h-4" />
+                                  <IconComponent className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </div>
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1">
                                     {announcement.title}
                                   </div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
                                     {announcement.message}
                                   </div>
                                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
@@ -489,13 +463,34 @@ const AnnouncementManagement = () => {
                                       announcement.createdAt
                                     ).toLocaleDateString()}
                                   </div>
+                                  {/* Show type/priority on mobile */}
+                                  <div className="md:hidden mt-2 flex flex-wrap gap-2">
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}
+                                    >
+                                      {announcement.type}
+                                    </span>
+                                    <span
+                                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                        announcement.priority === 'urgent'
+                                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                          : announcement.priority === 'high'
+                                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                          : announcement.priority === 'medium'
+                                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                      }`}
+                                    >
+                                      {announcement.priority}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
                               <div className="space-y-1">
                                 <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}
+                                  className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}
                                 >
                                   {announcement.type}
                                 </span>
@@ -514,7 +509,7 @@ const AnnouncementManagement = () => {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
                               <div className="flex items-center gap-1">
                                 <Users className="w-4 h-4 text-gray-400" />
                                 <span className="text-sm text-gray-900 dark:text-gray-100 capitalize">
@@ -522,10 +517,10 @@ const AnnouncementManagement = () => {
                                 </span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
                               <div className="space-y-1">
                                 <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                     announcement.isCurrentlyActive
                                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                       : announcement.isActive
@@ -546,7 +541,7 @@ const AnnouncementManagement = () => {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden xl:table-cell">
                               <div className="flex items-center gap-1">
                                 <Eye className="w-4 h-4 text-gray-400" />
                                 <span className="text-sm text-gray-900 dark:text-gray-100">
@@ -554,11 +549,11 @@ const AnnouncementManagement = () => {
                                 </span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex items-center gap-2">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div className="flex items-center justify-end gap-1 sm:gap-2">
                                 <button
                                   onClick={() => startEdit(announcement)}
-                                  className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300"
+                                  className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 p-1.5 sm:p-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
                                   title="Edit"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -567,10 +562,10 @@ const AnnouncementManagement = () => {
                                   onClick={() =>
                                     handleToggleStatus(announcement._id)
                                   }
-                                  className={`${
+                                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                                     announcement.isActive
-                                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-                                      : 'text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300'
+                                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                      : 'text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30'
                                   }`}
                                   title={
                                     announcement.isActive
@@ -588,7 +583,7 @@ const AnnouncementManagement = () => {
                                   onClick={() =>
                                     handleDeleteAnnouncement(announcement._id)
                                   }
-                                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -598,22 +593,45 @@ const AnnouncementManagement = () => {
                           </tr>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                </tbody>
+              </table>
             </div>
+          )}
+        </div>
+      </div>
+    </PageLayout>
 
-            {/* Create/Edit Modal */}
-            {showCreateModal && (
-              <div className="fixed inset-0 bg-gray-400/50 bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      {/* Create/Edit Modal */}
+      {showCreateModal && (
+        <div 
+          className="fixed inset-0 bg-gray-400/50 bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
+          onClick={() => {
+            setShowCreateModal(false);
+            setEditingAnnouncement(null);
+            resetForm();
+          }}
+        >
+                <div 
+                  className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                       {editingAnnouncement
                         ? 'Edit Announcement'
                         : 'Create New Announcement'}
                     </h2>
+                    <button
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setEditingAnnouncement(null);
+                        resetForm();
+                      }}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      aria-label="Close modal"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
                   </div>
 
                   <form
@@ -840,10 +858,7 @@ const AnnouncementManagement = () => {
                 </div>
               </div>
             )}
-          </div>
-        </main>
-      </div>
-    </div>
+    </>
   );
 };
 

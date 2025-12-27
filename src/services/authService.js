@@ -84,10 +84,18 @@ const authService = {
     try {
       const response = await api.post('/login', credentials);
 
-      // Store user data and token
+      // Store user data and token with 7-day persistence
       if (response.data?.data) {
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
-        localStorage.setItem('authToken', response.data.data.token);
+        const userData = response.data.data.user;
+        const token = response.data.data.token;
+        
+        // Store user and token in localStorage (persists for 7 days)
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('authToken', token);
+        
+        // Also store token expiry timestamp (7 days from now)
+        const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+        localStorage.setItem('tokenExpiry', expiryTime.toString());
       }
 
       return response.data;
@@ -102,10 +110,18 @@ const authService = {
     try {
       const response = await api.post('/register', userData);
 
-      // Store user data and token
-      if (response.data?.data) {
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
-        localStorage.setItem('authToken', response.data.data.token);
+      // Store user data and token with 7-day persistence (if token is provided)
+      if (response.data?.data?.user) {
+        const user = response.data.data.user;
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // If token is provided (e.g., after email verification)
+        if (response.data?.data?.token) {
+          const token = response.data.data.token;
+          localStorage.setItem('authToken', token);
+          const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
+          localStorage.setItem('tokenExpiry', expiryTime.toString());
+        }
       }
 
       return response.data;
@@ -122,9 +138,10 @@ const authService = {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Always clear local storage
+      // Always clear local storage including token expiry
       localStorage.removeItem('user');
       localStorage.removeItem('authToken');
+      localStorage.removeItem('tokenExpiry');
     }
   },
 
