@@ -319,6 +319,7 @@ const PostsManagement = () => {
               className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
             >
               <option value="all">All Categories</option>
+              <option value="Education">Education</option>
               <option value="Technology">Technology</option>
               <option value="Programming">Programming</option>
               <option value="Web Development">Web Development</option>
