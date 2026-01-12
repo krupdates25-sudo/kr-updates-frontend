@@ -235,7 +235,32 @@ const BreakingNewsPage = () => {
 
     try {
       if (platform === 'whatsapp') {
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
+        // Create share text with title, subtitle, and content preview
+        let shareText = '';
+        
+        // Add title
+        if (story?.title) {
+          shareText += `🚨 BREAKING: ${story.title}\n\n`;
+        }
+        
+        // Add excerpt/description
+        if (story?.excerpt) {
+          shareText += `${story.excerpt}\n\n`;
+        }
+        
+        // Add content preview (first 200 characters, strip HTML)
+        if (story?.content) {
+          const textContent = story.content.replace(/<[^>]*>/g, '').trim();
+          const preview = textContent.length > 200 
+            ? textContent.substring(0, 200) + '...' 
+            : textContent;
+          shareText += `${preview}\n\n`;
+        }
+        
+        // Add link at the end
+        shareText += `🔗 ${shareUrl}`;
+        
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(whatsappUrl, '_blank');
         return;
       }

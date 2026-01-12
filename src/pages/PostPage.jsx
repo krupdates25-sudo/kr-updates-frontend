@@ -597,7 +597,33 @@ const PostPage = () => {
 
     try {
       if (platform === 'whatsapp') {
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
+        // Create share text with title, subtitle, and content preview
+        let shareText = '';
+        
+        // Add title
+        if (post?.title) {
+          shareText += `📰 ${post.title}\n\n`;
+        }
+        
+        // Add subtitle/description
+        if (post?.description || post?.subheading || post?.excerpt) {
+          const subtitle = post.description || post.subheading || post.excerpt;
+          shareText += `${subtitle}\n\n`;
+        }
+        
+        // Add content preview (first 200 characters, strip HTML)
+        if (post?.content) {
+          const textContent = post.content.replace(/<[^>]*>/g, '').trim();
+          const preview = textContent.length > 200 
+            ? textContent.substring(0, 200) + '...' 
+            : textContent;
+          shareText += `${preview}\n\n`;
+        }
+        
+        // Add link at the end
+        shareText += `🔗 ${shareUrl}`;
+        
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(whatsappUrl, '_blank');
         await trackShare('whatsapp');
       } else if (platform === 'copy') {
