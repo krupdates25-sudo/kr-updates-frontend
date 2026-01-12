@@ -272,13 +272,17 @@ const PostPage = () => {
       }
       
       // Set all OG image tags (WhatsApp needs these)
+      // IMPORTANT: og:image must be first and use HTTPS for WhatsApp to show preview
       updateMetaTag('og:image', finalImageUrl);
       updateMetaTag('og:image:secure_url', finalImageUrl);
       updateMetaTag('og:image:url', finalImageUrl);
       updateMetaTag('og:image:width', '1200');
       updateMetaTag('og:image:height', '630');
       updateMetaTag('og:image:type', 'image/jpeg');
-      updateMetaTag('og:image:alt', post.title);
+      updateMetaTag('og:image:alt', post.title || 'Post image');
+      
+      // Twitter Card for better compatibility
+      updateNameTag('twitter:image', finalImageUrl);
       
       // Additional image meta for compatibility
       updateNameTag('image', finalImageUrl);
@@ -611,18 +615,19 @@ const PostPage = () => {
           shareText += `${subtitle}\n\n`;
         }
         
-        // Add content preview (first 200 characters, strip HTML)
+        // Add content preview (first 150 characters, strip HTML) - shorter to leave room for image preview
         if (post?.content) {
           const textContent = post.content.replace(/<[^>]*>/g, '').trim();
-          const preview = textContent.length > 200 
-            ? textContent.substring(0, 200) + '...' 
+          const preview = textContent.length > 150 
+            ? textContent.substring(0, 150) + '...' 
             : textContent;
           shareText += `${preview}\n\n`;
         }
         
-        // Add link at the end
-        shareText += `🔗 ${shareUrl}`;
+        // Add link at the end - WhatsApp will automatically fetch image preview from OG tags
+        shareText += `${shareUrl}`;
         
+        // WhatsApp will automatically show image preview from Open Graph tags when link is shared
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(whatsappUrl, '_blank');
         await trackShare('whatsapp');

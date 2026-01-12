@@ -248,17 +248,17 @@ const BreakingNewsPage = () => {
           shareText += `${story.excerpt}\n\n`;
         }
         
-        // Add content preview (first 200 characters, strip HTML)
+        // Add content preview (first 150 characters, strip HTML) - shorter to leave room for image preview
         if (story?.content) {
           const textContent = story.content.replace(/<[^>]*>/g, '').trim();
-          const preview = textContent.length > 200 
-            ? textContent.substring(0, 200) + '...' 
+          const preview = textContent.length > 150 
+            ? textContent.substring(0, 150) + '...' 
             : textContent;
           shareText += `${preview}\n\n`;
         }
         
-        // Add link at the end
-        shareText += `🔗 ${shareUrl}`;
+        // Add link at the end - WhatsApp will automatically fetch image preview from OG tags
+        shareText += `${shareUrl}`;
         
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(whatsappUrl, '_blank');
