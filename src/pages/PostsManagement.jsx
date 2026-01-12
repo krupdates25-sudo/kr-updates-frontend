@@ -124,13 +124,13 @@ const PostsManagement = () => {
   };
 
   const filteredPosts = posts.filter((post) => {
+    if (!post) return false;
+    
     const matchesSearch =
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author?.firstName
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      post.author?.lastName?.toLowerCase().includes(searchQuery.toLowerCase());
+      (post.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (post.content?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (post.author?.firstName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (post.author?.lastName?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
     const matchesStatus =
       filterStatus === 'all' || post.status === filterStatus;
@@ -147,6 +147,8 @@ const PostsManagement = () => {
   });
 
   const getStatusBadge = (status) => {
+    if (!status) return null;
+    
     const styles = {
       published: 'bg-green-100 text-green-800',
       draft: 'bg-yellow-100 text-yellow-800',
@@ -156,7 +158,7 @@ const PostsManagement = () => {
 
     return (
       <span
-        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-800'}`}
       >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
@@ -407,8 +409,7 @@ const PostsManagement = () => {
                               {post.title}
                             </div>
                             <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
-                              {post.excerpt || post.content.substring(0, 100)}
-                              ...
+                              {post.excerpt || (post.content ? post.content.substring(0, 100) + '...' : 'No content')}
                             </div>
                             {/* Show author on mobile */}
                             <div className="sm:hidden mt-1">
@@ -448,9 +449,13 @@ const PostsManagement = () => {
                         {getVisibilityBadge(post.isVisible)}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {post.category}
-                        </span>
+                        {post.category ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {post.category}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">No category</span>
+                        )}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden xl:table-cell">
                         {new Date(post.createdAt).toLocaleDateString()}
