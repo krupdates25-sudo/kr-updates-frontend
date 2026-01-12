@@ -6,7 +6,7 @@ import {
   ChevronDown,
   Shield,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AnnouncementDropdown from '../common/AnnouncementDropdown';
