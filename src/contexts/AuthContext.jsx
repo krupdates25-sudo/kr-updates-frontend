@@ -57,13 +57,11 @@ export const AuthProvider = ({ children }) => {
         try {
           const parsedUser = JSON.parse(cachedUser);
           if (parsedUser && typeof parsedUser === 'object') {
-            // User is already set in useState initializer - only update if different to prevent loops
-            // Check if user data actually changed before updating state
-            if (JSON.stringify(user) !== JSON.stringify(parsedUser)) {
+            // User is already set in useState initializer - don't update unnecessarily
+            // Only update if user is null or different
+            if (!user || JSON.stringify(user) !== JSON.stringify(parsedUser)) {
               setUser(parsedUser);
             }
-            // Re-save to ensure persistence (safe, doesn't trigger re-renders)
-            localStorage.setItem('user', JSON.stringify(parsedUser));
           } else {
             throw new Error('Invalid user data');
           }
