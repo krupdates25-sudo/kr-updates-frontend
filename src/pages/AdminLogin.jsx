@@ -10,7 +10,7 @@ const AdminLogin = () => {
   const [error, setError] = useState(null);
 
   if (isAuthenticated && user?.role === 'admin') {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   const handleLoginSuccess = async (credentials) => {

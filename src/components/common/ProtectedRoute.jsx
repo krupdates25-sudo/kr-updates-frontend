@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     if (requiredRole === 'admin') {
       return (
         <Navigate
-          to={`/${ADMIN_LOGIN_TOKEN}/admin-panel/login`}
+          to="/admin/login"
           replace
           state={{ from: location.pathname }}
         />

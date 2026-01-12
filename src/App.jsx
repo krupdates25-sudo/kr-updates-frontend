@@ -128,7 +128,11 @@ function App() {
                   />
                   <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-                  {/* Hidden admin login route */}
+                  {/* Admin login routes - both secure and simple */}
+                  <Route
+                    path="/admin/login"
+                    element={<AdminLogin />}
+                  />
                   <Route
                     path={`/${ADMIN_LOGIN_TOKEN}/admin-panel/login`}
                     element={<AdminLogin />}
