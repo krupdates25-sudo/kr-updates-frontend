@@ -113,6 +113,7 @@ const NewPost = () => {
   // (ticker removed)
 
   const categories = [
+    'Education',
     'Technology',
     'Programming',
     'Web Development',
