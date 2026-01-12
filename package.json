@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cloudinary/react": "^1.14.3",
-    "@cloudinary/url-gen": "^1.21.0",
     "@tailwindcss/vite": "^4.1.10",
     "@tiptap/extension-blockquote": "^2.14.0",
     "@tiptap/extension-bold": "^2.14.0",
@@ -39,7 +37,6 @@
     "@tiptap/starter-kit": "^2.14.0",
     "axios": "^1.10.0",
     "canvas-confetti": "^1.9.3",
-    "cloudinary-react": "^1.8.1",
     "framer-motion": "^12.18.1",
     "lucide-react": "^0.517.0",
     "react": "^19.1.0",
