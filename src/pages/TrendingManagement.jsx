@@ -28,6 +28,7 @@ import {
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../contexts/AuthContext';
 import postService from '../services/postService';
+import { API_BASE_URL } from '../config/api';
 
 const TrendingManagement = () => {
   const { user } = useAuth();
@@ -96,7 +97,7 @@ const TrendingManagement = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/posts/admin/trending?page=${page}&limit=20&status=${filterStatus === 'all' ? '' : filterStatus}&search=${searchQuery}&sortBy=${sortBy}`,
+        `${API_BASE_URL}/posts/admin/trending?page=${page}&limit=20&status=${filterStatus === 'all' ? '' : filterStatus}&search=${searchQuery}&sortBy=${sortBy}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -178,7 +179,7 @@ const TrendingManagement = () => {
     try {
       setActionLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/posts/admin/trending/bulk`,
+        `${API_BASE_URL}/posts/admin/trending/bulk`,
         {
           method: 'PATCH',
           headers: {
