@@ -57,9 +57,13 @@ export const AuthProvider = ({ children }) => {
         try {
           const parsedUser = JSON.parse(cachedUser);
           if (parsedUser && typeof parsedUser === 'object') {
-            // User is already set in useState initializer - ensure it's persisted
-            setUser(parsedUser);
-            localStorage.setItem('user', JSON.stringify(parsedUser)); // Re-save to ensure persistence
+            // User is already set in useState initializer - only update if different to prevent loops
+            // Check if user data actually changed before updating state
+            if (JSON.stringify(user) !== JSON.stringify(parsedUser)) {
+              setUser(parsedUser);
+            }
+            // Re-save to ensure persistence (safe, doesn't trigger re-renders)
+            localStorage.setItem('user', JSON.stringify(parsedUser));
           } else {
             throw new Error('Invalid user data');
           }
@@ -253,15 +257,16 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = useMemo(() => {
     // Check if we have both user and token, and not loading
     const token = localStorage.getItem('authToken');
-    const isStaff = user && ['admin', 'moderator'].includes(user.role);
+    const userRole = user?.role;
+    const isStaff = userRole && ['admin', 'moderator'].includes(userRole);
     return !loading && isStaff && token && isInitialized;
-  }, [user, loading, isInitialized]);
+  }, [user?.role, loading, isInitialized]); // Only depend on role, not entire user object
 
-  const isAdmin = useMemo(() => user?.role === 'admin', [user]);
-  const isModerator = useMemo(() => user?.role === 'moderator', [user]);
-  const isAuthor = useMemo(() => user?.role === 'author', [user]);
-  const hasRole = useCallback((role) => user?.role === role, [user]);
-  const hasAnyRole = useCallback((roles) => roles.includes(user?.role), [user]);
+  const isAdmin = useMemo(() => user?.role === 'admin', [user?.role]);
+  const isModerator = useMemo(() => user?.role === 'moderator', [user?.role]);
+  const isAuthor = useMemo(() => user?.role === 'author', [user?.role]);
+  const hasRole = useCallback((role) => user?.role === role, [user?.role]);
+  const hasAnyRole = useCallback((roles) => roles.includes(user?.role), [user?.role]);
 
   // Clear error function
   const clearError = useCallback(() => {
@@ -271,26 +276,29 @@ export const AuthProvider = ({ children }) => {
   // Refresh profile function (for manual refresh)
   const refreshProfile = useCallback(async () => {
     try {
-      console.log('🔄 Refreshing user profile...');
-
       const response = await authService.getProfile();
-      console.log('🔄 Profile response:', response);
 
       if (response?.data?.user) {
         const userData = response.data.user;
-        console.log('🔄 New user data:', userData);
-        console.log('🔄 New canPublish status:', userData.canPublish);
-
-        setUser(userData);
+        
+        // Always update - this is a manual refresh, so user wants latest data
+        // The check for changes happens in setUser via React's state batching
+        setUser((prevUser) => {
+          // Only update if data actually changed
+          if (JSON.stringify(prevUser) === JSON.stringify(userData)) {
+            return prevUser; // Return same reference to prevent re-render
+          }
+          return userData;
+        });
+        
         localStorage.setItem('user', JSON.stringify(userData));
-        console.log('🔄 User data updated successfully');
         return userData;
       }
     } catch (error) {
       console.warn('Could not refresh profile:', error);
       throw error;
     }
-  }, []);
+  }, []); // No dependencies - this is a manual function
 
   const value = useMemo(
     () => ({

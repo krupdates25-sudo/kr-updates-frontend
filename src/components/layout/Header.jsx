@@ -38,12 +38,18 @@ const Header = ({
   const fetchUnreadCountRef = useRef(false);
   const isStaff = !!user && ['admin', 'moderator'].includes(user.role);
 
-  // Fetch unread announcement count
+  // Fetch unread announcement count - only when user is available and staff
   useEffect(() => {
     const userId = user?.id || user?._id;
     
+    // Only proceed if user is staff and has an ID
+    if (!isStaff || !userId) {
+      setUnreadCount(0);
+      return;
+    }
+
     // Prevent multiple simultaneous calls
-    if (!isStaff || !userId || fetchUnreadCountRef.current) {
+    if (fetchUnreadCountRef.current) {
       return;
     }
 
@@ -56,17 +62,23 @@ const Header = ({
         const response = await announcementService.getUnreadCount();
         setUnreadCount(response.data?.count || 0);
       } catch (error) {
-        console.error('Error fetching unread count:', error);
+        // Don't log 401 errors - user might not be fully authenticated yet
+        if (error?.response?.status !== 401) {
+          console.error('Error fetching unread count:', error);
+        }
+        // Set to 0 on error to prevent UI issues
+        setUnreadCount(0);
       } finally {
         fetchUnreadCountRef.current = false;
       }
     };
 
+    // Fetch once when user becomes available
     fetchUnreadCount();
     
     // Poll for updates every 5 minutes
     const interval = setInterval(() => {
-      if (!fetchUnreadCountRef.current) {
+      if (isStaff && userId && !fetchUnreadCountRef.current) {
         fetchUnreadCount();
       }
     }, 5 * 60 * 1000);
@@ -75,8 +87,9 @@ const Header = ({
       clearInterval(interval);
       fetchUnreadCountRef.current = false;
     };
+    // Only depend on user ID, not entire user object or isStaff (which depends on user)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?._id, isStaff]); // Only depend on user ID, not entire user object
+  }, [user?.id, user?._id]); // Only re-run when user ID changes, not on every user update
 
   const handleLogout = async () => {
     await logout();

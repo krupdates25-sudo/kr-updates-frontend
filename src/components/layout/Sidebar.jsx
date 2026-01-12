@@ -27,15 +27,10 @@ import { useEffect, useMemo } from 'react';
 
 const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
 
-  // Refresh user data when component mounts to get latest permissions
-  useEffect(() => {
-    if (user) {
-      console.log('🔄 Sidebar: Refreshing user profile on mount');
-      refreshProfile().catch(console.warn);
-    }
-  }, [user, refreshProfile]); // Include dependencies
+  // Removed automatic refreshProfile call to prevent infinite loops
+  // Profile is already loaded from AuthContext on app initialization
 
   // Check user permissions
   const isAdmin = user?.role === 'admin';

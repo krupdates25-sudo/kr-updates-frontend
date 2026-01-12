@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated - use useMemo to prevent unnecessary re-renders
   if (!isAuthenticated) {
     if (requiredRole === 'admin') {
       return (
@@ -31,9 +31,6 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   // Check role-based access if required
   if (requiredRole && user?.role !== requiredRole) {
-    console.log(
-      'ProtectedRoute redirecting to /unauthorized - insufficient role'
-    );
     return <Navigate to="/unauthorized" replace />;
   }
 
