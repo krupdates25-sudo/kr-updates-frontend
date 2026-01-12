@@ -4,6 +4,7 @@ import PageLayout from '../components/layout/PageLayout';
 import ArticleCard from '../components/common/ArticleCard';
 import CompactArticleRowCard from '../components/common/CompactArticleRowCard';
 import WideArticleRowCard from '../components/common/WideArticleRowCard';
+import EducationCarousel from '../components/common/EducationCarousel';
 // import PostModal from '../components/common/PostModal'; // Commented out - posts now navigate directly to details page
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSkeleton } from '../components/common/LoadMoreButton';
@@ -692,28 +693,7 @@ const Dashboard = () => {
                       <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur p-3 sm:p-4 shadow-sm">
 
                     {educationPosts.length > 0 ? (
-                      <>
-                        {/* Mobile: carousel when multiple posts */}
-                        <div className="sm:hidden">
-                          <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
-                            {educationPosts.map((article) => (
-                              <div
-                                key={article.id}
-                                className="snap-start shrink-0 w-[88%]"
-                              >
-                                <WideArticleRowCard article={article} />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Website/tablet: 2-column grid */}
-                        <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          {educationPosts.map((article) => (
-                            <WideArticleRowCard key={article.id} article={article} />
-                          ))}
-                        </div>
-                      </>
+                      <EducationCarousel posts={educationPosts} />
                     ) : (
                       <div className="text-sm text-gray-600">
                         No education posts yet. Seed posts and refresh.
