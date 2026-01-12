@@ -10,7 +10,7 @@ const AdminLogin = () => {
   const [error, setError] = useState(null);
 
   if (isAuthenticated && user?.role === 'admin') {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleLoginSuccess = async (credentials) => {
@@ -31,8 +31,8 @@ const AdminLogin = () => {
         return { success: false, error: 'Staff only' };
       }
 
-      // Admins go to admin panel; moderators go to dashboard
-      navigate(loggedInUser.role === 'admin' ? '/admin' : '/dashboard', {
+      // All users go to dashboard after login
+      navigate('/dashboard', {
         replace: true,
       });
       return result;
