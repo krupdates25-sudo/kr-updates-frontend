@@ -292,12 +292,26 @@ const NewPost = () => {
       navigate(isEditing ? '/admin/posts' : '/dashboard');
     } catch (error) {
       console.error('Error saving post:', error);
-      const msg =
-        error?.message ||
-        error?.error ||
-        (typeof error === 'string' ? error : null) ||
-        'Error saving post. Please try again.';
-      alert(msg);
+      
+      // Extract error message from various error formats
+      let errorMessage = 'Error saving post. Please try again.';
+      
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.map(e => e.msg || e.message).join('. ');
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
