@@ -116,7 +116,7 @@ const EducationCarousel = ({ posts }) => {
               </button>
               <button
                 onClick={goToNext}
-                disabled={currentIndex >= maxMobileIndex}
+                disabled={currentIndex >= posts.length - 1}
                 className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 aria-label="Next slide"
               >
