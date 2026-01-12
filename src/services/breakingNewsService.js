@@ -26,7 +26,8 @@ export const breakingNewsService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching breaking news stories:', error);
-      throw error;
+      // Don't throw (keeps UI stable when backend/DB is temporarily down)
+      return { success: false, data: [], count: 0 };
     }
   },
 

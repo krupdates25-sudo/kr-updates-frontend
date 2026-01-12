@@ -122,14 +122,6 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
 
       if (text.trim().length > 0) {
         setSelectedText(text);
-        // Get selection coordinates for AI prompt positioning
-        const coords = editor.view.coordsAtPos(from);
-        setAiPromptPosition({
-          x: coords.left,
-          y: coords.top - 80, // Position above selection
-        });
-        setShowAiPrompt(true);
-        setAiPrompt(''); // Clear previous prompt
       } else {
         setSelectedText('');
         setShowAiPrompt(false);
@@ -143,6 +135,19 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
       },
     },
   });
+
+  // Keep editor content in sync when `content` prop changes (e.g. edit mode loads async).
+  useEffect(() => {
+    if (!editor) return;
+    if (typeof content !== 'string') return;
+
+    const current = editor.getHTML() || '';
+    if (content && content !== current) {
+      // `emitUpdate: false` prevents triggering onUpdate -> onChange loop
+      editor.commands.setContent(content, false);
+    }
+    // If content is intentionally empty, don't force-clear while user is typing.
+  }, [editor, content]);
 
   // Close AI prompt when clicking outside
   useEffect(() => {
@@ -307,14 +312,14 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
     { name: 'Merriweather', value: 'Merriweather, serif' },
   ];
 
-  const ToolbarButton = ({ onClick, isActive, children, title }) => (
+  const ToolbarButton = ({ onClick, isActive, children, title, className = '' }) => (
     <button
       type="button"
       onClick={onClick}
       title={title}
       className={`p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 ${
         isActive ? 'bg-purple-100 text-purple-600' : 'text-gray-600'
-      }`}
+      } ${className}`}
     >
       {children}
     </button>
@@ -326,81 +331,6 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
 
   return (
     <div className="border-0 rounded-lg overflow-hidden relative">
-      {/* AI Prompt Box for Selected Text */}
-      {showAiPrompt && selectedText && (
-        <div
-          className="ai-prompt-box fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[400px]"
-          style={{
-            left: aiPromptPosition.x,
-            top: aiPromptPosition.y,
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-gray-700">
-              AI Assistant - Selected: "{selectedText.substring(0, 50)}
-              {selectedText.length > 50 ? '...' : ''}"
-            </span>
-            <button
-              onClick={() => {
-                setShowAiPrompt(false);
-                setAiPrompt('');
-              }}
-              className="ml-auto p-1 hover:bg-gray-100 rounded"
-            >
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-
-          {/* Prompt Input */}
-          <div className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              onKeyPress={handlePromptKeyPress}
-              placeholder="Type your instruction (e.g., 'convert to Hindi', 'improve this', 'make it formal')"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-              disabled={aiLoading}
-            />
-            <button
-              onClick={processSelectedText}
-              disabled={aiLoading || !aiPrompt.trim()}
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {aiLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Apply
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Quick Prompt Suggestions */}
-          <div className="space-y-2">
-            <div className="text-xs text-gray-500 mb-2">Quick suggestions:</div>
-            <div className="flex flex-wrap gap-1">
-              {quickPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => setAiPrompt(prompt)}
-                  className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
-                  disabled={aiLoading}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toolbar */}
       <div className="bg-gray-50 border-b border-gray-200 p-3 flex flex-wrap items-center gap-1">
@@ -727,6 +657,18 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
             </ToolbarButton>
           </>
         )}
+
+        <ToolbarDivider />
+
+        {/* AI Assistant Button */}
+        <ToolbarButton
+          onClick={selectedText ? () => setShowAiPrompt(true) : undefined}
+          isActive={showAiPrompt}
+          title={selectedText ? `AI Assistant (${selectedText.substring(0, 30)}${selectedText.length > 30 ? '...' : ''})` : "Select text first"}
+          className={!selectedText ? 'opacity-50 cursor-not-allowed' : ''}
+        >
+          <Sparkles className="w-4 h-4" />
+        </ToolbarButton>
       </div>
 
       {/* Editor Content */}
@@ -759,6 +701,116 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
           </span>
         </div>
       </div>
+
+      {/* AI Assistant Modal */}
+      {showAiPrompt && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAiPrompt(false);
+              setAiPrompt('');
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10">
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  AI Assistant - Selected Text
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowAiPrompt(false);
+                    setAiPrompt('');
+                  }}
+                  className="ml-auto p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Selected Text Preview */}
+              {selectedText && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
+                  <p className="text-sm text-gray-600 mb-2">Selected text:</p>
+                  <p className="text-sm text-gray-800 italic">
+                    "{selectedText.substring(0, 200)}
+                    {selectedText.length > 200 ? '...' : ''}"
+                  </p>
+                </div>
+              )}
+
+              {/* Prompt Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  What would you like to do with this text?
+                  {aiPrompt && (
+                    <span className="ml-2 text-xs text-purple-600 font-normal">
+                      ✓ Ready to apply
+                    </span>
+                  )}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    onKeyPress={handlePromptKeyPress}
+                    placeholder="Type your instruction (e.g., 'convert to Hindi', 'improve this', 'make it formal')"
+                    className="ai-prompt-input flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    disabled={aiLoading}
+                    autoFocus
+                  />
+                  <button
+                    onClick={processSelectedText}
+                    disabled={aiLoading || !aiPrompt.trim()}
+                    className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2 font-medium shadow-md hover:shadow-lg"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        Apply
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Prompt Suggestions */}
+              <div>
+                <p className="text-sm text-gray-600 mb-3">Quick suggestions (click to select):</p>
+                <div className="flex flex-wrap gap-2">
+                  {quickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => {
+                        setAiPrompt(prompt);
+                        // Focus the input after setting the prompt
+                        setTimeout(() => {
+                          const input = document.querySelector('.ai-prompt-input');
+                          if (input) input.focus();
+                        }, 100);
+                      }}
+                      className="px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-full border border-blue-200 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-medium"
+                      disabled={aiLoading}
+                      title={`Click to use: "${prompt}"`}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image with Link Dialog */}
       {showImageLinkDialog && (

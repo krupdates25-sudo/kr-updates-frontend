@@ -853,12 +853,7 @@ const History = () => {
                     })}
                     </div>
 
-                    {/* Middle Ad - Show in middle of activities */}
-                    {filteredActivities.length >= 4 && (
-                      <div className="my-4 sm:my-6">
-                        <AdContainer position="middle" postIndex={Math.floor(filteredActivities.length / 2)} />
-                      </div>
-                    )}
+                    {/* Ads removed (only show a single top ad on pages) */}
 
                     {/* Second half of activities */}
                     <div className="space-y-3">
@@ -956,10 +951,7 @@ const History = () => {
               </div>
             )}
 
-            {/* Bottom Ad */}
-            <div className="mt-4 sm:mt-6">
-              <AdContainer position="bottom" postIndex={activities.length} />
-            </div>
+            {/* Ads removed (only show a single top ad on pages) */}
           </div>
     </PageLayout>
   );

@@ -1,15 +1,26 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { breakingNewsService } from '../../services/breakingNewsService';
 import { useSocket } from '../../contexts/SocketContext';
 
-const BreakingNewsBanner = () => {
+const BreakingNewsBanner = ({ onCurrentStoryChange } = {}) => {
   const navigate = useNavigate();
   const [stories, setStories] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const { socket, connected } = useSocket();
+
+  // Always compute (may be undefined when stories empty) so hooks can run unconditionally
+  const currentStory = stories[currentIndex];
+
+  // Let parent know which story is currently active (for sticky mini header, etc.)
+  // IMPORTANT: This hook must never be conditional (fixes "Rendered more hooks than during the previous render")
+  useEffect(() => {
+    if (typeof onCurrentStoryChange === 'function') {
+      onCurrentStoryChange(currentStory || null);
+    }
+  }, [currentStory?._id, currentIndex, stories.length, onCurrentStoryChange]);
 
   // Fetch breaking news stories
   useEffect(() => {
@@ -42,11 +53,14 @@ const BreakingNewsBanner = () => {
       const response = await breakingNewsService.getStories();
       if (response.success) {
         // Filter only active stories that haven't expired
-        const activeStories = (response.data || []).filter(
-          (story) =>
-            story.isActive &&
-            new Date(story.expiresAt) > new Date()
-        );
+        // NOTE: Some legacy stories may not have `isActive` or `expiresAt` set.
+        // Treat missing `isActive` as active, and missing `expiresAt` as non-expired.
+        const now = new Date();
+        const activeStories = (response.data || []).filter((story) => {
+          const isActive = story?.isActive !== false;
+          const notExpired = !story?.expiresAt || new Date(story.expiresAt) > now;
+          return isActive && notExpired;
+        });
         // Sort by priority (highest first) and then by creation date
         activeStories.sort((a, b) => {
           if (b.priority !== a.priority) {
@@ -78,8 +92,6 @@ const BreakingNewsBanner = () => {
     return null;
   }
 
-  const currentStory = stories[currentIndex];
-
   const handleReadMore = (e) => {
     if (e) {
       e.stopPropagation();
@@ -98,7 +110,7 @@ const BreakingNewsBanner = () => {
   };
 
   return (
-    <div className="relative w-full mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-lg sm:rounded-xl shadow-lg">
+    <div className="relative w-ful mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-lg sm:rounded-xl shadow-lg">
       {/* Banner Container */}
       <div
         className="relative min-h-[180px] sm:min-h-[220px] md:min-h-[280px] lg:min-h-[320px] bg-gradient-to-r from-red-600 via-red-500 to-orange-500 flex items-center cursor-pointer group"
@@ -241,5 +253,6 @@ const BreakingNewsBanner = () => {
   );
 };
 
-export default BreakingNewsBanner;
+export default memo(BreakingNewsBanner);
+
 

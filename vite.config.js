@@ -7,7 +7,7 @@ import ogPlugin from './vite-plugin-og.js';
 export default defineConfig({
   plugins: [react(), tailwindcss(), ogPlugin()],
   server: {
-    host: '0.0.0.0', // Allow external connections
+    host: true, // Allow external connections
     port: 5173,
     strictPort: false,
     allowedHosts: [

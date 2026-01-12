@@ -1,55 +1,49 @@
 import {
-  Search,
   Bell,
   User,
   Menu,
-  Settings,
   LogOut,
   ChevronDown,
   Shield,
-  Edit3,
-  Bookmark,
-  BookOpen,
-  TrendingUp,
-  Activity,
-  Zap,
-  X,
-  // Sun, Moon, Monitor - Removed, always using light theme
-  FileText,
-  Megaphone,
-  Tag,
-  Clock,
 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-// import { useTheme } from '../../contexts/ThemeContext'; // Removed - always using light theme
 import AnnouncementDropdown from '../common/AnnouncementDropdown';
 import announcementService from '../../services/announcementService';
-import searchService from '../../services/searchService';
+import updatesService from '../../services/updatesService';
+import Logo from '../common/Logo';
 
-const Header = ({ onSidebarToggle }) => {
+const Header = ({
+  onSidebarToggle,
+  topTags = [],
+  activeTag = null,
+  onTagSelect = null,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false); // Mobile search modal
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
-  const [searchResults, setSearchResults] = useState(null);
-  const [searchSuggestions, setSearchSuggestions] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isUpdatesOpen, setIsUpdatesOpen] = useState(false);
+  const [updatesSubmitted, setUpdatesSubmitted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [updatesForm, setUpdatesForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+  });
   const { user, logout } = useAuth();
   const fetchUnreadCountRef = useRef(false);
-  // const { theme, toggleTheme } = useTheme(); // Removed - always using light theme
+  const isStaff = !!user && ['admin', 'moderator'].includes(user.role);
 
   // Fetch unread announcement count
   useEffect(() => {
     const userId = user?.id || user?._id;
     
     // Prevent multiple simultaneous calls
-    if (!userId || fetchUnreadCountRef.current) {
+    if (!isStaff || !userId || fetchUnreadCountRef.current) {
       return;
     }
 
@@ -82,47 +76,7 @@ const Header = ({ onSidebarToggle }) => {
       fetchUnreadCountRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?._id]); // Only depend on user ID, not entire user object
-
-  // Search functionality with debouncing
-  const performSearch = useCallback(async (query) => {
-    if (!query || query.trim().length < 2) {
-      setSearchResults(null);
-      setSearchSuggestions([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const [globalResults, suggestions] = await Promise.all([
-        searchService.globalSearch(query, 5),
-        searchService.getSuggestions(query, 8),
-      ]);
-
-      setSearchResults(globalResults.data);
-      setSearchSuggestions(suggestions.data || []);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults(null);
-      setSearchSuggestions([]);
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
-
-  // Debounced search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchQuery.trim()) {
-        performSearch(searchQuery);
-      } else {
-        setSearchResults(null);
-        setSearchSuggestions([]);
-      }
-    }, 300); // 300ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, performSearch]);
+  }, [user?.id, user?._id, isStaff]); // Only depend on user ID, not entire user object
 
   const handleLogout = async () => {
     await logout();
@@ -131,229 +85,10 @@ const Header = ({ onSidebarToggle }) => {
 
   const isAdmin = user?.role === 'admin';
 
-  // Helper function to render search results (reusable for desktop and mobile)
-  const renderSearchResults = () => (
-    <>
-      {isSearching && (
-        <div className="flex items-center justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
-          <span className="ml-2 text-sm text-gray-600">Searching...</span>
-        </div>
-      )}
-
-      {/* Search Results */}
-      {searchResults && !isSearching && (
-        <div className="space-y-4">
-          {/* Posts */}
-          {searchResults.posts && searchResults.posts.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Posts ({searchResults.posts.length})
-              </p>
-              <div className="space-y-1">
-                {searchResults.posts.map((post) => (
-                  <button
-                    key={post.id}
-                    className="flex items-start gap-3 w-full p-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
-                    onClick={() => {
-                      navigate(`/post/${post.slug || String(post._id || post.id || '')}`);
-                      setSearchQuery('');
-                      setIsSearchFocused(false);
-                      setIsSearchModalOpen(false);
-                    }}
-                  >
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
-                      {post.featuredImage?.url || post.image ? (
-                        <img
-                          src={post.featuredImage?.url || post.image}
-                          alt={post.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <FileText className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {post.title}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {post.excerpt}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-400">
-                          {post.category}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Users */}
-          {searchResults.users && searchResults.users.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Users ({searchResults.users.length})
-              </p>
-              <div className="space-y-1">
-                {searchResults.users.map((user) => (
-                  <button
-                    key={user.id}
-                    className="flex items-center gap-3 w-full p-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
-                    onClick={() => {
-                      navigate(`/profile/${user.username}`);
-                      setSearchQuery('');
-                      setIsSearchFocused(false);
-                      setIsSearchModalOpen(false);
-                    }}
-                  >
-                    <User className="w-4 h-4 text-green-500" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        @{user.username} • {user.role}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Announcements */}
-          {searchResults.announcements && searchResults.announcements.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Megaphone className="w-4 h-4" />
-                Announcements ({searchResults.announcements.length})
-              </p>
-              <div className="space-y-1">
-                {searchResults.announcements.map((announcement) => (
-                  <button
-                    key={announcement.id}
-                    className="flex items-start gap-3 w-full p-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
-                    onClick={() => {
-                      if (announcement.actionUrl) {
-                        window.location.href = announcement.actionUrl;
-                      } else {
-                        navigate('/announcements', {
-                          state: { searchQuery: announcement.title },
-                        });
-                      }
-                      setSearchQuery('');
-                      setIsSearchFocused(false);
-                      setIsSearchModalOpen(false);
-                    }}
-                  >
-                    <Megaphone className="w-4 h-4 text-orange-500 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {announcement.title}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {announcement.message}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Categories */}
-          {searchResults.categories && searchResults.categories.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Categories ({searchResults.categories.length})
-              </p>
-              <div className="space-y-1">
-                {searchResults.categories.map((category, index) => (
-                  <button
-                    key={index}
-                    className="flex items-center gap-3 w-full p-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
-                    onClick={() => {
-                      if (window.location.pathname === '/dashboard') {
-                        window.dispatchEvent(
-                          new CustomEvent('setCategoryFilter', {
-                            detail: { category: category.name },
-                          })
-                        );
-                      } else {
-                        navigate('/dashboard', {
-                          state: { filterCategory: category.name },
-                        });
-                      }
-                      setSearchQuery('');
-                      setIsSearchFocused(false);
-                      setIsSearchModalOpen(false);
-                    }}
-                  >
-                    <Tag className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm text-gray-700">{category.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Search Suggestions */}
-      {searchSuggestions.length > 0 && !searchResults && !isSearching && (
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Suggestions
-          </p>
-          <div className="space-y-1">
-            {searchSuggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                className="flex items-center gap-3 w-full p-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
-                onClick={() => {
-                  setSearchQuery(suggestion.text);
-                  performSearch(suggestion.text);
-                }}
-              >
-                <Search className="w-4 h-4 text-gray-400" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm text-gray-700">{suggestion.text}</span>
-                  <span className="text-xs text-gray-500 ml-2">
-                    {suggestion.category}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* No Results */}
-      {searchQuery && !isSearching && searchResults && searchResults.total === 0 && (
-        <div className="text-center py-4">
-          <Search className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">
-            No results found for "{searchQuery}"
-          </p>
-        </div>
-      )}
-    </>
-  );
-
   // Get current page name for header display
   const getCurrentPageName = () => {
     const path = location.pathname;
-    if (path === '/dashboard' || path === '/') return 'My Feed';
+    if (path === '/dashboard' || path === '/') return isStaff ? 'My Feed' : 'KRUPDATES';
     if (path === '/history') return 'History';
     if (path === '/profile') return 'Profile';
     if (path === '/ads') return 'Ad Management';
@@ -361,99 +96,100 @@ const Header = ({ onSidebarToggle }) => {
     return 'KRUPDATES';
   };
 
+  const showTagRow = Array.isArray(topTags) && topTags.length > 0 && typeof onTagSelect === 'function';
+  const handleTagClick = (tag) => {
+    if (typeof onTagSelect === 'function') onTagSelect(tag);
+  };
+
+  const [updatesSubmitting, setUpdatesSubmitting] = useState(false);
+  const [updatesError, setUpdatesError] = useState(null);
+
+  const handleUpdatesSubmit = async () => {
+    setUpdatesError(null);
+    setUpdatesSubmitting(true);
+
+    const payload = {
+      ...updatesForm,
+      pageUrl: typeof window !== 'undefined' ? window.location.href : '',
+    };
+
+    // Always keep local fallback
+    try {
+      localStorage.setItem(
+        'kr_updates_lead',
+        JSON.stringify({ ...payload, capturedAt: new Date().toISOString() })
+      );
+      setIsSubscribed(true);
+    } catch {
+      // ignore
+    }
+
+    try {
+      await updatesService.subscribe(payload);
+      setUpdatesSubmitted(true);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2200);
+      setIsSubscribed(true);
+    } catch (e) {
+      setUpdatesError(
+        (typeof e === 'string' && e) ||
+          e?.message ||
+          e?.response?.data?.message ||
+          'Failed to save details. Please try again.'
+      );
+    } finally {
+      setUpdatesSubmitting(false);
+    }
+  };
+
+  // Hide "Want updates?" once the user has already submitted details
+  useEffect(() => {
+    try {
+      const existing = localStorage.getItem('kr_updates_lead');
+      if (existing) setIsSubscribed(true);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 w-full shadow-sm">
-      <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 w-full">
-        {/* Left side - Search and Notifications (Mobile) / Page Name and Search (Desktop) */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1">
-          {/* Burger Menu Button - Desktop only */}
+      <div className="relative flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 w-full">
+        {/* Left side */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+          {/* Burger Menu Button - Desktop only (only for authenticated users) */}
+          {isStaff && (
           <button
             onClick={onSidebarToggle}
-            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Toggle sidebar"
           >
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
-
-          {/* Current Page Name - Desktop */}
-          <div className="hidden lg:block">
-            <h1 className="text-lg font-semibold text-gray-900">
-              {getCurrentPageName()}
-            </h1>
-          </div>
-
-          {/* Mobile: Search and Notifications on Left */}
-          <div className="lg:hidden flex items-center gap-2">
-            {/* Search Icon Button */}
-          <button
-            onClick={() => setIsSearchModalOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Search"
-          >
-            <Search className="w-5 h-5 text-gray-600" />
-          </button>
-
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setIsAnnouncementOpen(!isAnnouncementOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Bell className="w-5 h-5 text-gray-600" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold shadow-lg animate-pulse">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              <AnnouncementDropdown
-                isOpen={isAnnouncementOpen}
-                onClose={() => setIsAnnouncementOpen(false)}
-                unreadCount={unreadCount}
-                onUnreadCountChange={setUnreadCount}
-              />
-            </div>
-          </div>
-
-          {/* Desktop: Full Search Bar */}
-          <div className="hidden lg:flex flex-1 max-w-xl">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search articles, authors, topics..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm bg-white text-gray-900 placeholder-gray-500"
-              />
-
-              {/* Desktop Search suggestions overlay */}
-              {isSearchFocused &&
-                (searchQuery ||
-                  searchResults ||
-                  searchSuggestions.length > 0) && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
-                    <div className="p-4">{renderSearchResults()}</div>
-                  </div>
-                )}
-            </div>
-          </div>
+          )}
         </div>
 
+        {/* Centered logo */}
+        <button
+          onClick={() => navigate(isStaff ? '/dashboard' : '/')}
+          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
+          aria-label="Go to home"
+        >
+          <Logo size="md" />
+        </button>
+
         {/* Right side - Notifications (Desktop) and User menu */}
-        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-          {/* Notifications - Desktop only */}
-          <div className="hidden lg:block relative">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-3 flex-1">
+          {/* Notifications - Desktop only (only for authenticated users) */}
+          {isStaff && (
+            <div className="hidden lg:block relative">
             <button
               onClick={() => setIsAnnouncementOpen(!isAnnouncementOpen)}
-              className="relative p-2 md:p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                className="relative p-2 md:p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5 text-gray-600" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold shadow-lg animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold shadow-lg animate-pulse">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -466,155 +202,287 @@ const Header = ({ onSidebarToggle }) => {
               onUnreadCountChange={setUnreadCount}
             />
           </div>
+          )}
 
-          {/* User Menu */}
-          <div className="relative">
+          {/* Desktop: Want updates? CTA (Public users only) */}
+          {!isStaff && !isSubscribed && (
             <button
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center gap-1.5 sm:gap-2 md:gap-3 p-1 sm:p-1.5 md:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => {
+                setUpdatesSubmitted(false);
+                setIsUpdatesOpen(true);
+              }}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm sm:text-base"
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xs sm:text-sm">
-                  {user?.firstName?.charAt(0) || 'U'}
-                </span>
-              </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-semibold text-gray-700">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs capitalize flex items-center gap-1 text-gray-500">
-                  {isAdmin && <Shield className="w-3 h-3 text-red-500" />}
-                  {user?.role}
-                </p>
-              </div>
-              <ChevronDown
-                className={`hidden md:block w-4 h-4 transition-transform duration-200 text-gray-500 ${
-                  isUserMenuOpen ? 'rotate-180' : ''
-                }`}
-              />
+              <Bell className="w-4 h-4" />
+              Want updates?
             </button>
+          )}
 
-            {/* Dropdown Menu */}
-            {isUserMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsUserMenuOpen(false)}
+          {/* Staff user menu (admin/moderator only) */}
+          {isStaff && (
+            <div className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-1.5 sm:gap-2 md:gap-3 p-1 sm:p-1.5 md:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-xs sm:text-sm">
+                    {user?.firstName?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-sm font-semibold text-gray-700">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs capitalize flex items-center gap-1 text-gray-500">
+                    {isAdmin && <Shield className="w-3 h-3 text-red-500" />}
+                    {user?.role}
+                  </p>
+                </div>
+                <ChevronDown
+                  className={`hidden md:block w-4 h-4 transition-transform duration-200 text-gray-500 ${
+                    isUserMenuOpen ? 'rotate-180' : ''
+                  }`}
                 />
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
-                  {/* User info */}
-                  <div className="p-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">
-                          {user?.firstName?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">
-                          {user?.firstName} {user?.lastName}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {user?.email}
-                        </p>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full mt-1 capitalize ${
-                            isAdmin
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {isAdmin && <Shield className="w-3 h-3" />}
-                          {user?.role}
-                        </span>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
+                    {/* User info */}
+                    <div className="p-4 border-b border-gray-200 bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg">
+                          <span className="text-white font-bold text-lg">
+                            {user?.firstName?.charAt(0) || 'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800">
+                            {user?.firstName} {user?.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600">{user?.email}</p>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full mt-1 capitalize ${
+                              isAdmin
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {isAdmin && <Shield className="w-3 h-3" />}
+                            {user?.role}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Menu items */}
+                    <div className="p-2">
+                      {/* Admin Panel Access - Only for Admin */}
+                      {isAdmin && (
+                        <>
+                          <div className="border-t border-gray-200 my-2"></div>
+                          <button className="flex items-center gap-3 w-full p-3 text-left hover:bg-red-50 rounded-lg transition-colors">
+                            <Shield className="w-5 h-5 text-red-500" />
+                            <div>
+                              <span className="font-semibold text-red-600">
+                                Admin Panel
+                              </span>
+                              <p className="text-xs text-red-500">
+                                Manage users & content
+                              </p>
+                            </div>
+                          </button>
+                        </>
+                      )}
+
+                      <div className="border-t border-gray-200 my-2"></div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full p-3 text-left hover:bg-red-50 rounded-lg transition-colors text-red-600"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium">Sign Out</span>
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Menu items */}
-                  <div className="p-2">
-                    {/* Admin Panel Access - Only for Admin */}
-                    {isAdmin && (
-                      <>
-                        <div className="border-t border-gray-200 my-2"></div>
-                        <button className="flex items-center gap-3 w-full p-3 text-left hover:bg-red-50 rounded-lg transition-colors">
-                          <Shield className="w-5 h-5 text-red-500" />
-                          <div>
-                            <span className="font-semibold text-red-600">
-                              Admin Panel
-                            </span>
-                            <p className="text-xs text-red-500">
-                              Manage users & content
-                            </p>
-                          </div>
-                        </button>
-                      </>
-                    )}
-
-                    <div className="border-t border-gray-200 my-2"></div>
-
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-3 w-full p-3 text-left hover:bg-red-50 rounded-lg transition-colors text-red-600"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      <span className="font-medium">Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Mobile Search Modal */}
-      {isSearchModalOpen && (
+      {/* Tag chips row (max 5) */}
+      {showTagRow && (
+        <div className="px-3 sm:px-4 md:px-6 pb-2 -mt-1">
+          <div className="flex items-center justify-center gap-2 overflow-x-auto no-scrollbar py-1">
+            {topTags.slice(0, 5).map((tag) => {
+              const isActive = activeTag && String(activeTag).toLowerCase() === String(tag).toLowerCase();
+              return (
+                <button
+                  key={tag}
+                  onClick={() => handleTagClick(tag)}
+                  className={`whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Confetti */}
+      {showConfetti && (
         <>
-          <div
-            className="fixed inset-0 bg-gray-500/50 z-50 lg:hidden"
-            onClick={() => setIsSearchModalOpen(false)}
-          />
-          <div className="fixed inset-x-0 top-0 bg-white z-50 lg:hidden shadow-lg">
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search articles, authors, topics..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                    className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm bg-white text-gray-900 placeholder-gray-500"
-                  />
-                  <button
-                    onClick={() => setIsSearchModalOpen(false)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="max-h-[calc(100vh-80px)] overflow-y-auto">
-              <div className="p-4">
-                {(searchQuery || searchResults || searchSuggestions.length > 0) &&
-                  renderSearchResults()}
-                {!searchQuery &&
-                  !searchResults &&
-                  searchSuggestions.length === 0 && (
-                    <div className="text-center py-8">
-                      <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">
-                        Start typing to search...
-                      </p>
-                    </div>
-                  )}
-              </div>
-            </div>
+          <style>{`
+            @keyframes kr-confetti-fall {
+              0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(80vh) rotate(720deg); opacity: 0; }
+            }
+          `}</style>
+          <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
+            {Array.from({ length: 40 }).map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  position: 'absolute',
+                  top: '-10px',
+                  left: `${Math.random() * 100}%`,
+                  width: `${6 + Math.random() * 6}px`,
+                  height: `${8 + Math.random() * 10}px`,
+                  background: ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#7c3aed'][i % 5],
+                  animation: `kr-confetti-fall ${1.4 + Math.random() * 0.9}s linear`,
+                  animationDelay: `${Math.random() * 0.2}s`,
+                  borderRadius: '2px',
+                }}
+              />
+            ))}
           </div>
         </>
+      )}
+
+      {/* Want updates modal (bottom sheet on mobile, small centered modal on desktop) */}
+      {isUpdatesOpen && !isStaff && (
+        <>
+          <div
+            className="fixed inset-0 bg-gray-500/50 z-50"
+            onClick={() => setIsUpdatesOpen(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+            <div className="w-full sm:max-w-md bg-white shadow-2xl rounded-t-2xl sm:rounded-2xl">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-blue-600" />
+                <h2 className="text-base font-semibold text-gray-900">Want updates?</h2>
+              </div>
+              <button
+                onClick={() => setIsUpdatesOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+              >
+                <span className="text-gray-500 text-xl leading-none">×</span>
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {!updatesSubmitted ? (
+                <>
+                  <p className="text-sm text-gray-600">
+                    Share your details and we’ll keep you updated.
+                  </p>
+
+                  {updatesError && (
+                    <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
+                      {updatesError}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <input
+                      value={updatesForm.name}
+                      onChange={(e) => setUpdatesForm((p) => ({ ...p, name: e.target.value }))}
+                      placeholder="Your name"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <input
+                      value={updatesForm.phone}
+                      onChange={(e) => setUpdatesForm((p) => ({ ...p, phone: e.target.value }))}
+                      placeholder="Mobile number"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <input
+                      value={updatesForm.email}
+                      onChange={(e) => setUpdatesForm((p) => ({ ...p, email: e.target.value }))}
+                      placeholder="Email (optional)"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => setIsUpdatesOpen(false)}
+                      className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                    >
+                      Not now
+                    </button>
+                    <button
+                      onClick={handleUpdatesSubmit}
+                      disabled={updatesSubmitting}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {updatesSubmitting ? 'Saving...' : 'Submit'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="py-6 text-center">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                    <span className="text-green-700 text-2xl">✓</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Thank you!</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    We received your details.
+                  </p>
+                  <button
+                    onClick={() => setIsUpdatesOpen(false)}
+                    className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          </div>
+        </>
+      )}
+
+      {/* Mobile fixed bottom bar (logged out) */}
+      {!isStaff && !isSubscribed && (
+        <div className="sm:hidden fixed inset-x-0 bottom-0 z-40 px-3 pb-3">
+          <button
+            onClick={() => {
+              setUpdatesSubmitted(false);
+              setIsUpdatesOpen(true);
+            }}
+            className="w-full bg-blue-600 text-white rounded-xl shadow-lg px-4 py-3 flex items-center justify-between"
+          >
+            <span className="text-sm font-semibold">Want updates?</span>
+            <span className="text-sm opacity-90">Tap to share details</span>
+          </button>
+        </div>
       )}
     </header>
   );

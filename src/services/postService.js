@@ -321,7 +321,12 @@ const postService = {
   // Share post
   sharePost: async (postId, shareData = {}) => {
     try {
-      const response = await api.post(`/posts/${postId}/share`, shareData);
+      const normalizedShareData =
+        typeof shareData === 'string' ? { platform: shareData } : shareData;
+      const response = await api.post(
+        `/posts/${postId}/share`,
+        normalizedShareData
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

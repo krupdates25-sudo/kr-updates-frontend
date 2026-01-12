@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Save,
@@ -17,6 +17,10 @@ import {
   RefreshCw,
   Video,
   User,
+  Newspaper,
+  TrendingUp,
+  AlertTriangle,
+  Clock,
 } from 'lucide-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
 import PageLayout from '../components/layout/PageLayout';
@@ -27,7 +31,9 @@ import { useAuth } from '../contexts/AuthContext';
 
 const NewPost = () => {
   const navigate = useNavigate();
+  const { postId } = useParams();
   const { user } = useAuth();
+  const isEditing = !!postId;
   const [isLoading, setIsLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -41,6 +47,9 @@ const NewPost = () => {
     tags: [],
     featuredImage: null,
     featuredVideo: null,
+    // Flags for feed filtering
+    isTrending: false,
+    isFeatured: false,
     status: 'draft',
     publishedAt: '',
   });
@@ -51,6 +60,8 @@ const NewPost = () => {
   const [currentTag, setCurrentTag] = useState('');
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
+  // NOTE: The breaking news ticker should only appear on the home feed, not on the editor.
+
   // Sync media type tab with existing media
   useEffect(() => {
     if (formData.featuredVideo) {
@@ -59,6 +70,47 @@ const NewPost = () => {
       setMediaType('image');
     }
   }, [formData.featuredVideo, formData.featuredImage]);
+
+  // Load existing post for edit mode
+  useEffect(() => {
+    const loadForEdit = async () => {
+      if (!isEditing) return;
+      try {
+        setIsLoading(true);
+        const resp = await postService.getPostById(postId);
+        const post = resp?.data;
+        if (!post?._id) throw new Error('Post not found');
+
+        setFormData({
+          title: post.title || '',
+          // Backend uses `excerpt` (and doesn't always store `description`), so map it for the UI subheading.
+          description: post.description || post.subheading || post.excerpt || '',
+          content: post.content || '',
+          excerpt: post.excerpt || '',
+          reporterName: post.reporterName || '',
+          category: post.category || '',
+          tags: Array.isArray(post.tags) ? post.tags : [],
+          featuredImage: post.featuredImage || null,
+          featuredVideo: post.featuredVideo || null,
+          isTrending: !!post.isTrending,
+          isFeatured: !!post.isFeatured,
+          status: post.status || 'draft',
+          publishedAt: post.publishedAt || '',
+        });
+      } catch (e) {
+        console.error('Failed to load post for edit:', e);
+        alert('Failed to load post. Please try again.');
+        navigate('/admin/posts');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadForEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, postId]);
+
+  // (ticker removed)
 
   const categories = [
     'Technology',
@@ -79,7 +131,6 @@ const NewPost = () => {
     'Opinion',
   ];
 
-  // Removed heavy animations for performance
 
   const handleInputChange = useCallback((field, value) => {
     setFormData((prev) => ({
@@ -209,13 +260,24 @@ const NewPost = () => {
 
     setIsLoading(true);
     try {
+      const resolvedExcerpt =
+        (typeof formData.excerpt === 'string' && formData.excerpt.trim()) ||
+        (typeof formData.description === 'string' && formData.description.trim()) ||
+        '';
+
       const postData = {
         ...formData,
+        // Ensure backend gets a summary even if user only filled the "Description (Subheading)" field.
+        excerpt: resolvedExcerpt,
         status: finalStatus,
         publishedAt: finalStatus === 'published' ? new Date().toISOString() : null,
       };
 
-      await postService.createPost(postData);
+      if (isEditing) {
+        await postService.updatePost(postId, postData);
+      } else {
+        await postService.createPost(postData);
+      }
 
       // Show success message
       const successMessage = 
@@ -226,10 +288,15 @@ const NewPost = () => {
           : 'Post saved as draft and submitted for review. Admin will review and publish it.';
       
       alert(successMessage);
-      navigate('/dashboard');
+      navigate(isEditing ? '/admin/posts' : '/dashboard');
     } catch (error) {
       console.error('Error saving post:', error);
-      alert('Error saving post. Please try again.');
+      const msg =
+        error?.message ||
+        error?.error ||
+        (typeof error === 'string' ? error : null) ||
+        'Error saving post. Please try again.';
+      alert(msg);
     } finally {
       setIsLoading(false);
     }
@@ -357,6 +424,53 @@ const NewPost = () => {
 
   return (
     <PageLayout activeTab="new-post" contentClassName="bg-gray-50" defaultSidebarOpen={false}>
+      {/* Custom animations for news ticker and page */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes slideUpFade {
+            0% {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @keyframes newsSlideIn {
+            0% {
+              opacity: 0;
+              transform: translateY(10px) scale(0.98);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          @keyframes pulse-glow {
+            0%, 100% {
+              box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+            }
+            50% {
+              box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+            }
+          }
+
+          .animate-slide-up-fade-in {
+            animation: slideUpFade 0.8s ease-out forwards;
+          }
+
+          .animate-news-slide-in {
+            animation: newsSlideIn 0.6s ease-out forwards;
+          }
+
+          .animate-pulse-glow {
+            animation: pulse-glow 2s infinite;
+          }
+        `
+      }} />
       <div className="min-h-screen">
           {/* Page Header */}
           <div className="bg-white border-b border-gray-200">
@@ -364,17 +478,17 @@ const NewPost = () => {
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate(isEditing ? '/admin/posts' : '/dashboard')}
                     className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                   >
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                   </button>
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                      Create New Post
+                      {isEditing ? 'Edit Post' : 'Create New Post'}
                     </h1>
                     <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                      Share your thoughts with the world
+                      {isEditing ? 'Update your post details' : 'Share your thoughts with the world'}
                     </p>
                   </div>
                 </div>
@@ -421,8 +535,10 @@ const NewPost = () => {
             </div>
           </div>
 
+          {/* Breaking News Ticker removed from editor */}
+
           {/* Content Area */}
-          <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8">
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8">
             <div className="w-full">
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
                 {/* Main Content */}
@@ -440,7 +556,7 @@ const NewPost = () => {
                         handleInputChange('title', e.target.value)
                       }
                       placeholder="Enter your post heading..."
-                      className="w-full text-xl sm:text-2xl font-bold border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
+                      className="w-full text-xl sm:text-2xl font-bold border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
                     />
                     {errors.title && (
                       <p className="text-red-500 text-sm mt-2">
@@ -462,7 +578,7 @@ const NewPost = () => {
                         handleInputChange('description', e.target.value)
                       }
                       placeholder="Enter a short description or subheading..."
-                      className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
+                      className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
                       maxLength={200}
                     />
                     <p className="text-xs text-gray-500 mt-2">
@@ -480,21 +596,7 @@ const NewPost = () => {
 
                       {/* AI Buttons */}
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={handleGenerateContent}
-                          disabled={
-                            aiLoading || !formData.title || !formData.category
-                          }
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Generate content based on heading and category"
-                        >
-                          {aiLoading ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Wand2 className="w-3 h-3" />
-                          )}
-                          <span className="hidden sm:inline">AI Generate</span>
-                        </button>
+        
 
                         <button
                           onClick={handleImproveContent}
@@ -512,6 +614,7 @@ const NewPost = () => {
                       </div>
                     </div>
                     <RichTextEditor
+                      key={isEditing ? String(postId) : 'new-post'}
                       content={formData.content}
                       onChange={(content) =>
                         handleInputChange('content', content)
@@ -554,7 +657,7 @@ const NewPost = () => {
                       }
                       placeholder="Brief description of your post..."
                       rows={3}
-                      className="w-full border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
+                      className="w-full border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
                     />
                   </div>
 
@@ -573,7 +676,7 @@ const NewPost = () => {
                         }
                         placeholder="Enter reporter name (optional)..."
                         maxLength={100}
-                        className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none resize-none"
+                        className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
                       />
                       <p className="text-xs text-gray-500 mt-2">
                         {formData.reporterName.length}/100 characters - Leave empty to use author name
@@ -583,7 +686,7 @@ const NewPost = () => {
                 </div>
 
                 {/* Sidebar */}
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-6 xl:sticky xl:top-6">
                   {/* Featured Media (Image or Video) with Tabs */}
                   <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                     {/* Tabs */}
@@ -644,7 +747,7 @@ const NewPost = () => {
                           handleInputChange('category', e.target.value)
                         }
                         placeholder="Enter custom category or select from suggestions below..."
-                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all duration-200 ease-in-out"
                       />
                       <div className="text-xs text-gray-500 mb-2">
                         Popular categories:
@@ -670,6 +773,79 @@ const NewPost = () => {
                       </p>
                     )}
                   </div>
+
+                  {/* Post Flags (Admin-only) */}
+                  {user?.role === 'admin' && (
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                      <label className="block text-sm font-semibold text-gray-700 mb-4">
+                        Feed Flags
+                      </label>
+
+                      <div className="space-y-4">
+                        {/* Trending toggle */}
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">
+                              Trending
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Show this post in the Trending section
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleInputChange('isTrending', !formData.isTrending)
+                            }
+                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                              formData.isTrending ? 'bg-blue-600' : 'bg-gray-200'
+                            }`}
+                            aria-label="Toggle Trending"
+                            aria-pressed={formData.isTrending}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                                formData.isTrending ? 'translate-x-5' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Featured toggle */}
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">
+                              Featured
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Highlight this post in Featured areas
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleInputChange('isFeatured', !formData.isFeatured)
+                            }
+                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                              formData.isFeatured ? 'bg-blue-600' : 'bg-gray-200'
+                            }`}
+                            aria-label="Toggle Featured"
+                            aria-pressed={formData.isFeatured}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                                formData.isFeatured ? 'translate-x-5' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-gray-500">
+                          These flags control “Trending” and “Featured” sections in the feed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tags */}
                   <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
@@ -705,7 +881,7 @@ const NewPost = () => {
                         onChange={(e) => setCurrentTag(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Add tags..."
-                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ease-in-out"
                       />
                       <button
                         onClick={handleAddTag}

@@ -20,17 +20,89 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import Sidebar from '../components/layout/Sidebar';
-import Header from '../components/layout/Header';
+import PageLayout from '../components/layout/PageLayout';
 import CloudinaryUpload from '../components/common/CloudinaryUpload';
 import settingsService from '../services/settingsService';
 import { useSettings } from '../contexts/SettingsContext';
+
+const SOCIAL_PLATFORMS = [
+  {
+    platform: 'facebook',
+    label: 'Facebook',
+    Icon: Facebook,
+    iconClassName: 'text-blue-600',
+    placeholder: 'https://facebook.com/yourpage',
+  },
+  {
+    platform: 'twitter',
+    label: 'Twitter',
+    Icon: Twitter,
+    iconClassName: 'text-blue-400',
+    placeholder: 'https://twitter.com/yourhandle',
+  },
+  {
+    platform: 'instagram',
+    label: 'Instagram',
+    Icon: Instagram,
+    iconClassName: 'text-pink-600',
+    placeholder: 'https://instagram.com/yourhandle',
+  },
+  {
+    platform: 'linkedin',
+    label: 'LinkedIn',
+    Icon: Linkedin,
+    iconClassName: 'text-blue-700',
+    placeholder: 'https://linkedin.com/company/yourcompany',
+  },
+  {
+    platform: 'youtube',
+    label: 'YouTube',
+    Icon: Youtube,
+    iconClassName: 'text-red-600',
+    placeholder: 'https://youtube.com/@yourchannel',
+  },
+];
+
+const normalizeSocialProfiles = (data) => {
+  const existing = Array.isArray(data?.socialProfiles) ? data.socialProfiles : [];
+  const byPlatform = new Map(
+    existing
+      .filter((p) => p && p.platform)
+      .map((p) => [String(p.platform).toLowerCase(), p])
+  );
+
+  return SOCIAL_PLATFORMS.map(({ platform }) => {
+    const p = byPlatform.get(platform);
+    const url =
+      p?.url ??
+      data?.socialLinks?.[platform] ??
+      '';
+
+    const enabled = typeof p?.enabled === 'boolean' ? p.enabled : !!url;
+    const placements = Array.isArray(p?.placements) ? p.placements : [];
+
+    return {
+      platform,
+      url,
+      enabled,
+      placements,
+    };
+  });
+};
+
+const socialProfilesToLinks = (profiles) => {
+  const links = {};
+  for (const p of profiles || []) {
+    if (!p?.platform) continue;
+    links[p.platform] = p.url || '';
+  }
+  return links;
+};
 
 const Settings = () => {
   const { refreshSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -42,13 +114,12 @@ const Settings = () => {
     contactEmail: '',
     contactPhone: '',
     address: '',
-    socialLinks: {
-      facebook: '',
-      twitter: '',
-      instagram: '',
-      linkedin: '',
-      youtube: '',
-    },
+    socialProfiles: SOCIAL_PLATFORMS.map(({ platform }) => ({
+      platform,
+      url: '',
+      enabled: false,
+      placements: [],
+    })),
     seo: {
       metaTitle: '',
       metaDescription: '',
@@ -69,6 +140,7 @@ const Settings = () => {
       setLoading(true);
       const response = await settingsService.getSettings();
       if (response.success && response.data) {
+        const socialProfiles = normalizeSocialProfiles(response.data);
         setSettings({
           siteName: response.data.siteName || '',
           siteDescription: response.data.siteDescription || '',
@@ -77,13 +149,7 @@ const Settings = () => {
           contactEmail: response.data.contactEmail || '',
           contactPhone: response.data.contactPhone || '',
           address: response.data.address || '',
-          socialLinks: {
-            facebook: response.data.socialLinks?.facebook || '',
-            twitter: response.data.socialLinks?.twitter || '',
-            instagram: response.data.socialLinks?.instagram || '',
-            linkedin: response.data.socialLinks?.linkedin || '',
-            youtube: response.data.socialLinks?.youtube || '',
-          },
+          socialProfiles,
           seo: {
             metaTitle: response.data.seo?.metaTitle || '',
             metaDescription: response.data.seo?.metaDescription || '',
@@ -120,13 +186,26 @@ const Settings = () => {
     }
   };
 
-  const handleSocialLinkChange = (platform, value) => {
+  const updateSocialProfile = (platform, patch) => {
     setSettings((prev) => ({
       ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [platform]: value,
-      },
+      socialProfiles: prev.socialProfiles.map((p) =>
+        p.platform === platform ? { ...p, ...patch } : p
+      ),
+    }));
+  };
+
+  const setSocialPlacement = (platform, placement, isEnabled) => {
+    setSettings((prev) => ({
+      ...prev,
+      socialProfiles: prev.socialProfiles.map((p) => {
+        if (p.platform !== platform) return p;
+        const placements = Array.isArray(p.placements) ? p.placements : [];
+        const next = isEnabled
+          ? Array.from(new Set([...placements, placement]))
+          : placements.filter((x) => x !== placement);
+        return { ...p, placements: next };
+      }),
     }));
   };
 
@@ -191,7 +270,13 @@ const Settings = () => {
       setSuccessMessage('');
       setErrorMessage('');
 
-      const response = await settingsService.updateSettings(settings);
+      const payload = {
+        ...settings,
+        // Keep legacy fields in sync (backend also syncs, but this helps older code)
+        socialLinks: socialProfilesToLinks(settings.socialProfiles),
+      };
+
+      const response = await settingsService.updateSettings(payload);
 
       if (response.success) {
         setSuccessMessage('Settings updated successfully!');
@@ -221,16 +306,9 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
-      <div className="lg:pl-64 flex flex-col flex-1">
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-          <div className="w-full">
+    <PageLayout activeTab="settings" contentClassName="bg-gray-50 dark:bg-gray-900" defaultSidebarOpen={false}>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="w-full max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
@@ -419,86 +497,75 @@ const Settings = () => {
                   Social Media Links
                 </h2>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      <Facebook className="w-4 h-4 text-blue-600" />
-                      Facebook
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialLinks.facebook}
-                      onChange={(e) =>
-                        handleSocialLinkChange('facebook', e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="https://facebook.com/yourpage"
-                    />
-                  </div>
+                <div className="space-y-5">
+                  {SOCIAL_PLATFORMS.map(({ platform, label, Icon, iconClassName, placeholder }) => {
+                    const profile =
+                      settings.socialProfiles.find((p) => p.platform === platform) ||
+                      { platform, url: '', enabled: false, placements: [] };
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      <Twitter className="w-4 h-4 text-blue-400" />
-                      Twitter
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialLinks.twitter}
-                      onChange={(e) =>
-                        handleSocialLinkChange('twitter', e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="https://twitter.com/yourhandle"
-                    />
-                  </div>
+                    const inFollowSection = Array.isArray(profile.placements)
+                      ? profile.placements.includes('dashboard_follow')
+                      : false;
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      <Instagram className="w-4 h-4 text-pink-600" />
-                      Instagram
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialLinks.instagram}
-                      onChange={(e) =>
-                        handleSocialLinkChange('instagram', e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="https://instagram.com/yourhandle"
-                    />
-                  </div>
+                    return (
+                      <div
+                        key={platform}
+                        className="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${iconClassName}`} />
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {label}
+                            </p>
+                          </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      <Linkedin className="w-4 h-4 text-blue-700" />
-                      LinkedIn
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialLinks.linkedin}
-                      onChange={(e) =>
-                        handleSocialLinkChange('linkedin', e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="https://linkedin.com/company/yourcompany"
-                    />
-                  </div>
+                          <div className="flex flex-wrap items-center gap-4">
+                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                              <input
+                                type="checkbox"
+                                checked={!!profile.enabled}
+                                onChange={(e) =>
+                                  updateSocialProfile(platform, { enabled: e.target.checked })
+                                }
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              Enabled
+                            </label>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                      <Youtube className="w-4 h-4 text-red-600" />
-                      YouTube
-                    </label>
-                    <input
-                      type="url"
-                      value={settings.socialLinks.youtube}
-                      onChange={(e) =>
-                        handleSocialLinkChange('youtube', e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="https://youtube.com/@yourchannel"
-                    />
-                  </div>
+                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                              <input
+                                type="checkbox"
+                                checked={inFollowSection}
+                                onChange={(e) =>
+                                  setSocialPlacement(
+                                    platform,
+                                    'dashboard_follow',
+                                    e.target.checked
+                                  )
+                                }
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              Show in “Follow” section
+                            </label>
+                          </div>
+                        </div>
+
+                        <input
+                          type="url"
+                          value={profile.url || ''}
+                          onChange={(e) =>
+                            updateSocialProfile(platform, { url: e.target.value })
+                          }
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          placeholder={placeholder}
+                        />
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          Tip: To hide this icon everywhere it’s used, turn off <b>Enabled</b>.
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -669,10 +736,9 @@ const Settings = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </main>
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

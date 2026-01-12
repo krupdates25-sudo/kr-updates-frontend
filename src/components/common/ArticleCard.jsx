@@ -2,9 +2,11 @@ import {
   Clock,
   Trash2,
 } from 'lucide-react';
+import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/postService';
+import OptimisticImage from './OptimisticImage';
 
 const ArticleCard = ({
   article,
@@ -24,7 +26,7 @@ const ArticleCard = ({
       console.error('No valid post identifier found:', article);
       return;
     }
-    navigate(`/post/${postSlug}`);
+    navigate(`/post/${postSlug}`, { state: { initialPost: article } });
   };
 
   const formatDate = (dateString) => {
@@ -129,31 +131,18 @@ const ArticleCard = ({
                 }
               />
             ) : (
-              <img
+              <OptimisticImage
                 src={article.featuredImage?.url || article.image}
                 alt={article.featuredImage?.alt || article.title}
-                className="w-full h-full object-contain select-none"
-                style={{ 
+                className="w-full h-full"
+                imgClassName="object-contain select-none"
+                draggable={false}
+                style={{
                   userSelect: 'none',
                   WebkitUserSelect: 'none',
                   pointerEvents: 'none',
                   WebkitUserDrag: 'none',
-                  userDrag: 'none'
-                }}
-                loading="lazy"
-                draggable="false"
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
-                onDragStart={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
-                onError={(e) => {
-                  // Fallback to placeholder image if the main image fails to load
-                  e.target.src =
-                    'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=600&fit=crop&auto=format';
+                  userDrag: 'none',
                 }}
               />
             )}
@@ -300,4 +289,4 @@ const ArticleCard = ({
   );
 };
 
-export default ArticleCard;
+export default memo(ArticleCard);

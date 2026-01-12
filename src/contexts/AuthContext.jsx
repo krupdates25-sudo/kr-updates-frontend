@@ -253,7 +253,8 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = useMemo(() => {
     // Check if we have both user and token, and not loading
     const token = localStorage.getItem('authToken');
-    return !loading && user !== null && token && isInitialized;
+    const isStaff = user && ['admin', 'moderator'].includes(user.role);
+    return !loading && isStaff && token && isInitialized;
   }, [user, loading, isInitialized]);
 
   const isAdmin = useMemo(() => user?.role === 'admin', [user]);

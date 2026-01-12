@@ -55,7 +55,7 @@ api.interceptors.response.use(
         // Refresh failed, redirect to login
         console.error('Token refresh failed:', refreshError);
         authService.logout();
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
 

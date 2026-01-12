@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -27,6 +28,7 @@ import postService from '../services/postService';
 
 const PostsManagement = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,8 +37,6 @@ const PostsManagement = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [notification, setNotification] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({
@@ -114,8 +114,8 @@ const PostsManagement = () => {
   };
 
   const handleViewDetails = (post) => {
-    setSelectedPost(post);
-    setShowDetailsModal(true);
+    if (!post?._id) return;
+    navigate(`/new-post/${post._id}`);
   };
 
   const showNotification = (message, type) => {
@@ -502,93 +502,6 @@ const PostsManagement = () => {
         </div>
       </div>
     </PageLayout>
-
-      {/* Post Details Modal */}
-      {showDetailsModal && selectedPost && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Post Details
-                </h3>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Title</h4>
-                  <p className="text-gray-700 dark:text-gray-300">{selectedPost.title}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Content</h4>
-                  <div
-                    className="text-gray-700 dark:text-gray-300 max-h-40 overflow-y-auto"
-                    dangerouslySetInnerHTML={{
-                      __html: selectedPost.content.substring(0, 500) + '...',
-                    }}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Status</h4>
-                    {getStatusBadge(selectedPost.status)}
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                      Visibility
-                    </h4>
-                    {getVisibilityBadge(selectedPost.isVisible)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Category</h4>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      {selectedPost.category}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Author</h4>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {selectedPost.author?.firstName}{' '}
-                      {selectedPost.author?.lastName}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Created</h4>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {new Date(selectedPost.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                      Last Updated
-                    </h4>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {new Date(selectedPost.updatedAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Notification */}
       {notification && (

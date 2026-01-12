@@ -1,23 +1,13 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { ADMIN_LOGIN_TOKEN } from '../../config/admin';
 
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { user, loading, isAuthenticated } = useAuth();
-
-  console.log(
-    'ProtectedRoute - loading:',
-    loading,
-    'isAuthenticated:',
-    isAuthenticated,
-    'user:',
-    user,
-    'requiredRole:',
-    requiredRole
-  );
+  const location = useLocation();
 
   // Show loading state while checking authentication
   if (loading) {
-    console.log('ProtectedRoute showing loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -25,10 +15,18 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
-  // Redirect to auth if not authenticated
+  // Redirect if not authenticated
   if (!isAuthenticated) {
-    console.log('ProtectedRoute redirecting to /auth - not authenticated');
-    return <Navigate to="/auth" replace />;
+    if (requiredRole === 'admin') {
+      return (
+        <Navigate
+          to={`/${ADMIN_LOGIN_TOKEN}/admin-panel/login`}
+          replace
+          state={{ from: location.pathname }}
+        />
+      );
+    }
+    return <Navigate to="/" replace />;
   }
 
   // Check role-based access if required
@@ -39,7 +37,6 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  console.log('ProtectedRoute rendering children');
   return children;
 };
 

@@ -30,15 +30,26 @@ export default function ogPlugin() {
           console.log('[OG Plugin] Request URL:', req.url);
         }
         
+        // Parse URL for safe pathname parsing (avoid querystring issues)
+        let urlObj;
+        try {
+          urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        } catch (e) {
+          urlObj = null;
+        }
+
         // Check if it's a post URL
-        const postMatch = req.url.match(/^\/post\/([^\/]+)/);
+        const pathname = urlObj ? urlObj.pathname : req.url;
+        const postMatch = pathname.match(/^\/post\/([^\/]+)/);
         
         if ((isBot || isQueryParamBot) && postMatch) {
           const slug = postMatch[1];
           try {
             // Fetch post data from backend
             const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-            const apiUrl = new URL(`${API_BASE_URL}/posts/${slug}`);
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
+            const apiPath = isObjectId ? `posts/details/${slug}` : `posts/${slug}`;
+            const apiUrl = new URL(`${API_BASE_URL}/${apiPath}`);
             const client = apiUrl.protocol === 'https:' ? https : http;
             
             const postData = await new Promise((resolve, reject) => {
@@ -79,12 +90,33 @@ export default function ogPlugin() {
               
               if (post) {
                 // Get image URL and ensure it's absolute
-                let imageUrl = post.featuredImage?.url || post.featuredVideo?.thumbnail || post.featuredVideo?.url || '';
+                const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http') || 'https';
+                const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5173';
+                const baseUrl = `${protocol}://${host}`;
+
+                let imageUrl =
+                  post.featuredImage?.url ||
+                  post.featuredVideo?.thumbnail ||
+                  post.featuredVideo?.url ||
+                  '';
+
+                // WhatsApp can't fetch data: URLs; fall back to site logo
+                if (imageUrl && imageUrl.startsWith('data:')) {
+                  imageUrl = '';
+                }
+                if (!imageUrl) {
+                  // Use a stable, public logo for previews
+                  imageUrl = `${baseUrl}/favicon.png`;
+                }
                 
                 // Ensure image URL is absolute (Cloudinary URLs should already be absolute, but double-check)
                 if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-                  // If relative, make it absolute (shouldn't happen with Cloudinary, but just in case)
-                  imageUrl = `https://${imageUrl}`;
+                  // If relative, make it absolute to the current host
+                  if (imageUrl.startsWith('/')) {
+                    imageUrl = `${baseUrl}${imageUrl}`;
+                  } else {
+                    imageUrl = `${baseUrl}/${imageUrl}`;
+                  }
                 }
                 
                 // For Cloudinary URLs, ensure proper format for WhatsApp
@@ -210,12 +242,11 @@ export default function ogPlugin() {
                 
                 const title = `${post.title} - KR Updates`;
                 const description = post.excerpt || post.description || post.title;
-                
-                // Build URL dynamically from request headers
-                const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http') || 'https';
-                const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5173';
-                const baseUrl = `${protocol}://${host}`;
                 const url = `${baseUrl}${req.url}`;
+
+                const imageType = imageUrl?.toLowerCase().endsWith('.png')
+                  ? 'image/png'
+                  : 'image/jpeg';
                 
                 // Log the final HTML being served (for debugging)
                 console.log('[OG Plugin] Serving OG HTML with image:', imageUrl);
@@ -240,7 +271,7 @@ export default function ogPlugin() {
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:url" content="${escapeHtml(imageUrl)}">
-  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:type" content="${escapeHtml(imageType)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="${escapeHtml(post.title || 'Post image')}">
@@ -270,7 +301,9 @@ export default function ogPlugin() {
                 
                 // Set proper headers - WhatsApp needs public access
                 res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                res.setHeader('Cache-Control', 'public, max-age=3600'); // Allow caching but refresh after 1 hour
+                // Avoid stale previews (WhatsApp/Facebook can be aggressive about caching)
+                res.setHeader('Cache-Control', 'no-store, max-age=0');
+                res.setHeader('Pragma', 'no-cache');
                 res.setHeader('X-Content-Type-Options', 'nosniff');
                 res.setHeader('X-Frame-Options', 'SAMEORIGIN');
                 // Important: Don't block WhatsApp crawler

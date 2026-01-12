@@ -19,11 +19,12 @@ import { useAuth } from '../../contexts/AuthContext';
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isModerator = user?.role === 'moderator';
+  const shouldShow = !!isAuthenticated && (isAdmin || isModerator);
 
   // Determine active tab based on current path
   const getActiveTab = () => {
@@ -219,6 +220,9 @@ const BottomNavigation = () => {
                 </button>
               );
   };
+
+  // IMPORTANT: return must be AFTER hooks to avoid hooks-order violations when auth changes.
+  if (!shouldShow) return null;
 
   return (
     <>

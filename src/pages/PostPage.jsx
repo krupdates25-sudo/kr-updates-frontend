@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Share2,
   Clock,
@@ -29,14 +29,17 @@ import AdContainer from '../components/common/AdContainer';
 import PageLayout from '../components/layout/PageLayout';
 import Logo from '../components/common/Logo';
 import { useSettings } from '../contexts/SettingsContext';
+import OptimisticImage from '../components/common/OptimisticImage';
 
 const PostPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { settings } = useSettings();
-  const [post, setPost] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialPost = location?.state?.initialPost || null;
+  const [post, setPost] = useState(initialPost);
+  const [isLoading, setIsLoading] = useState(!initialPost);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
@@ -62,14 +65,20 @@ const PostPage = () => {
   }, [user?.role, isEditingAuthor]);
 
   useEffect(() => {
-    if (slug && user) {
+    if (slug) {
       fetchPostDetails();
     }
-  }, [slug, user]);
+  }, [slug]);
 
-  // Fetch breaking news
+  // Fetch breaking news (defer: non-critical for initial post paint)
   useEffect(() => {
-    fetchBreakingNews();
+    const run = () => fetchBreakingNews();
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(run, { timeout: 1500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(run, 300);
+    return () => clearTimeout(t);
   }, []);
 
   const fetchBreakingNews = async () => {
@@ -78,12 +87,13 @@ const PostPage = () => {
       const response = await breakingNewsService.getStories();
       if (response.success && Array.isArray(response.data)) {
         // Filter only active stories that haven't expired, limit to 5
+        const now = new Date();
         const activeStories = response.data
-          .filter(
-            (story) =>
-              story.isActive &&
-              new Date(story.expiresAt) > new Date()
-          )
+          .filter((story) => {
+            const isActive = story?.isActive !== false;
+            const notExpired = !story?.expiresAt || new Date(story.expiresAt) > now;
+            return isActive && notExpired;
+          })
           .sort((a, b) => b.priority - a.priority)
           .slice(0, 5);
         setBreakingNews(activeStories);
@@ -183,8 +193,23 @@ const PostPage = () => {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const shareUrl = `${baseUrl}/post/${post.slug || String(post._id || '')}`;
     const imageUrl = post.featuredImage?.url || post.featuredVideo?.thumbnail || post.featuredVideo?.url || '';
-    const title = `${post.title} - KR Updates`;
-    const description = post.excerpt || post.description || '';
+    const title = post.title || 'Post - KR Updates';
+    
+    // Create description - WhatsApp prefers 200 characters or less
+    let description = post.excerpt || post.description || '';
+    if (!description && post.content) {
+      // Strip HTML tags and get first 200 characters
+      const textContent = post.content.replace(/<[^>]*>/g, '').trim();
+      description = textContent.substring(0, 200);
+      if (textContent.length > 200) {
+        description += '...';
+      }
+    }
+    if (!description) {
+      description = `Read more: ${post.title || 'Latest post from KR Updates'}`;
+    }
+    // Ensure description doesn't exceed WhatsApp's limit
+    description = description.substring(0, 200);
 
     const updateMetaTag = (property, content) => {
       let meta = document.querySelector(`meta[property="${property}"]`);
@@ -206,25 +231,39 @@ const PostPage = () => {
       meta.setAttribute('content', content);
     };
 
+    // Update title tag
+    document.title = title;
+
+    // Open Graph tags
     updateMetaTag('og:title', title);
     updateMetaTag('og:description', description);
     updateMetaTag('og:url', shareUrl);
     updateMetaTag('og:type', 'article');
+    updateMetaTag('og:site_name', 'KR Updates');
+    updateMetaTag('og:locale', 'en_US');
+
+    // Image handling - ensure absolute URL and proper dimensions for WhatsApp
     if (imageUrl) {
-      // Ensure image URL is absolute and properly formatted
       let finalImageUrl = imageUrl;
-      if (imageUrl.includes('cloudinary.com')) {
+      
+      // Ensure absolute URL
+      if (!finalImageUrl.startsWith('http://') && !finalImageUrl.startsWith('https://')) {
+        finalImageUrl = `${baseUrl}${finalImageUrl}`;
+      }
+
+      // Optimize Cloudinary images for OG sharing
+      if (finalImageUrl.includes('cloudinary.com')) {
         try {
-          const urlObj = new URL(imageUrl);
+          const urlObj = new URL(finalImageUrl);
           const params = new URLSearchParams(urlObj.search);
-          // Ensure proper dimensions for OG image
-          if (!params.has('w') && !params.has('h')) {
-            params.set('w', '1200');
-            params.set('h', '630');
-            params.set('c', 'fill');
-            params.set('f', 'auto');
-            params.set('q', 'auto');
-          }
+          
+          // Set optimal dimensions for WhatsApp (1200x630 recommended)
+          params.set('w', '1200');
+          params.set('h', '630');
+          params.set('c', 'fill');
+          params.set('f', 'auto');
+          params.set('q', 'auto');
+          
           urlObj.search = params.toString();
           finalImageUrl = urlObj.toString();
         } catch (e) {
@@ -232,6 +271,7 @@ const PostPage = () => {
         }
       }
       
+      // Set all OG image tags (WhatsApp needs these)
       updateMetaTag('og:image', finalImageUrl);
       updateMetaTag('og:image:secure_url', finalImageUrl);
       updateMetaTag('og:image:url', finalImageUrl);
@@ -240,19 +280,31 @@ const PostPage = () => {
       updateMetaTag('og:image:type', 'image/jpeg');
       updateMetaTag('og:image:alt', post.title);
       
-      // Also set as regular meta tag
+      // Additional image meta for compatibility
       updateNameTag('image', finalImageUrl);
+      
+      // Legacy image tag
+      let linkTag = document.querySelector('link[rel="image_src"]');
+      if (!linkTag) {
+        linkTag = document.createElement('link');
+        linkTag.setAttribute('rel', 'image_src');
+        document.head.appendChild(linkTag);
+      }
+      linkTag.setAttribute('href', finalImageUrl);
     }
-    updateMetaTag('og:site_name', 'KR Updates');
 
+    // Twitter Card tags
     updateNameTag('twitter:card', 'summary_large_image');
     updateNameTag('twitter:title', title);
     updateNameTag('twitter:description', description);
+    updateNameTag('twitter:url', shareUrl);
     if (imageUrl) {
       updateNameTag('twitter:image', imageUrl);
     }
 
-    document.title = title;
+    // Additional meta tags
+    updateNameTag('description', description);
+    updateNameTag('author', 'KR Updates');
   }, [post]);
 
   useEffect(() => {
@@ -288,7 +340,8 @@ const PostPage = () => {
   const fetchPostDetails = async () => {
     if (!slug) return;
     
-    setIsLoading(true);
+    // If we already have an optimistic post (from navigation state), don't blank the UI.
+    if (!post) setIsLoading(true);
     try {
       let response;
       
@@ -305,8 +358,14 @@ const PostPage = () => {
       if (response?.data) {
         setPost(response.data);
         console.log('Post fetched successfully:', response.data.title, 'Status:', response.data.status);
-        // Fetch similar posts after current post is loaded
-        fetchSimilarPosts(response.data._id, response.data.slug);
+        // Fetch similar posts after current post is loaded (defer so details page paints faster)
+        const runSimilar = () =>
+          fetchSimilarPosts(response.data._id, response.data.slug);
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.requestIdleCallback(runSimilar, { timeout: 1500 });
+        } else {
+          setTimeout(runSimilar, 400);
+        }
       } else {
         throw new Error('Post data not found in response');
       }
@@ -314,9 +373,10 @@ const PostPage = () => {
       console.error('Error fetching post details:', error);
       setPost(null);
       
+      // For non-admins (including logged-out users), send them back safely.
       if (user?.role !== 'admin') {
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(user ? '/dashboard' : '/');
         }, 2000);
       }
     } finally {
@@ -591,20 +651,28 @@ const PostPage = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && !post) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading post...</p>
+      <PageLayout hideSidebar={!user} hideBottomNav={!user}>
+        <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-2/3 bg-gray-200 rounded" />
+            <div className="h-4 w-1/2 bg-gray-200 rounded" />
+            <div className="h-[260px] sm:h-[420px] bg-gray-200 rounded-lg" />
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded" />
+              <div className="h-4 bg-gray-200 rounded" />
+              <div className="h-4 bg-gray-200 rounded w-4/5" />
+            </div>
+          </div>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (!post) {
     return (
-      <PageLayout>
+      <PageLayout hideSidebar={!user} hideBottomNav={!user}>
         <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8">
           <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
             <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
@@ -615,10 +683,10 @@ const PostPage = () => {
                 : 'The post you are looking for does not exist or is not available.'}
             </p>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(user ? '/dashboard' : '/')}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Back to Dashboard
+              {user ? 'Back to Dashboard' : 'Back to Home'}
             </button>
           </div>
         </div>
@@ -627,17 +695,25 @@ const PostPage = () => {
   }
 
   return (
-    <PageLayout activeTab="feed">
+    <PageLayout activeTab="feed" hideSidebar={!user} hideBottomNav={!user}>
       {/* Back Button */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(user ? '/dashboard' : '/')}
             className="flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="hidden sm:inline">{user ? 'Back to Dashboard' : 'Back to Home'}</span>
             <span className="sm:hidden">Back</span>
+          </button>
+
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 dark:text-gray-100 text-sm font-semibold"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
           </button>
         </div>
       </div>
@@ -655,21 +731,20 @@ const PostPage = () => {
             {/* Featured Media */}
             {(post?.featuredImage?.url || post?.featuredVideo?.url) && (
               <div 
-                className="mb-3 sm:mb-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center"
+                className="mb-3 sm:mb-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
                 data-protected-content
               >
                 {post?.featuredVideo?.url ? (
                   <video
                     src={post.featuredVideo.url}
                     controls
-                    className="w-full h-auto object-contain max-h-[400px] select-none"
-                    style={{ 
-                      minHeight: '250px',
+                    className="w-full h-[280px] sm:h-[420px] md:h-[520px] lg:h-[60vh] object-cover select-none"
+                    style={{
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       pointerEvents: 'auto',
                       WebkitUserDrag: 'none',
-                      userDrag: 'none'
+                      userDrag: 'none',
                     }}
                     draggable="false"
                     onContextMenu={(e) => {
@@ -687,26 +762,18 @@ const PostPage = () => {
                     Your browser does not support the video tag.
                   </video>
                 ) : (
-                  <img
-                    src={post.featuredImage.url}
-                    alt={post.title}
-                    className="w-full h-auto object-contain max-h-[400px] select-none"
-                    style={{ 
-                      minHeight: '200px',
+                  <OptimisticImage
+                    src={post?.featuredImage?.url}
+                    alt={post?.title || 'Post image'}
+                    className="w-full h-[280px] sm:h-[420px] md:h-[520px] lg:h-[60vh]"
+                    imgClassName="object-cover select-none"
+                    loading="eager"
+                    style={{
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       pointerEvents: 'auto',
                       WebkitUserDrag: 'none',
-                      userDrag: 'none'
-                    }}
-                    draggable="false"
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                    onDragStart={(e) => {
-                      e.preventDefault();
-                      return false;
+                      userDrag: 'none',
                     }}
                   />
                 )}
@@ -748,13 +815,13 @@ const PostPage = () => {
                 {post?.title}
               </h1>
 
-              {/* Subheading */}
-              {post?.subheading && (
+              {/* Subheading (backend usually provides `excerpt`) */}
+              {(post?.subheading || post?.description || post?.excerpt) && (
                 <p 
                   className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-3 sm:mb-4 font-medium select-none"
                   style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 >
-                  {post.subheading}
+                  {post.subheading || post.description || post.excerpt}
                 </p>
               )}
 
@@ -968,11 +1035,6 @@ const PostPage = () => {
               </div>
             </div>
 
-            {/* Middle Ad */}
-            <div className="mb-3 sm:mb-4">
-              <AdContainer position="middle" postIndex={1} />
-            </div>
-
             {/* Article Content */}
             <div 
               className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 border border-gray-200 dark:border-gray-700"
@@ -1030,9 +1092,107 @@ const PostPage = () => {
               </div>
             </div>
 
-            {/* Bottom Ad */}
-            <div className="mt-3 sm:mt-4 mb-3 sm:mb-4">
-              <AdContainer position="bottom" postIndex={2} />
+            {/* Mobile/Tablet: Recommendations below content (prevents empty-feel) */}
+            <div className="lg:hidden mt-4 space-y-4">
+              {/* Similar Posts */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+                  <h3 className="text-base font-bold text-blue-900 dark:text-blue-100">
+                    Similar Posts
+                  </h3>
+                </div>
+                <div>
+                  {loadingSimilarPosts ? (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      Loading...
+                    </div>
+                  ) : similarPosts.length > 0 ? (
+                    similarPosts.slice(0, 6).map((item, idx, array) => {
+                      const postSlug = item.slug || String(item._id || '');
+                      return (
+                        <div
+                          key={item._id || idx}
+                          className={`p-3 sm:p-4 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-colors ${
+                            idx !== array.length - 1
+                              ? 'border-b border-gray-200 dark:border-gray-700'
+                              : ''
+                          }`}
+                          onClick={() => navigate(`/post/${postSlug}`)}
+                        >
+                          <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                            {item.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs">
+                            {item.category && (
+                              <>
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
+                                  {item.category}
+                                </span>
+                                <span className="text-gray-400 dark:text-gray-500">•</span>
+                              </>
+                            )}
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {item.viewCount || item.views || 0} views
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      No similar posts found
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Breaking News */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+                  <h3 className="text-base font-bold text-red-900 dark:text-red-100">
+                    Breaking News
+                  </h3>
+                </div>
+                <div>
+                  {loadingBreakingNews ? (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      Loading breaking news...
+                    </div>
+                  ) : breakingNews.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      No breaking news available
+                    </div>
+                  ) : (
+                    breakingNews.slice(0, 6).map((item, idx, array) => (
+                      <div
+                        key={item._id || idx}
+                        className={`p-3 sm:p-4 hover:bg-red-50 dark:hover:bg-red-900/10 cursor-pointer transition-colors ${
+                          idx !== array.length - 1
+                            ? 'border-b border-gray-200 dark:border-gray-700'
+                            : ''
+                        }`}
+                        onClick={() => navigate(`/breaking-news/${item._id}`)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-base font-bold text-red-600 dark:text-red-400 flex-shrink-0">
+                            {idx + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                              {item.title}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-medium">
+                                {item.category}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
