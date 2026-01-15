@@ -5,10 +5,10 @@ const Logo = ({ size = 'md', className = '' }) => {
   const { settings, loading } = useSettings();
   
   const logoSize = {
-    sm: 'h-10 max-h-10',
-    md: 'h-16 max-h-16',
-    lg: 'h-20 max-h-20',
-    xl: 'h-24 max-h-24',
+    sm: 'h-6 max-h-6',
+    md: 'h-10 max-h-10',
+    lg: 'h-14 max-h-14',
+    xl: 'h-20 max-h-20',
   };
 
   // Determine which logo to use
