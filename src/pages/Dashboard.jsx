@@ -48,6 +48,11 @@ const Dashboard = () => {
   // Removed automatic refresh to prevent multiple API calls
   // Profile is already loaded from AuthContext on app initialization
 
+  // Set SEO meta tags for homepage
+  useEffect(() => {
+    setHomepageSEO();
+  }, []);
+
   useEffect(() => {
     if (location.state?.filterCategory) {
       setFilterBy(location.state.filterCategory);
