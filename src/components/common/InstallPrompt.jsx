@@ -8,14 +8,20 @@ const InstallPrompt = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if device is mobile
+    // Check if device is mobile - be more aggressive for iOS
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-        userAgent.toLowerCase()
-      );
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera || '';
+      const ua = userAgent.toLowerCase();
+      
+      // Detect iOS specifically
+      const isIOS = /iphone|ipad|ipod/i.test(ua);
+      // Detect other mobile devices
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+      // Check screen size
       const isSmallScreen = window.innerWidth <= 768;
-      const mobile = isMobileDevice || isSmallScreen;
+      
+      // Always consider it mobile if iOS or small screen
+      const mobile = isIOS || isMobileDevice || isSmallScreen;
       setIsMobile(mobile);
       
       // Always show prompt on mobile (not just when beforeinstallprompt fires)
@@ -33,18 +39,30 @@ const InstallPrompt = () => {
           return;
         }
 
-        // Check if permanently dismissed
+        // Check if permanently dismissed - but allow showing again after 24 hours
         const dismissed = localStorage.getItem('pwa-prompt-dismissed');
-        if (dismissed === 'true') {
-          return;
+        const dismissedTime = localStorage.getItem('pwa-prompt-dismissed-time');
+        if (dismissed === 'true' && dismissedTime) {
+          const hoursSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60);
+          // Show again after 24 hours
+          if (hoursSinceDismissed < 24) {
+            return;
+          }
         }
 
-        // Show prompt immediately on mobile
+        // Show prompt immediately on mobile - force it!
         setShowPrompt(true);
       }
     };
 
+    // Check immediately
     checkMobile();
+    
+    // Also check after a short delay to ensure it shows
+    const timeoutId = setTimeout(() => {
+      checkMobile();
+    }, 500);
+    
     window.addEventListener('resize', checkMobile);
 
     // Listen for beforeinstallprompt event (for Android Chrome)
@@ -66,6 +84,7 @@ const InstallPrompt = () => {
     });
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('resize', checkMobile);
     };
@@ -102,18 +121,34 @@ const InstallPrompt = () => {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    // Don't show again permanently (user can clear localStorage to see it again)
+    // Don't show again for 24 hours (user can clear localStorage to see it again)
     localStorage.setItem('pwa-prompt-dismissed', 'true');
+    localStorage.setItem('pwa-prompt-dismissed-time', Date.now().toString());
   };
 
-  // Don't show if already installed, not mobile, or dismissed permanently
-  if (isInstalled || !isMobile || !showPrompt || localStorage.getItem('pwa-prompt-dismissed') === 'true') {
+  // Don't show if already installed
+  if (isInstalled) {
+    return null;
+  }
+
+  // Always show on mobile if not dismissed recently
+  const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+  const dismissedTime = localStorage.getItem('pwa-prompt-dismissed-time');
+  let shouldHide = false;
+  
+  if (dismissed === 'true' && dismissedTime) {
+    const hoursSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60);
+    shouldHide = hoursSinceDismissed < 24;
+  }
+
+  // Force show on mobile devices
+  if (!isMobile || shouldHide) {
     return null;
   }
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden animate-in slide-in-from-bottom-5 duration-300">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 max-w-sm mx-auto">
+    <div className="fixed bottom-20 left-0 right-0 z-[60] px-4 md:hidden" style={{ pointerEvents: 'auto' }}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border-2 border-blue-500 dark:border-blue-400 p-4 max-w-sm mx-auto animate-pulse">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
