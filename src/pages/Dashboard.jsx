@@ -12,6 +12,7 @@ import { useSocket } from '../contexts/SocketContext';
 import AdContainer from '../components/common/AdContainer';
 import BreakingNewsBanner from '../components/common/BreakingNewsBanner';
 import { useSettings } from '../contexts/SettingsContext';
+import { setHomepageSEO } from '../utils/seo';
 
 import usePagination from '../hooks/usePagination';
 import {
