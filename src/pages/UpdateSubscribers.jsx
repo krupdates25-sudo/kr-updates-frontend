@@ -22,7 +22,7 @@ const UpdateSubscribers = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
+  const [selectedSubscriber, setSelectedSubscriber] = useState(null);
   const [showPostSelector, setShowPostSelector] = useState(false);
   const [posts, setPosts] = useState([]);
 
@@ -125,10 +125,13 @@ const UpdateSubscribers = () => {
       return;
     }
 
-    // Clean phone number (remove + and spaces)
-    const phone = subscriber.phone.replace(/[^\d]/g, '');
+    // Clean phone number (remove + and spaces, keep only digits)
+    let phone = subscriber.phone.replace(/[^\d]/g, '');
     
-    if (!phone) {
+    // Remove leading zeros if any
+    phone = phone.replace(/^0+/, '');
+    
+    if (!phone || phone.length < 10) {
       showNotification('Invalid phone number', 'error');
       return;
     }
@@ -144,26 +147,16 @@ const UpdateSubscribers = () => {
       showNotification('No phone number available for this subscriber', 'error');
       return;
     }
-    setSelectedPost(null);
+    setSelectedSubscriber(subscriber);
     setShowPostSelector(true);
   };
 
   const handlePostSelect = (post) => {
-    if (selectedPost) {
-      // Share to all selected subscribers
-      subscribers
-        .filter((sub) => sub.phone)
-        .forEach((sub) => {
-          setTimeout(() => {
-            handleWhatsAppShare(sub, post);
-          }, 500);
-        });
+    if (selectedSubscriber) {
+      // Share to the selected subscriber
+      handleWhatsAppShare(selectedSubscriber, post);
       setShowPostSelector(false);
-      setSelectedPost(null);
-      showNotification('Opening WhatsApp for all subscribers...', 'success');
-    } else {
-      setSelectedPost(post);
-      setShowPostSelector(false);
+      setSelectedSubscriber(null);
     }
   };
 
@@ -251,7 +244,7 @@ const UpdateSubscribers = () => {
                   <button
                     onClick={() => {
                       setShowPostSelector(false);
-                      setSelectedPost(null);
+                      setSelectedSubscriber(null);
                     }}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
