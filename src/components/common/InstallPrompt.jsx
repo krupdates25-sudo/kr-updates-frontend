@@ -59,7 +59,7 @@ const InstallPrompt = () => {
     checkMobile();
     
     // Also check after a short delay to ensure it shows
-    const timeoutId = setTimeout(() => {
+    let timeoutId = setTimeout(() => {
       checkMobile();
     }, 500);
     
