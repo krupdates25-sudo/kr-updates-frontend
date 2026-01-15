@@ -10,6 +10,8 @@ import {
   X,
   CheckCircle,
   AlertCircle,
+  Edit2,
+  Save,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +26,13 @@ const UpdateSubscribers = () => {
   const [notification, setNotification] = useState(null);
   const [selectedSubscriber, setSelectedSubscriber] = useState(null);
   const [showPostSelector, setShowPostSelector] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSubscriber, setEditingSubscriber] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+  });
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
@@ -75,6 +84,56 @@ const UpdateSubscribers = () => {
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
+    }
+  };
+
+  const handleEditClick = (subscriber) => {
+    setEditingSubscriber(subscriber);
+    setEditFormData({
+      name: subscriber.name || '',
+      phone: subscriber.phone || '',
+      email: subscriber.email || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(
+        `${API_BASE_URL}/updates/subscribers/${editingSubscriber._id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(editFormData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update subscriber');
+      }
+
+      const data = await response.json();
+      
+      // Update the subscriber in the list
+      setSubscribers(
+        subscribers.map((sub) =>
+          sub._id === editingSubscriber._id ? data.data : sub
+        )
+      );
+
+      setShowEditModal(false);
+      setEditingSubscriber(null);
+      showNotification('Subscriber updated successfully', 'success');
+    } catch (error) {
+      console.error('Error updating subscriber:', error);
+      showNotification(error.message || 'Error updating subscriber', 'error');
     }
   };
 
@@ -233,6 +292,95 @@ const UpdateSubscribers = () => {
             </div>
           </div>
 
+          {/* Edit Modal */}
+          {showEditModal && editingSubscriber && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Edit Subscriber
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingSubscriber(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <form onSubmit={handleEditSubmit} className="p-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.name}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, name: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="Enter name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={editFormData.phone}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, phone: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="Enter phone number"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Format: +91XXXXXXXXXX or 91XXXXXXXXXX
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={editFormData.email}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, email: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="Enter email"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingSubscriber(null);
+                      }}
+                      className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium rounded-lg border border-gray-300 dark:border-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* Post Selector Modal */}
           {showPostSelector && (
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -358,6 +506,13 @@ const UpdateSubscribers = () => {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditClick(subscriber)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              title="Edit subscriber"
+                            >
+                              <Edit2 className="w-5 h-5" />
+                            </button>
                             {subscriber.phone && (
                               <button
                                 onClick={() => handleShareClick(subscriber)}
