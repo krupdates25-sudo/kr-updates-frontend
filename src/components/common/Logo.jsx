@@ -1,4 +1,5 @@
 import { useSettings } from '../../contexts/SettingsContext';
+import kruMainLogo from '../../assets/KRU_main.png';
 
 const Logo = ({ size = 'md', className = '' }) => {
   const { settings, loading } = useSettings();
@@ -16,7 +17,7 @@ const Logo = ({ size = 'md', className = '' }) => {
     xl: 'h-16',
   };
 
-  // Show logo image if available, otherwise show text
+  // Show logo image if available from settings, otherwise use default KRU_main.png
   if (settings?.siteLogo && !loading) {
     return (
       <div className={`flex items-center ${className}`}>
@@ -29,13 +30,14 @@ const Logo = ({ size = 'md', className = '' }) => {
     );
   }
 
-  // KRUPDATES text logo with KRUP in black and DATES in blue
+  // Default KRU main logo
   return (
     <div className={`flex items-center ${className}`}>
-      <h1 className={`font-bold ${textSizes[size]} tracking-tight`}>
-        <span className="text-gray-900 dark:text-white">KRUP</span>
-        <span className="text-blue-600 dark:text-blue-400">DATES</span>
-      </h1>
+      <img
+        src={kruMainLogo}
+        alt="KRUPDATES"
+        className={`${logoSize[size]} object-contain`}
+      />
     </div>
   );
 };

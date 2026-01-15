@@ -13,7 +13,7 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,8 +30,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('token');
-      window.location.href = '/auth';
+      localStorage.removeItem('authToken');
+      // Don't redirect here - let ProtectedRoute handle it
+      // This prevents redirect loops and allows proper error handling
     }
     return Promise.reject(error.response?.data || error.message);
   }
