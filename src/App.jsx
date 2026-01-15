@@ -118,6 +118,7 @@ function App() {
           <AdProvider>
             <Router>
             <div className="App">
+                <InstallPrompt />
                 <Routes>
                   {/* Public routes */}
                   {/* Public users should not see a login page */}
