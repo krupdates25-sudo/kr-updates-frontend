@@ -3,40 +3,39 @@ import kruMainLogo from '../../assets/KRU_main.png';
 
 const Logo = ({ size = 'md', className = '' }) => {
   const { settings, loading } = useSettings();
-  const textSizes = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl',
-    xl: 'text-3xl',
-  };
-
+  
   const logoSize = {
-    sm: 'h-6',
-    md: 'h-8',
-    lg: 'h-12',
-    xl: 'h-16',
+    sm: 'h-6 max-h-6',
+    md: 'h-8 max-h-8',
+    lg: 'h-12 max-h-12',
+    xl: 'h-16 max-h-16',
   };
 
-  // Show logo image if available from settings, otherwise use default KRU_main.png
-  if (settings?.siteLogo && !loading) {
-    return (
-      <div className={`flex items-center ${className}`}>
-        <img
-          src={settings.siteLogo}
-          alt={settings.siteName || 'Logo'}
-          className={`${logoSize[size]} object-contain`}
-        />
-      </div>
-    );
-  }
+  // Determine which logo to use
+  // Use settings logo only if it exists, is not empty, and is a valid URL
+  const hasCustomLogo = settings?.siteLogo && 
+                        typeof settings.siteLogo === 'string' && 
+                        settings.siteLogo.trim() !== '' &&
+                        !loading;
 
-  // Default KRU main logo
+  const logoSrc = hasCustomLogo ? settings.siteLogo : kruMainLogo;
+  const logoAlt = hasCustomLogo ? (settings.siteName || 'Logo') : 'KRUPDATES';
+
+  // Always show the logo image (default KRU_main.png or custom from settings)
   return (
-    <div className={`flex items-center ${className}`}>
+    <div className={`flex items-center justify-center ${className}`}>
       <img
-        src={kruMainLogo}
-        alt="KRUPDATES"
-        className={`${logoSize[size]} object-contain`}
+        src={logoSrc}
+        alt={logoAlt}
+        className={`${logoSize[size]} w-auto object-contain`}
+        style={{ maxWidth: '100%' }}
+        onError={(e) => {
+          // Fallback to default logo if custom logo fails to load
+          if (hasCustomLogo && e.target.src !== kruMainLogo) {
+            e.target.src = kruMainLogo;
+            e.target.alt = 'KRUPDATES';
+          }
+        }}
       />
     </div>
   );
