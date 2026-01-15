@@ -147,43 +147,35 @@ const InstallPrompt = () => {
   }
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-[60] px-4 md:hidden" style={{ pointerEvents: 'auto' }}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border-2 border-blue-500 dark:border-blue-400 p-4 max-w-sm mx-auto animate-pulse">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <Download className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+    <div className="fixed bottom-20 left-0 right-0 z-[60] px-3 md:hidden" style={{ pointerEvents: 'auto' }}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-blue-500 dark:border-blue-400 p-2.5 max-w-xs mx-auto">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0">
+              <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                Install KRUPDATES
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-xs leading-tight">
+                Install App
               </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Add to home screen for quick access
+              <p className="text-[10px] text-gray-600 dark:text-gray-400 leading-tight truncate">
+                Add to home screen
               </p>
             </div>
           </div>
           <button
+            onClick={handleInstallClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
+          >
+            <Download className="w-3 h-3" />
+            Install
+          </button>
+          <button
             onClick={handleDismiss}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 p-1"
             aria-label="Dismiss"
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleInstallClick}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Install App
-          </button>
-          <button
-            onClick={handleDismiss}
-            className="px-4 py-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 transition-colors"
-          >
-            Later
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
