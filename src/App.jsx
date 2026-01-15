@@ -24,6 +24,7 @@ import AnnouncementManagement from './pages/AnnouncementManagement';
 import NotificationManagement from './pages/NotificationManagement';
 import Settings from './pages/Settings';
 import PostPage from './pages/PostPage';
+import UpdateSubscribers from './pages/UpdateSubscribers';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSuccess from './pages/VerifyEmailSuccess';
 import Explore from './pages/Explore';
@@ -271,6 +272,15 @@ function App() {
                     element={
                       <ProtectedRoute requiredRole="admin">
                         <TrendingManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/admin/subscribers"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <UpdateSubscribers />
                       </ProtectedRoute>
                     }
                   />

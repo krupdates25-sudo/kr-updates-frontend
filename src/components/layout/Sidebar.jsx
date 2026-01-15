@@ -163,6 +163,12 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
       icon: Bell,
       path: '/announcements',
     },
+    {
+      id: 'admin-subscribers',
+      label: 'Update Subscribers',
+      icon: MessageSquare,
+      path: '/admin/subscribers',
+    },
     // {
     //   id: 'admin-notifications',
     //   label: 'Notifications',
