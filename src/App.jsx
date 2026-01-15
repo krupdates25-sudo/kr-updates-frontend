@@ -33,6 +33,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AdProvider } from './contexts/AdContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import InstallPrompt from './components/common/InstallPrompt';
 import './App.css';
 
 const AdminDashboard = () => {
