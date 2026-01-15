@@ -15,33 +15,44 @@ const InstallPrompt = () => {
         userAgent.toLowerCase()
       );
       const isSmallScreen = window.innerWidth <= 768;
-      setIsMobile(isMobileDevice || isSmallScreen);
+      const mobile = isMobileDevice || isSmallScreen;
+      setIsMobile(mobile);
+      
+      // Always show prompt on mobile (not just when beforeinstallprompt fires)
+      if (mobile) {
+        // Check if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          setIsInstalled(true);
+          return;
+        }
+
+        // Check if already installed via localStorage
+        const installed = localStorage.getItem('pwa-installed');
+        if (installed === 'true') {
+          setIsInstalled(true);
+          return;
+        }
+
+        // Check if permanently dismissed
+        const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+        if (dismissed === 'true') {
+          return;
+        }
+
+        // Show prompt immediately on mobile
+        setShowPrompt(true);
+      }
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Check if already installed via localStorage
-    const installed = localStorage.getItem('pwa-installed');
-    if (installed === 'true') {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Listen for beforeinstallprompt event
+    // Listen for beforeinstallprompt event (for Android Chrome)
     const handleBeforeInstallPrompt = (e) => {
       // Prevent the mini-infobar from appearing
       e.preventDefault();
       // Stash the event so it can be triggered later
       setDeferredPrompt(e);
-      // Show our custom install prompt
-      setShowPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -91,17 +102,17 @@ const InstallPrompt = () => {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    // Don't show again for this session
-    sessionStorage.setItem('pwa-prompt-dismissed', 'true');
+    // Don't show again permanently (user can clear localStorage to see it again)
+    localStorage.setItem('pwa-prompt-dismissed', 'true');
   };
 
-  // Don't show if already installed, not mobile, or dismissed this session
-  if (isInstalled || !isMobile || !showPrompt || sessionStorage.getItem('pwa-prompt-dismissed')) {
+  // Don't show if already installed, not mobile, or dismissed permanently
+  if (isInstalled || !isMobile || !showPrompt || localStorage.getItem('pwa-prompt-dismissed') === 'true') {
     return null;
   }
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden">
+    <div className="fixed bottom-20 left-0 right-0 z-50 px-4 md:hidden animate-in slide-in-from-bottom-5 duration-300">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 p-4 max-w-sm mx-auto">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
