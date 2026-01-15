@@ -1,3 +1,6 @@
+// Disable console.logs in production (must be first import)
+import './utils/disableConsole.js';
+
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
