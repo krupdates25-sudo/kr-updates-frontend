@@ -1,7 +1,27 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/og.js": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
+    {
+      "source": "/post/:slug*",
+      "has": [
+        {
+          "type": "query",
+          "key": "spa",
+          "value": "true"
+        }
+      ],
+      "destination": "/index.html"
+    },
+    {
+      "source": "/post/:slug*",
+      "destination": "/api/og"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
