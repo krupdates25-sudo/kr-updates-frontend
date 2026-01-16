@@ -4,7 +4,7 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
-import AuthPage from './pages/AuthPage';
+import AdminLogin from './pages/AdminLogin';
 import Dashboard from './pages/Dashboard';
 import NewPost from './pages/NewPost';
 import UserProfile from './pages/UserProfile';
@@ -24,16 +24,17 @@ import AnnouncementManagement from './pages/AnnouncementManagement';
 import NotificationManagement from './pages/NotificationManagement';
 import Settings from './pages/Settings';
 import PostPage from './pages/PostPage';
-import FeedbackManagement from './pages/FeedbackManagement';
+import UpdateSubscribers from './pages/UpdateSubscribers';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSuccess from './pages/VerifyEmailSuccess';
+import Explore from './pages/Explore';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { ADMIN_LOGIN_TOKEN } from './config/admin';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { SocketProvider } from './contexts/SocketContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AdProvider } from './contexts/AdContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import FeedbackWrapper from './components/common/FeedbackWrapper';
+import InstallPrompt from './components/common/InstallPrompt';
 import './App.css';
 
 const AdminDashboard = () => {
@@ -115,20 +116,30 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <SettingsProvider>
-          <SocketProvider>
-            <AdProvider>
-              <Router>
-              <div className="App">
-                <FeedbackWrapper />
+          <AdProvider>
+            <Router>
+            <div className="App">
+                <InstallPrompt />
                 <Routes>
                   {/* Public routes */}
-                  <Route path="/auth" element={<AuthPage />} />
+                  {/* Public users should not see a login page */}
+                  <Route path="/auth" element={<Navigate to="/" replace />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route
                     path="/verify-email-success"
                     element={<VerifyEmailSuccess />}
                   />
                   <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+                  {/* Admin login routes - both secure and simple */}
+                  <Route
+                    path="/admin/login"
+                    element={<AdminLogin />}
+                  />
+                  <Route
+                    path={`/${ADMIN_LOGIN_TOKEN}/admin-panel/login`}
+                    element={<AdminLogin />}
+                  />
 
                   {/* Test route without ProtectedRoute */}
                   <Route
@@ -142,7 +153,13 @@ function App() {
                     }
                   />
 
-                  {/* Protected routes */}
+                  {/* Public Dashboard - accessible to everyone */}
+                  <Route path="/" element={<Dashboard />} />
+
+                  {/* Public Explore page */}
+                  <Route path="/explore" element={<Explore />} />
+                  
+                  {/* Protected Dashboard route - redirects authenticated users */}
                   <Route
                     path="/dashboard"
                     element={
@@ -154,6 +171,15 @@ function App() {
 
                   <Route
                     path="/new-post"
+                    element={
+                      <ProtectedRoute>
+                        <NewPost />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/new-post/:postId"
                     element={
                       <ProtectedRoute>
                         <NewPost />
@@ -181,6 +207,14 @@ function App() {
                   />
 
                   {/* Admin only routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/admin/dashboard"
                     element={
@@ -238,6 +272,15 @@ function App() {
                     element={
                       <ProtectedRoute requiredRole="admin">
                         <TrendingManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/admin/subscribers"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <UpdateSubscribers />
                       </ProtectedRoute>
                     }
                   />
@@ -328,25 +371,12 @@ function App() {
                     }
                   />
 
-                  <Route
-                    path="/admin/feedbacks"
-                    element={
-                      <ProtectedRoute requiredRole="admin">
-                        <FeedbackManagement />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* Default redirect */}
-                  <Route path="/" element={<Navigate to="/auth" replace />} />
-
-                  {/* Catch all route */}
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
+                  {/* Catch all route - redirect to home */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </div>
-              </Router>
-            </AdProvider>
-          </SocketProvider>
+            </Router>
+          </AdProvider>
         </SettingsProvider>
       </AuthProvider>
     </ErrorBoundary>

@@ -1,11 +1,11 @@
 {
-  "name": "KR Updates - Breaking News & Latest Updates",
-  "short_name": "KR Updates",
-  "description": "Stay informed with KR Updates - Your trusted source for breaking news, latest updates, in-depth analysis, and comprehensive coverage of current events.",
+  "name": "KRUPDATES - Kishangarh Renwal Updates",
+  "short_name": "KRUPDATES",
+  "description": "Your trusted source for latest news, breaking news, education updates, city news, and local updates from Kishangarh and Renwal",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -19,15 +19,18 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/favicon.ico",
-      "sizes": "48x48",
-      "type": "image/x-icon"
     }
   ],
-  "categories": ["news", "information"],
-  "lang": "en",
-  "dir": "ltr"
+  "categories": ["news", "education", "newsstand"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Latest News",
+      "short_name": "News",
+      "description": "View latest news",
+      "url": "/",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    }
+  ]
 }
 
