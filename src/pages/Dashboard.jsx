@@ -1,25 +1,22 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import PageLayout from '../components/layout/PageLayout';
 import ArticleCard from '../components/common/ArticleCard';
-import CompactArticleRowCard from '../components/common/CompactArticleRowCard';
-import WideArticleRowCard from '../components/common/WideArticleRowCard';
-import EducationCarousel from '../components/common/EducationCarousel';
 // import PostModal from '../components/common/PostModal'; // Commented out - posts now navigate directly to details page
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSkeleton } from '../components/common/LoadMoreButton';
 import { useSocket } from '../contexts/SocketContext';
 import AdContainer from '../components/common/AdContainer';
 import BreakingNewsBanner from '../components/common/BreakingNewsBanner';
-import { useSettings } from '../contexts/SettingsContext';
-import { setHomepageSEO } from '../utils/seo';
 
 import usePagination from '../hooks/usePagination';
 import {
   Plus,
-  Facebook,
-  Youtube,
-  Instagram,
+  Search,
+  Clock,
+  Users,
+  MessageCircle,
+  CheckCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import postService from '../services/postService';
@@ -28,17 +25,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, refreshProfile } = useAuth();
-  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState('feed');
   const [sortBy, setSortBy] = useState('latest');
   const [filterBy, setFilterBy] = useState('all');
-  const [activeTag, setActiveTag] = useState(null);
-  const breakingRef = useRef(null);
-  const hasUserScrolledRef = useRef(false);
-  const [breakingInView, setBreakingInView] = useState(true);
-  const [breakingStory, setBreakingStory] = useState(null);
   const { joinPost, leavePost, socket, connected } = useSocket();
-  const isAuthenticated = !!user;
   // PostModal removed - posts now navigate directly to details page
   // const [selectedPostId, setSelectedPostId] = useState(null);
   // const [selectedPost, setSelectedPost] = useState(null);
@@ -48,18 +38,26 @@ const Dashboard = () => {
   // Removed automatic refresh to prevent multiple API calls
   // Profile is already loaded from AuthContext on app initialization
 
-  // Set SEO meta tags for homepage
+  // PostModal removed - posts now navigate directly to details page
+  // Handle search navigation from Header
   useEffect(() => {
-    setHomepageSEO();
-  }, []);
+    console.log('Dashboard - Location state changed:', location.state);
 
-  useEffect(() => {
+    // Navigate to post details page if postId is provided
+    if (location.state?.postId) {
+      const postSlug = location.state.postSlug || String(location.state.postId || '');
+      if (postSlug) {
+        navigate(`/post/${postSlug}`, { replace: true });
+      }
+      return;
+    }
+
     if (location.state?.filterCategory) {
       setFilterBy(location.state.filterCategory);
       // Clear the state to prevent re-filtering on refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate, location.pathname]);
+  }, [location.state, navigate]);
 
   // Handle custom event for category filter
   useEffect(() => {
@@ -78,18 +76,35 @@ const Dashboard = () => {
   const canCreatePosts = useMemo(() => {
     if (!user) return false;
 
+    console.log('🔍 Dashboard Permission check - User:', user);
+    console.log('🔍 Dashboard Permission check - Role:', user.role);
+    console.log('🔍 Dashboard Permission check - canPublish:', user.canPublish);
+    console.log(
+      '🔍 Dashboard Permission check - canPublish type:',
+      typeof user.canPublish
+    );
+
     // Admin can always create posts
     if (user.role === 'admin') {
+      console.log('🔍 Dashboard Admin user - can create posts');
       return true;
     }
 
     // For moderators and users, check canPublish permission
     if (user.role === 'moderator' || user.role === 'user') {
       const canPublish = user.canPublish === true;
+      console.log(
+        '🔍 Dashboard Non-admin user - canPublish check result:',
+        canPublish
+      );
       return canPublish;
     }
+
+    console.log('🔍 Dashboard Unknown role - cannot create posts');
     return false;
   }, [user]);
+
+  console.log('Dashboard - canCreatePosts:', canCreatePosts);
 
   // Transform API data to match component structure
   const transformArticleData = useCallback((posts) => {
@@ -111,11 +126,12 @@ const Dashboard = () => {
           _id: post._id, // Keep the MongoDB ID for API calls
           id: post._id,
           title: post.title,
-          description: post.excerpt || '',
-          // Keep both `featuredImage` and `image` for compatibility across card components.
-          // IMPORTANT: do NOT generate random URLs here (it causes re-downloads + layout jank).
-          featuredImage: post.featuredImage,
-          image: post.featuredImage?.url || undefined,
+          description: post.excerpt || post.content?.substring(0, 150) + '...',
+          image:
+            post.featuredImage?.url ||
+            `https://images.unsplash.com/photo-${Math.floor(
+              Math.random() * 1000000
+            )}?w=800&h=400&fit=crop`,
           author: {
             _id: post.author._id, // IMPORTANT: This should be the USER ID, not post ID
             id: post.author._id, // Alternative ID field
@@ -129,7 +145,9 @@ const Dashboard = () => {
           },
           tags: post.tags || [],
           category: post.category,
-          readTime: `${Math.max(1, Number(post.readingTime || 0) || 0) || 3} min read`,
+          readTime: `${Math.ceil(
+            (post.content?.length || 500) / 200
+          )} min read`,
           publishedAt: post.publishedAt,
           likeCount: post.likeCount ?? 0, // Use nullish coalescing to preserve 0 values
           likes: post.likeCount ?? 0, // Keep for backward compatibility
@@ -188,7 +206,7 @@ const Dashboard = () => {
             hasMore: response.data.hasMore,
             pagination: response.data.pagination || {
               page: params.page || 1,
-              limit: params.limit || 20,
+              limit: params.limit || 8,
               totalCount: response.data.totalCount,
               hasMore: response.data.hasMore,
             },
@@ -250,50 +268,14 @@ const Dashboard = () => {
     loadMore,
     refresh,
   } = usePagination(fetchPosts, {
-    limit: 20,
+    limit: 8,
     dependencies: [activeTab],
     transformData: transformArticleData,
   });
 
-  // Infinite scroll sentinel (auto-load older posts)
-  const loadMoreSentinelRef = useRef(null);
-
-  // Avoid auto-loading page 2 immediately on first paint (common cause of "slow even for 8 posts").
-  // We only start auto-loading after the user actually scrolls.
+  // Join/leave post rooms for real-time updates
   useEffect(() => {
-    const onScroll = () => {
-      if (hasUserScrolledRef.current) return;
-      if (window.scrollY > 50) {
-        hasUserScrolledRef.current = true;
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => {
-    if (!loadMoreSentinelRef.current) return;
-    if (activeTab !== 'feed') return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        if (!hasUserScrolledRef.current) return;
-        if (loading || loadingMore) return;
-        if (!hasMore) return;
-        loadMore();
-      },
-      { root: null, rootMargin: '200px 0px', threshold: 0.05 }
-    );
-
-    observer.observe(loadMoreSentinelRef.current);
-    return () => observer.disconnect();
-  }, [activeTab, hasMore, loadMore, loading, loadingMore]);
-
-  // Join/leave post rooms for real-time updates (only for authenticated users)
-  useEffect(() => {
-    if (!isAuthenticated || !articles || articles.length === 0) return;
-    
+    if (articles && articles.length > 0) {
       // Join rooms for all visible posts
       articles.forEach((article) => {
         if (article._id) {
@@ -309,46 +291,47 @@ const Dashboard = () => {
           }
         });
       };
-  }, [articles, joinPost, leavePost, isAuthenticated]);
+    }
+  }, [articles, joinPost, leavePost]);
 
-  // Listen for real-time updates on posts (likes, comments, shares, trending status) - only for authenticated users
+  // Listen for real-time updates on posts (likes, comments, shares, trending status)
   useEffect(() => {
-    if (!isAuthenticated || !socket || !connected) return;
-    
-    const handlePostUpdate = (data) => {
-      console.log('Post updated:', data);
-      // Refresh posts when they're updated
-      if (activeTab === 'feed' || activeTab === 'trending') {
-        refresh();
-      }
-    };
+    if (socket && connected) {
+      const handlePostUpdate = (data) => {
+        console.log('Post updated:', data);
+        // Refresh posts when they're updated
+        if (activeTab === 'feed' || activeTab === 'trending') {
+          refresh();
+        }
+      };
 
-    const handlePostCreated = (data) => {
-      console.log('New post created:', data);
-      // Refresh posts when new ones are created
-      if (activeTab === 'feed') {
-        refresh();
-      }
-    };
+      const handlePostCreated = (data) => {
+        console.log('New post created:', data);
+        // Refresh posts when new ones are created
+        if (activeTab === 'feed') {
+          refresh();
+        }
+      };
 
-    const handleTrendingUpdate = (data) => {
-      console.log('Trending posts updated:', data);
-      // Refresh trending posts
-      if (activeTab === 'trending') {
-        refresh();
-      }
-    };
+      const handleTrendingUpdate = (data) => {
+        console.log('Trending posts updated:', data);
+        // Refresh trending posts
+        if (activeTab === 'trending') {
+          refresh();
+        }
+      };
 
-    socket.on('postUpdated', handlePostUpdate);
-    socket.on('postCreated', handlePostCreated);
-    socket.on('trendingUpdated', handleTrendingUpdate);
+      socket.on('postUpdated', handlePostUpdate);
+      socket.on('postCreated', handlePostCreated);
+      socket.on('trendingUpdated', handleTrendingUpdate);
 
-    return () => {
-      socket.off('postUpdated', handlePostUpdate);
-      socket.off('postCreated', handlePostCreated);
-      socket.off('trendingUpdated', handleTrendingUpdate);
-    };
-  }, [socket, connected, activeTab, refresh, isAuthenticated]);
+      return () => {
+        socket.off('postUpdated', handlePostUpdate);
+        socket.off('postCreated', handlePostCreated);
+        socket.off('trendingUpdated', handleTrendingUpdate);
+      };
+    }
+  }, [socket, connected, activeTab, refresh]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -386,17 +369,8 @@ const Dashboard = () => {
       return article.category.toLowerCase() === filterBy.toLowerCase();
     });
 
-    // Optional tag filter (keeps breaking/recommended sections unchanged)
-    const tagFiltered = filtered.filter((article) => {
-      if (!activeTag) return true;
-      const tags = Array.isArray(article.tags) ? article.tags : [];
-      return tags.some(
-        (t) => String(t).toLowerCase() === String(activeTag).toLowerCase()
-      );
-    });
-
     // Sort articles
-    return [...tagFiltered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'latest':
           return new Date(b.publishedAt) - new Date(a.publishedAt);
@@ -408,94 +382,11 @@ const Dashboard = () => {
           return 0;
       }
     });
-  }, [articles, filterBy, sortBy, activeTag]);
-
-  const topTags = useMemo(() => {
-    // Only show on main feed for now
-    if (activeTab !== 'feed') return [];
-    const counts = new Map();
-    for (const a of articles) {
-      const tags = Array.isArray(a.tags) ? a.tags : [];
-      for (const t of tags) {
-        const key = String(t || '').trim();
-        if (!key) continue;
-        counts.set(key, (counts.get(key) || 0) + 1);
-      }
-    }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([tag]) => tag);
-  }, [articles, activeTab]);
-
-  const educationPosts = useMemo(() => {
-    const isEducation = (a) => {
-      const cat = String(a.category || '').toLowerCase();
-      if (cat === 'education' || cat.includes('education')) return true;
-      const tags = Array.isArray(a.tags) ? a.tags : [];
-      return tags.some((t) => String(t || '').toLowerCase() === 'education');
-    };
-
-    return [...articles]
-      .filter(isEducation)
-      .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-      .slice(0, 4);
-  }, [articles]);
-
-  const followProfiles = useMemo(() => {
-    const profiles = Array.isArray(settings?.socialProfiles)
-      ? settings.socialProfiles
-      : [];
-
-    // Backward compat (should rarely happen because backend now backfills)
-    const derived =
-      profiles.length > 0
-        ? profiles
-        : [
-            {
-              platform: 'youtube',
-              url: settings?.socialLinks?.youtube || 'https://www.youtube.com/',
-              enabled: true,
-              placements: ['dashboard_follow'],
-            },
-            {
-              platform: 'facebook',
-              url: settings?.socialLinks?.facebook || 'https://www.facebook.com/',
-              enabled: true,
-              placements: ['dashboard_follow'],
-            },
-          ];
-
-    return derived.filter(
-      (p) =>
-        p &&
-        p.enabled &&
-        typeof p.url === 'string' &&
-        p.url.trim() &&
-        Array.isArray(p.placements) &&
-        p.placements.includes('dashboard_follow')
-    );
-  }, [settings]);
-
-  const followLine = useMemo(() => {
-    const names = followProfiles
-      .map((p) => String(p.platform || '').toLowerCase())
-      .map((p) => (p === 'youtube' ? 'YouTube' : p === 'facebook' ? 'Facebook' : p === 'instagram' ? 'Instagram' : p))
-      .filter(Boolean);
-
-    if (names.length === 0) return '';
-    if (names.length === 1) return `Get daily updates on ${names[0]}`;
-    if (names.length === 2) return `Get daily updates on ${names[0]} and ${names[1]}`;
-    return `Get daily updates on ${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
-  }, [followProfiles]);
+  }, [articles, filterBy, sortBy]);
 
   // Content protection - prevent copying
   useEffect(() => {
-    const hasClosest = (target) =>
-      target && typeof target.closest === 'function';
-
     const handleContextMenu = (e) => {
-      if (!hasClosest(e.target)) return;
       // Allow context menu on buttons and interactive elements
       if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('textarea')) {
         return;
@@ -508,7 +399,6 @@ const Dashboard = () => {
     };
 
     const handleCopy = (e) => {
-      if (!hasClosest(e.target)) return;
       // Allow copying from inputs and textareas
       if (e.target.closest('input') || e.target.closest('textarea')) {
         return;
@@ -521,7 +411,6 @@ const Dashboard = () => {
     };
 
     const handleCut = (e) => {
-      if (!hasClosest(e.target)) return;
       // Allow cutting from inputs and textareas
       if (e.target.closest('input') || e.target.closest('textarea')) {
         return;
@@ -534,7 +423,6 @@ const Dashboard = () => {
     };
 
     const handleSelectStart = (e) => {
-      if (!hasClosest(e.target)) return;
       // Allow selection in inputs and textareas
       if (e.target.closest('input') || e.target.closest('textarea')) {
         return;
@@ -547,7 +435,6 @@ const Dashboard = () => {
     };
 
     const handleKeyDown = (e) => {
-      if (!hasClosest(e.target)) return;
       // Prevent Ctrl+A (Select All), Ctrl+C (Copy), Ctrl+X (Cut) on article content
       if (e.target.closest('[data-protected-content]')) {
         if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'c' || e.key === 'x')) {
@@ -574,77 +461,15 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Show a sticky mini breaking bar when the main breaking banner is scrolled out of view.
-  useEffect(() => {
-    if (activeTab !== 'feed') return;
-    if (!breakingRef.current) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setBreakingInView(entry.isIntersecting);
-      },
-      { threshold: 0.15 }
-    );
-
-    observer.observe(breakingRef.current);
-    return () => observer.disconnect();
-  }, [activeTab]);
-
   return (
-    <PageLayout 
-      activeTab={activeTab} 
-      onTabChange={handleTabChange}
-      hideSidebar={!isAuthenticated}
-      hideBottomNav={!isAuthenticated}
-      headerProps={{
-        topTags,
-        activeTag,
-        onTagSelect: (tag) => {
-          setActiveTag((prev) =>
-            prev && String(prev).toLowerCase() === String(tag).toLowerCase()
-              ? null
-              : tag
-          );
-        },
-      }}
-    >
+    <PageLayout activeTab={activeTab} onTabChange={handleTabChange}>
       {/* Main Content */}
-      <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8">
         {/* Loading Skeleton for initial load */}
         {loading && <LoadingSkeleton />}
 
-        {/* Sticky mini breaking subheader (only when banner not visible) */}
-        {activeTab === 'feed' && !breakingInView && breakingStory?.title && (
-          <div className="sticky top-14 sm:top-16 z-20 mb-3">
-            <button
-              onClick={() => {
-                // Scroll to breaking section
-                breakingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="w-[100%] bg-red-500 backdrop-blur border border-red-100  px-3 py-2 flex items-center gap-2 shadow-sm"
-            >
-              <span className="inline-flex items-center gap-2 text-gray-200 font-bold text-xs uppercase tracking-wider">
-                <span className="relative inline-flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-200 opacity-60 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-300"
-                    style={{ boxShadow: '0 0 10px rgba(247, 245, 245, 0.8)' }}
-                  />
-                </span>
-                Breaking
-              </span>
-              <span className="text-sm font-semibold text-gray-200 truncate">
-                {breakingStory.title}
-              </span>
-            </button>
-          </div>
-        )}
-
         {/* Breaking News Banner - Show at top of feed */}
-        {activeTab === 'feed' && (
-          <div ref={breakingRef}>
-            <BreakingNewsBanner onCurrentStoryChange={setBreakingStory} />
-          </div>
-        )}
+        {activeTab === 'feed' && <BreakingNewsBanner />}
 
         {/* Top Ad - Always show */}
         <div className="mb-4 sm:mb-6 w-full">
@@ -655,194 +480,44 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Articles */}
+        {/* Articles Grid */}
         {!loading && filteredAndSortedArticles.length > 0 && (
           <>
-            {/* Mobile: compact list */}
-            <div className="sm:hidden space-y-3">
-              {filteredAndSortedArticles.map((article) => (
-                <CompactArticleRowCard key={article.id} article={article} />
-              ))}
-            </div>
-
-            {/* Website (tablet/desktop): image-left/content-right row cards in a 2-column grid */}
-            <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredAndSortedArticles.map((article) => (
-                <WideArticleRowCard key={article.id} article={article} />
-              ))}
-            </div>
-
-                {/* Extra Sections (real content + modern cards) */}
-                <div className="mt-6 sm:mt-10 space-y-6">
-                  {/* Education (band background without viewport overflow) */}
-                  <section className="-mx-3 sm:-mx-4 md:-mx-6 border-y border-blue-100 bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50 py-5 sm:py-7">
-                    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
-                      {/* OUTER header */}
-                      <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
-                        <div className="min-w-0">
-                          <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                            Education Updates
-                          </h3>
-                          <p className="text-sm sm:text-base text-gray-600">
-                            Latest exams, results, admissions & scholarships
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => navigate('/explore?category=education')}
-                          className="shrink-0 text-sm font-semibold text-blue-700 hover:text-blue-800"
-                        >
-                          View all
-                        </button>
-                      </div>
-
-                      {/* Inner container (clean white for cards) */}
-                      <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur p-3 sm:p-4 shadow-sm">
-
-                    {educationPosts.length > 0 ? (
-                      <EducationCarousel posts={educationPosts} />
-                    ) : (
-                      <div className="text-sm text-gray-600">
-                        No education posts yet. Seed posts and refresh.
-                      </div>
-                    )}
-                      </div>
+            <div 
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4"
+              data-protected-content
+              style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
+            >
+                  {filteredAndSortedArticles.map((article, index) => (
+                    <div
+                      key={article.id}
+                      className="group animate-fade-in-up"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                      data-protected-content
+                    >
+                      <ArticleCard
+                        article={article}
+                        onBookmark={(postId) => {
+                          // Handle bookmark functionality
+                          console.log('Bookmark post:', postId);
+                        }}
+                        onShare={(postId) => {
+                          // Handle share functionality
+                          console.log('Share post:', postId);
+                        }}
+                      />
                     </div>
-                  </section>
-
-                  {/* Follow */}
-                  {followProfiles.length > 0 && (
-                    <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">
-                          Follow KRUPDATES
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {followLine || 'Get daily updates'}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {followProfiles.map((p) => {
-                          const platform = String(p.platform || '').toLowerCase();
-                          if (platform === 'youtube') {
-                            return (
-                              <a
-                                key="youtube"
-                                href={p.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group rounded-xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-4 hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-red-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                                    <Youtube className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-base font-extrabold text-gray-900">
-                                      YouTube
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-snug">
-                                      Subscribe for video updates and breaking clips
-                                    </p>
-                                    <p className="mt-2 inline-flex items-center text-sm font-semibold text-red-700 group-hover:text-red-800">
-                                      Subscribe →
-                                    </p>
-                                  </div>
-                                </div>
-                              </a>
-                            );
-                          }
-
-                          if (platform === 'facebook') {
-                            return (
-                              <a
-                                key="facebook"
-                                href={p.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                                    <Facebook className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-base font-extrabold text-gray-900">
-                                      Facebook
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-snug">
-                                      Follow for daily posts, reels, and community updates
-                                    </p>
-                                    <p className="mt-2 inline-flex items-center text-sm font-semibold text-blue-700 group-hover:text-blue-800">
-                                      Follow →
-                                    </p>
-                                  </div>
-                                </div>
-                              </a>
-                            );
-                          }
-
-                          if (platform === 'instagram') {
-                            return (
-                              <a
-                                key="instagram"
-                                href={p.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-white p-4 hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                                    <Instagram className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-base font-extrabold text-gray-900">
-                                      Instagram
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-snug">
-                                      Follow for photos, reels, and daily updates
-                                    </p>
-                                    <p className="mt-2 inline-flex items-center text-sm font-semibold text-pink-700 group-hover:text-pink-800">
-                                      Follow →
-                                    </p>
-                                  </div>
-                                </div>
-                              </a>
-                            );
-                          }
-
-                          return null;
-                        })}
-                      </div>
-                    </section>
-                  )}
+                  ))}
                 </div>
 
-                {/* Infinite scroll sentinel */}
-                {activeTab === 'feed' && (
-                  <div className="pt-6">
-                    <div ref={loadMoreSentinelRef} className="h-8" />
-                    {loadingMore && (
-                      <div className="text-center text-sm text-gray-500">
-                        Loading more…
-                      </div>
-                    )}
-                    {!!error && (
-                      <div className="text-center text-sm text-red-600 mt-3">
-                        Failed to load more posts.
-                        <button
-                          onClick={refresh}
-                          className="ml-2 font-semibold text-blue-700 hover:text-blue-800"
-                        >
-                          Retry
-                        </button>
-                      </div>
-                    )}
-                    {!hasMore && loadedCount > 0 && (
-                      <div className="text-center text-sm text-gray-400 mt-3">
-                        You’re all caught up.
-                      </div>
-                    )}
+                {/* Middle Ad - Show after 4+ articles */}
+                {filteredAndSortedArticles.length >= 4 && (
+                  <div className="mt-6 sm:mt-8">
+                    <AdContainer
+                      position="middle"
+                      postIndex={Math.floor(filteredAndSortedArticles.length / 2)}
+                      className="w-full"
+                    />
                   </div>
                 )}
 

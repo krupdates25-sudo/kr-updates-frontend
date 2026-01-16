@@ -6,11 +6,6 @@ import ogPlugin from './vite-plugin-og.js';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), ogPlugin()],
-  build: {
-    minify: 'esbuild',
-    // Console.logs are disabled via disableConsole.js utility
-    // esbuild will also remove them during minification
-  },
   server: {
     host: true, // Allow external connections
     port: 5173,

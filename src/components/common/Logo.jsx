@@ -6,9 +6,9 @@ const Logo = ({ size = 'md', className = '' }) => {
   
   const logoSize = {
     sm: 'h-6 max-h-6',
-    md: 'h-10 max-h-10',
-    lg: 'h-14 max-h-14',
-    xl: 'h-20 max-h-20',
+    md: 'h-8 max-h-8',
+    lg: 'h-12 max-h-12',
+    xl: 'h-16 max-h-16',
   };
 
   // Determine which logo to use
