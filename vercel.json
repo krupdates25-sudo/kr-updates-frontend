@@ -20,7 +20,7 @@
     },
     {
       "source": "/post/:slug*",
-      "destination": "/api/og"
+      "destination": "/api/og?slug=:slug"
     },
     {
       "source": "/(.*)",

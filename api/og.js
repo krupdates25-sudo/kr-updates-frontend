@@ -22,11 +22,17 @@ export default async function handler(req, res) {
     const userAgent = req.headers['user-agent'] || '';
     const isBot = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|whatsapp|WhatsAppBot|Googlebot|bingbot|Slackbot|Applebot|Discordbot|TelegramBot|SkypeUriPreview|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|ia_archiver/i.test(userAgent);
 
-    // Extract post slug from URL path
-    // Vercel rewrite sends the original path in req.url
-    const urlPath = req.url.split('?')[0];
-    const postMatch = urlPath.match(/\/post\/([^\/]+)/);
-    const slug = postMatch?.[1] || req.query?.slug;
+    // Extract post slug from query parameter (set by middleware or rewrite)
+    const slug = req.query?.slug || req.query?.originalPath?.replace('/post/', '').split('/')[0];
+    
+    // Log for debugging
+    console.log('[OG Function] Request details:', {
+      url: req.url,
+      query: req.query,
+      slug: slug,
+      userAgent: userAgent.substring(0, 50),
+      isBot: isBot
+    });
     
     // If not a bot, return a response that loads the SPA
     // We use a query parameter to bypass the rewrite on the redirect
