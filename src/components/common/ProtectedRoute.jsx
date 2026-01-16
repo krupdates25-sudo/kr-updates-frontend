@@ -26,14 +26,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
         />
       );
     }
-    // For non-admin protected routes, redirect to login
-    return (
-      <Navigate
-        to="/auth"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
+    return <Navigate to="/" replace />;
   }
 
   // Check role-based access if required

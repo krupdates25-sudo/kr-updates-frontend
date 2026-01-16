@@ -27,7 +27,6 @@ import PostPage from './pages/PostPage';
 import FeedbackManagement from './pages/FeedbackManagement';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSuccess from './pages/VerifyEmailSuccess';
-import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
@@ -123,9 +122,7 @@ function App() {
                 <FeedbackWrapper />
                 <Routes>
                   {/* Public routes */}
-                  <Route path="/" element={<HomePage />} />
                   <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/admin/login" element={<AuthPage />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route
                     path="/verify-email-success"
@@ -340,8 +337,8 @@ function App() {
                     }
                   />
 
-                  {/* Catch all route - redirect to home */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  {/* Default redirect */}
+                  <Route path="/" element={<Navigate to="/auth" replace />} />
 
                   {/* Catch all route */}
                   <Route path="*" element={<Navigate to="/auth" replace />} />
