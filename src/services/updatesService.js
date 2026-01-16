@@ -9,8 +9,16 @@ const api = axios.create({
 
 const updatesService = {
   subscribe: async (payload) => {
-    const response = await api.post('/subscribe', payload);
-    return response.data;
+    try {
+      const response = await api.post('/subscribe', payload);
+      return response.data;
+    } catch (error) {
+      // Better error handling
+      const errorMessage = error?.response?.data?.message || 
+                          error?.message || 
+                          'Failed to subscribe. Please try again.';
+      throw new Error(errorMessage);
+    }
   },
 };
 

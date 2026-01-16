@@ -55,11 +55,18 @@ const UpdateSubscribers = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch subscribers');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch subscribers');
       }
 
       const data = await response.json();
-      setSubscribers(data.data.data || []);
+      // ApiResponse.paginated returns: { statusCode, success, message, data: [...], pagination }
+      // So we need data.data (the array of subscribers)
+      if (data.success && data.data) {
+        setSubscribers(Array.isArray(data.data) ? data.data : []);
+      } else {
+        setSubscribers([]);
+      }
     } catch (error) {
       console.error('Error fetching subscribers:', error);
       showNotification('Error fetching subscribers', 'error');
@@ -121,10 +128,12 @@ const UpdateSubscribers = () => {
 
       const data = await response.json();
       
+      // ApiResponse.updated returns: { statusCode, success, message, data: {...} }
       // Update the subscriber in the list
+      const updatedSubscriber = data.data || data;
       setSubscribers(
         subscribers.map((sub) =>
-          sub._id === editingSubscriber._id ? data.data : sub
+          sub._id === editingSubscriber._id ? updatedSubscriber : sub
         )
       );
 
