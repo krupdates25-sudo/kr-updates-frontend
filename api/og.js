@@ -86,18 +86,37 @@ export default async function handler(req, res) {
       });
 
       if (!response.ok) {
+        console.error(`[OG Function] API returned status ${response.status} for URL: ${apiUrl}`);
         throw new Error(`API returned status ${response.status}`);
       }
 
       postData = await response.json();
+      console.log('[OG Function] Post data fetched:', {
+        hasData: !!postData?.data,
+        hasPost: !!postData,
+        slug: slug,
+        apiUrl: apiUrl
+      });
     } catch (error) {
-      console.error('[OG Function] Error fetching post:', error);
+      console.error('[OG Function] Error fetching post:', error.message, 'URL:', apiUrl);
       // Return default OG tags if post fetch fails
       return res.status(200).send(generateDefaultOG(req));
     }
 
     // Extract post from response
+    // Backend returns: { statusCode, data, message, success }
     const post = postData?.data || postData;
+    
+    if (!post) {
+      console.error('[OG Function] No post found in response:', postData);
+      return res.status(200).send(generateDefaultOG(req));
+    }
+    
+    console.log('[OG Function] Post found:', {
+      title: post.title,
+      hasImage: !!post.featuredImage?.url,
+      imageUrl: post.featuredImage?.url
+    });
     
     if (!post) {
       return res.status(200).send(generateDefaultOG(req));
@@ -109,7 +128,7 @@ export default async function handler(req, res) {
     const baseUrl = `${protocol}://${host}`;
     const shareUrl = `${baseUrl}${urlPath}`;
 
-    // Get image URL
+    // Get image URL - prioritize featuredImage
     let imageUrl = post.featuredImage?.url || 
                    post.featuredVideo?.thumbnail || 
                    post.featuredVideo?.url || 
@@ -117,12 +136,21 @@ export default async function handler(req, res) {
 
     // Handle data URLs (WhatsApp can't fetch these)
     if (imageUrl && imageUrl.startsWith('data:')) {
+      console.warn('[OG Function] Data URL detected, skipping:', imageUrl.substring(0, 50));
       imageUrl = '';
     }
 
-    // If no image, use default logo
+    // Log image URL for debugging
+    if (imageUrl) {
+      console.log('[OG Function] Image URL found:', imageUrl.substring(0, 100));
+    } else {
+      console.warn('[OG Function] No image URL found, using default logo');
+    }
+
+    // If no image, use default logo (but log it)
     if (!imageUrl) {
       imageUrl = `${baseUrl}/favicon.png`;
+      console.log('[OG Function] Using default logo:', imageUrl);
     }
 
     // Ensure absolute URL
@@ -132,23 +160,43 @@ export default async function handler(req, res) {
         : `${baseUrl}/${imageUrl}`;
     }
 
-    // Optimize Cloudinary images for WhatsApp
-    if (imageUrl && imageUrl.includes('cloudinary.com')) {
+    // Optimize images for WhatsApp based on source
+    if (imageUrl) {
       try {
         const urlObj = new URL(imageUrl);
-        const params = new URLSearchParams(urlObj.search);
         
-        // Set optimal dimensions for WhatsApp (1200x630 recommended)
-        params.set('w', '1200');
-        params.set('h', '630');
-        params.set('c', 'fill');
-        params.set('f', 'auto');
-        params.set('q', 'auto');
-        
-        urlObj.search = params.toString();
-        imageUrl = urlObj.toString();
+        // Handle Cloudinary images
+        if (imageUrl.includes('cloudinary.com')) {
+          const params = new URLSearchParams(urlObj.search);
+          
+          // Set optimal dimensions for WhatsApp (1200x630 recommended)
+          params.set('w', '1200');
+          params.set('h', '630');
+          params.set('c', 'fill');
+          params.set('f', 'auto');
+          params.set('q', 'auto');
+          
+          urlObj.search = params.toString();
+          imageUrl = urlObj.toString();
+        }
+        // Handle Unsplash images
+        else if (imageUrl.includes('unsplash.com') || imageUrl.includes('images.unsplash.com')) {
+          const params = new URLSearchParams(urlObj.search);
+          
+          // Set optimal dimensions for WhatsApp (1200x630 recommended)
+          params.set('w', '1200');
+          params.set('h', '630');
+          params.set('fit', 'crop');
+          params.set('auto', 'format');
+          params.set('q', '80');
+          
+          urlObj.search = params.toString();
+          imageUrl = urlObj.toString();
+        }
+        // For other external images, ensure they're accessible
+        // WhatsApp requires images to be publicly accessible over HTTPS
       } catch (e) {
-        console.warn('[OG Function] Could not parse Cloudinary URL:', e);
+        console.warn('[OG Function] Could not parse image URL:', e);
       }
     }
 
@@ -180,6 +228,15 @@ export default async function handler(req, res) {
     // Determine image type
     const imageType = imageUrl?.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
 
+    // Final log before generating HTML
+    console.log('[OG Function] Final image URL:', imageUrl);
+    console.log('[OG Function] Generating OG HTML for:', {
+      title: title.substring(0, 50),
+      description: description.substring(0, 50),
+      imageUrl: imageUrl.substring(0, 100),
+      shareUrl: shareUrl
+    });
+
     // Generate HTML with OG tags
     const html = `<!DOCTYPE html>
 <html lang="en" prefix="og: http://ogp.me/ns#">
@@ -207,7 +264,7 @@ export default async function handler(req, res) {
   <meta property="og:image:alt" content="${escapeHtml(title)}">
   <!-- Additional image meta for compatibility -->
   <meta name="image" content="${escapeHtml(imageUrl)}">
-  <link rel="image_src" href="${escapeHtml(imageUrl)}">` : ''}
+  <link rel="image_src" href="${escapeHtml(imageUrl)}">` : '  <!-- No image URL available, using default -->'}
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
