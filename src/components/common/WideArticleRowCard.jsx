@@ -53,7 +53,11 @@ const WideArticleRowCard = ({ article }) => {
         <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500">
             <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-            <span>{article.readTime?.split(' ')[0] || '5'}m</span>
+            <span>
+              {typeof article.readTime === 'string' 
+                ? article.readTime.split(' ')[0] 
+                : article.readTime || '5'}m
+            </span>
             <span className="text-gray-300">•</span>
             <span>{formatDate(article.publishedAt || new Date())}</span>
           </div>

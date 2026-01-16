@@ -53,7 +53,11 @@ const CompactArticleRowCard = ({ article }) => {
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <Clock className="w-3 h-3" />
-            <span>{article.readTime?.split(' ')[0] || '5'}m</span>
+            <span>
+              {typeof article.readTime === 'string' 
+                ? article.readTime.split(' ')[0] 
+                : article.readTime || '5'}m
+            </span>
             <span className="text-gray-300">•</span>
             <span>{formatDate(article.publishedAt || new Date())}</span>
           </div>
