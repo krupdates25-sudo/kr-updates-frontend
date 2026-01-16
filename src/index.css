@@ -87,12 +87,6 @@ video {
     sans-serif !important;
 }
 
-/* Prevent accidental page-level horizontal scroll (caused by full-bleed sections / rounding) */
-html,
-body {
-  overflow-x: hidden;
-}
-
 h1,
 h2,
 h3,

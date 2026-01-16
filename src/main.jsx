@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -20,7 +21,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 }
 
 createRoot(document.getElementById('root')).render(
-  <ThemeProvider>
-    <App />
-  </ThemeProvider>
+  <HelmetProvider>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </HelmetProvider>
 );

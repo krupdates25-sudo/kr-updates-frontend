@@ -2,11 +2,9 @@ import {
   Clock,
   Trash2,
 } from 'lucide-react';
-import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/postService';
-import OptimisticImage from './OptimisticImage';
 
 const ArticleCard = ({
   article,
@@ -26,7 +24,7 @@ const ArticleCard = ({
       console.error('No valid post identifier found:', article);
       return;
     }
-    navigate(`/post/${postSlug}`, { state: { initialPost: article } });
+    navigate(`/post/${postSlug}`);
   };
 
   const formatDate = (dateString) => {
@@ -61,41 +59,9 @@ const ArticleCard = ({
   return (
     <>
       <article
-        className="bg-white dark:bg-gray-800 rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col select-none"
-        style={{ 
-          borderColor: '#e5e7eb',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          MozUserSelect: 'none',
-          msUserSelect: 'none',
-          WebkitTouchCallout: 'none'
-        }}
+        className="bg-white dark:bg-gray-800 rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col"
+        style={{ borderColor: '#e5e7eb' }}
         onClick={handleCardClick}
-        onContextMenu={(e) => {
-          // Allow context menu on buttons
-          if (e.target.closest('button')) return;
-          e.preventDefault();
-          return false;
-        }}
-        onCopy={(e) => {
-          // Allow copying from buttons
-          if (e.target.closest('button')) return;
-          e.preventDefault();
-          return false;
-        }}
-        onCut={(e) => {
-          // Allow cutting from buttons
-          if (e.target.closest('button')) return;
-          e.preventDefault();
-          return false;
-        }}
-        onSelectStart={(e) => {
-          // Allow selection on buttons
-          if (e.target.closest('button')) return;
-          e.preventDefault();
-          return false;
-        }}
-        data-protected-content
       >
         {/* Featured Media (Image or Video) */}
         {(article.featuredImage?.url ||
@@ -107,42 +73,23 @@ const ArticleCard = ({
             {article.featuredVideo?.url ? (
               <video
                 src={article.featuredVideo.url}
-                className="w-full h-full object-contain select-none"
-                style={{ 
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  pointerEvents: 'none',
-                  WebkitUserDrag: 'none',
-                  userDrag: 'none'
-                }}
+                className="w-full h-full object-contain"
                 muted
                 playsInline
-                draggable="false"
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
-                onDragStart={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
                 poster={
                   article.featuredVideo.thumbnail || article.featuredImage?.url
                 }
               />
             ) : (
-              <OptimisticImage
+              <img
                 src={article.featuredImage?.url || article.image}
                 alt={article.featuredImage?.alt || article.title}
-                className="w-full h-full"
-                imgClassName="object-contain select-none"
-                draggable={false}
-                style={{
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  pointerEvents: 'none',
-                  WebkitUserDrag: 'none',
-                  userDrag: 'none',
+                className="w-full h-full object-contain"
+                loading="lazy"
+                onError={(e) => {
+                  // Fallback to placeholder image if the main image fails to load
+                  e.target.src =
+                    'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=600&fit=crop&auto=format';
                 }}
               />
             )}
@@ -201,19 +148,13 @@ const ArticleCard = ({
           )}
 
           {/* Title (Heading) */}
-          <h2 
-            className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2 leading-tight select-none"
-            style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-          >
+          <h2 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2 leading-tight">
             {article.title || article.heading}
           </h2>
 
           {/* Subheading (Description) */}
           {article.description && (
-            <p 
-              className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 sm:mb-2 line-clamp-2 leading-snug select-none"
-              style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-            >
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 sm:mb-2 line-clamp-2 leading-snug">
               {article.description}
             </p>
           )}
@@ -289,4 +230,4 @@ const ArticleCard = ({
   );
 };
 
-export default memo(ArticleCard);
+export default ArticleCard;

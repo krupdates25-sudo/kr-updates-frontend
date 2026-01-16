@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Share2,
@@ -30,6 +30,7 @@ import PageLayout from '../components/layout/PageLayout';
 import Logo from '../components/common/Logo';
 import { useSettings } from '../contexts/SettingsContext';
 import OptimisticImage from '../components/common/OptimisticImage';
+import { Helmet } from 'react-helmet-async';
 
 const PostPage = () => {
   const { slug } = useParams();
@@ -185,18 +186,18 @@ const PostPage = () => {
     };
   }, []);
 
-  // Update Open Graph meta tags for sharing previews
-  useEffect(() => {
-    if (!post) return;
+  // Generate Open Graph data for sharing previews
+  const ogData = useMemo(() => {
+    if (!post) return null;
 
     // Use current window location for dynamic URL
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const shareUrl = `${baseUrl}/post/${post.slug || String(post._id || '')}`;
-    const imageUrl = post.featuredImage?.url || post.featuredVideo?.thumbnail || post.featuredVideo?.url || '';
+    const rawImageUrl = post.featuredImage?.url || post.featuredVideo?.thumbnail || post.featuredVideo?.url || '';
     const title = post.title || 'Post - KR Updates';
     
     // Create description - WhatsApp prefers 200 characters or less
-    let description = post.excerpt || post.description || '';
+    let description = post.excerpt || post.description || post.subheading || '';
     if (!description && post.content) {
       // Strip HTML tags and get first 200 characters
       const textContent = post.content.replace(/<[^>]*>/g, '').trim();
@@ -208,47 +209,16 @@ const PostPage = () => {
     if (!description) {
       description = `Read more: ${post.title || 'Latest post from KR Updates'}`;
     }
-    // Ensure description doesn't exceed WhatsApp's limit
-    description = description.substring(0, 200);
-
-    const updateMetaTag = (property, content) => {
-      let meta = document.querySelector(`meta[property="${property}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    const updateNameTag = (name, content) => {
-      let meta = document.querySelector(`meta[name="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', name);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-
-    // Update title tag
-    document.title = title;
-
-    // Open Graph tags
-    updateMetaTag('og:title', title);
-    updateMetaTag('og:description', description);
-    updateMetaTag('og:url', shareUrl);
-    updateMetaTag('og:type', 'article');
-    updateMetaTag('og:site_name', 'KR Updates');
-    updateMetaTag('og:locale', 'en_US');
+    // Ensure description doesn't exceed WhatsApp's limit (200 chars)
+    description = description.substring(0, 200).trim();
 
     // Image handling - ensure absolute URL and proper dimensions for WhatsApp
-    if (imageUrl) {
-      let finalImageUrl = imageUrl;
-      
+    let finalImageUrl = rawImageUrl;
+    
+    if (finalImageUrl) {
       // Ensure absolute URL
       if (!finalImageUrl.startsWith('http://') && !finalImageUrl.startsWith('https://')) {
-        finalImageUrl = `${baseUrl}${finalImageUrl}`;
+        finalImageUrl = `${baseUrl}${finalImageUrl.startsWith('/') ? '' : '/'}${finalImageUrl}`;
       }
 
       // Optimize Cloudinary images for OG sharing
@@ -271,44 +241,19 @@ const PostPage = () => {
         }
       }
       
-      // Set all OG image tags (WhatsApp needs these)
-      // IMPORTANT: og:image must be first and use HTTPS for WhatsApp to show preview
-      updateMetaTag('og:image', finalImageUrl);
-      updateMetaTag('og:image:secure_url', finalImageUrl);
-      updateMetaTag('og:image:url', finalImageUrl);
-      updateMetaTag('og:image:width', '1200');
-      updateMetaTag('og:image:height', '630');
-      updateMetaTag('og:image:type', 'image/jpeg');
-      updateMetaTag('og:image:alt', post.title || 'Post image');
-      
-      // Twitter Card for better compatibility
-      updateNameTag('twitter:image', finalImageUrl);
-      
-      // Additional image meta for compatibility
-      updateNameTag('image', finalImageUrl);
-      
-      // Legacy image tag
-      let linkTag = document.querySelector('link[rel="image_src"]');
-      if (!linkTag) {
-        linkTag = document.createElement('link');
-        linkTag.setAttribute('rel', 'image_src');
-        document.head.appendChild(linkTag);
+      // Ensure HTTPS for WhatsApp compatibility
+      if (finalImageUrl.startsWith('http://')) {
+        finalImageUrl = finalImageUrl.replace('http://', 'https://');
       }
-      linkTag.setAttribute('href', finalImageUrl);
     }
 
-    // Twitter Card tags
-    updateNameTag('twitter:card', 'summary_large_image');
-    updateNameTag('twitter:title', title);
-    updateNameTag('twitter:description', description);
-    updateNameTag('twitter:url', shareUrl);
-    if (imageUrl) {
-      updateNameTag('twitter:image', imageUrl);
-    }
-
-    // Additional meta tags
-    updateNameTag('description', description);
-    updateNameTag('author', 'KR Updates');
+    return {
+      title,
+      description,
+      url: shareUrl,
+      image: finalImageUrl,
+      siteName: 'KR Updates',
+    };
   }, [post]);
 
   useEffect(() => {
@@ -726,8 +671,50 @@ const PostPage = () => {
   }
 
   return (
-    <PageLayout activeTab="feed" hideSidebar={!user} hideBottomNav={!user}>
-      {/* Back Button */}
+    <>
+      {/* Open Graph Meta Tags for WhatsApp and Social Media Sharing */}
+      {ogData && (
+        <Helmet>
+          <title>{ogData.title}</title>
+          <meta name="description" content={ogData.description} />
+          <meta name="author" content="KR Updates" />
+          
+          {/* Open Graph / Facebook / WhatsApp */}
+          <meta property="og:type" content="article" />
+          <meta property="og:url" content={ogData.url} />
+          <meta property="og:title" content={ogData.title} />
+          <meta property="og:description" content={ogData.description} />
+          <meta property="og:site_name" content={ogData.siteName} />
+          <meta property="og:locale" content="en_US" />
+          
+          {/* Open Graph Image - Critical for WhatsApp previews */}
+          {ogData.image && (
+            <>
+              <meta property="og:image" content={ogData.image} />
+              <meta property="og:image:secure_url" content={ogData.image} />
+              <meta property="og:image:url" content={ogData.image} />
+              <meta property="og:image:type" content="image/jpeg" />
+              <meta property="og:image:width" content="1200" />
+              <meta property="og:image:height" content="630" />
+              <meta property="og:image:alt" content={ogData.title} />
+              <meta name="image" content={ogData.image} />
+              <link rel="image_src" href={ogData.image} />
+            </>
+          )}
+          
+          {/* Twitter Card */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:url" content={ogData.url} />
+          <meta name="twitter:title" content={ogData.title} />
+          <meta name="twitter:description" content={ogData.description} />
+          {ogData.image && (
+            <meta name="twitter:image" content={ogData.image} />
+          )}
+        </Helmet>
+      )}
+      
+      <PageLayout activeTab="feed" hideSidebar={!user} hideBottomNav={!user}>
+        {/* Back Button */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
           <button
@@ -1445,7 +1432,8 @@ const PostPage = () => {
           </div>
         </>
       )}
-    </PageLayout>
+      </PageLayout>
+    </>
   );
 };
 
