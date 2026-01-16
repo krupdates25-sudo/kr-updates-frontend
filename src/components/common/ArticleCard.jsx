@@ -222,11 +222,7 @@ const ArticleCard = ({
           <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2">
             <div className="flex items-center gap-0.5 sm:gap-1">
               <Clock className="w-3 h-3" />
-              <span className="text-xs">
-                {typeof article.readTime === 'string' 
-                  ? article.readTime.split(' ')[0] 
-                  : article.readTime || '5'}m
-              </span>
+              <span className="text-xs">{article.readTime?.split(' ')[0] || '5'}m</span>
             </div>
             <span className="text-xs">•</span>
             <span className="text-xs">{formatDate(article.publishedAt || new Date())}</span>
