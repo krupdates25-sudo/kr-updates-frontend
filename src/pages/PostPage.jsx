@@ -71,6 +71,11 @@ const PostPage = () => {
     }
   }, [slug]);
 
+  // Scroll to top when navigating to post details page
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [slug]);
+
   // Fetch breaking news (defer: non-critical for initial post paint)
   useEffect(() => {
     const run = () => fetchBreakingNews();
