@@ -416,9 +416,30 @@ h6 {
   backdrop-filter: blur(24px);
 }
 
+/* Force Light Mode - Override all dark mode styles */
+html,
+body {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+html.dark,
+body.dark,
+html[class*="dark"],
+body[class*="dark"] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Disable dark mode classes globally */
+.dark,
+[class*="dark:"] {
+  /* Dark mode classes are disabled - force light mode */
+}
+
 /* Custom utilities for the news blog */
 .news-card {
-  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden;
+  @apply bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden;
 }
 
 .news-card:hover {
@@ -430,9 +451,9 @@ h6 {
 }
 
 .news-input {
-  @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400 transition-all duration-300;
+  @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400 transition-all duration-300;
 }
 
 .news-select {
-  @apply appearance-none w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400 transition-all duration-300 cursor-pointer;
+  @apply appearance-none w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400 transition-all duration-300 cursor-pointer;
 }

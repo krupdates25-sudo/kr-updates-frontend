@@ -23,11 +23,34 @@
 
   <title>KRUPDATES - Professional News Platform</title>
 
+  <!-- Force Light Mode - Must run before React loads -->
+  <script>
+    // Force light mode immediately before React loads
+    (function() {
+      const root = document.documentElement;
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.setAttribute('data-theme', 'light');
+      document.body.className = 'light-mode';
+      localStorage.setItem('theme', 'light');
+      localStorage.setItem('resolvedTheme', 'light');
+      
+      // Prevent system theme detection
+      if (window.matchMedia) {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        // Override any system theme detection
+        Object.defineProperty(mediaQuery, 'matches', {
+          get: function() { return false; }
+        });
+      }
+    })();
+  </script>
+
   <!-- Cloudinary Upload Widget -->
   <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
 
-<body>
+<body class="light-mode" style="background-color: #ffffff !important;">
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

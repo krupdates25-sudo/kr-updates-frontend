@@ -71,10 +71,26 @@ const PostPage = () => {
     }
   }, [slug]);
 
-  // Scroll to top when navigating to post details page
+  // Scroll to top immediately when navigating to post details page
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    // Immediate scroll to top (no smooth behavior for instant effect)
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Also ensure any scrollable containers are at top
+    const scrollableElements = document.querySelectorAll('[data-scroll-container]');
+    scrollableElements.forEach(el => {
+      el.scrollTop = 0;
+    });
   }, [slug]);
+
+  // Also scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
 
   // Fetch breaking news (defer: non-critical for initial post paint)
   useEffect(() => {

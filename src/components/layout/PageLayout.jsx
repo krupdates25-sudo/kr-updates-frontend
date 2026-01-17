@@ -65,7 +65,7 @@ const PageLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 lg:pb-0">
+    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
       {/* Sidebar - Hidden on mobile, visible on desktop, or hidden completely if hideSidebar is true */}
       {!effectiveHideSidebar && (
         <Sidebar
