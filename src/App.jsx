@@ -139,14 +139,10 @@ function App() {
                     }
                   />
 
-                  {/* Protected routes */}
+                  {/* Dashboard route - also accessible at /dashboard for logged-in users */}
                   <Route
                     path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
+                    element={<Dashboard />}
                   />
 
                   <Route
@@ -157,6 +153,9 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Public homepage - Dashboard */}
+                  <Route path="/" element={<Dashboard />} />
 
                   {/* Public user profile route */}
                   <Route path="/profile/:userId" element={<UserProfile />} />
@@ -325,11 +324,8 @@ function App() {
                     }
                   />
 
-                  {/* Default redirect */}
-                  <Route path="/" element={<Navigate to="/auth" replace />} />
-
-                  {/* Catch all route */}
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
+                  {/* Catch all route - redirect to homepage instead of login */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </div>
               </Router>
