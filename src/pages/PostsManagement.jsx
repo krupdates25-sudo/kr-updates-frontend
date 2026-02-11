@@ -118,6 +118,32 @@ const PostsManagement = () => {
     navigate(`/new-post/${post._id}`);
   };
 
+  const handleDeletePost = async (postId, postTitle) => {
+    if (!postId) return;
+    
+    // Show confirmation dialog
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete "${postTitle}"? This action cannot be undone.`
+    );
+    
+    if (!isConfirmed) return;
+
+    try {
+      setActionLoading(true);
+      await postService.deletePost(postId);
+
+      // Remove the post from the local state
+      setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
+
+      showNotification('Post deleted successfully', 'success');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showNotification('Error deleting post', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const showNotification = (message, type) => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 5000);
@@ -489,6 +515,19 @@ const PostsManagement = () => {
                                 <span className="hidden sm:inline">Show</span>
                               </>
                             )}
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post._id, post.title)}
+                            disabled={actionLoading}
+                            className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                              actionLoading
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'bg-red-600 text-white hover:bg-red-700'
+                            }`}
+                            title="Delete post"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            <span className="hidden sm:inline">Delete</span>
                           </button>
                           <button
                             onClick={() => handleViewDetails(post)}

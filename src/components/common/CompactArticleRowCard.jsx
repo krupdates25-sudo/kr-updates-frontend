@@ -1,8 +1,11 @@
-import { Clock } from 'lucide-react';
+import { Clock, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import postService from '../../services/postService';
 
 const CompactArticleRowCard = ({ article }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCardClick = () => {
     // Navigate directly to post details page
@@ -13,6 +16,37 @@ const CompactArticleRowCard = ({ article }) => {
       return;
     }
     navigate(`/post/${postSlug}`);
+  };
+
+  const handleDeletePost = async (e) => {
+    e.stopPropagation(); // Prevent card click
+    
+    if (!user || user.role !== 'admin') {
+      alert('Only admins can delete posts.');
+      return;
+    }
+
+    const postId = article._id || article.id;
+    if (!postId) {
+      console.error('No valid post ID found:', article);
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete "${article.title}"? This action cannot be undone.`
+    );
+    
+    if (!isConfirmed) return;
+
+    try {
+      await postService.deletePost(postId);
+      alert('Post deleted successfully');
+      // Refresh the page to show updated list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Failed to delete post. Please try again.');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -87,14 +121,26 @@ const CompactArticleRowCard = ({ article }) => {
         )}
 
         {/* Metadata - Compact */}
-        <div className="flex items-center gap-2 text-xs text-gray-500 mt-auto">
-          {date && (
-            <span>{formatDate(date)}</span>
-          )}
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>{readTime}</span>
+        <div className="flex items-center justify-between text-xs text-gray-500 mt-auto">
+          <div className="flex items-center gap-2">
+            {date && (
+              <span>{formatDate(date)}</span>
+            )}
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{readTime}</span>
+            </div>
           </div>
+          {/* Admin Delete Button */}
+          {user?.role === 'admin' && (
+            <button
+              onClick={handleDeletePost}
+              className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
+              title="Delete post"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
     </article>

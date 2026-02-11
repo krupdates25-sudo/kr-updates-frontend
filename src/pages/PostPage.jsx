@@ -16,6 +16,7 @@ import {
   X,
   Edit2,
   Save,
+  Trash2,
 } from 'lucide-react';
 // Custom share icons from assets
 import whatsappIcon from '../assets/whatsapp.png';
@@ -509,25 +510,20 @@ const PostPage = () => {
       setIsEditingReporter(false);
       return;
     }
-    
-    // Allow empty string to clear reporter name
-    const trimmedName = reporterName ? reporterName.trim() : "";
-    
-    setIsSavingReporter(true);
+
     try {
-      const response = await postService.updatePost(post._id, {
-        reporterName: trimmedName || null, // Send null if empty to clear reporter name
+      setIsSavingReporter(true);
+      await postService.updatePost(post._id, {
+        reporterName: reporterName.trim() || null,
       });
       
-      // Check response structure - ApiResponse returns { statusCode, data, message, success }
-      if (response && (response.success !== false) && (response.statusCode === 200 || response.statusCode < 400)) {
-        // Refresh post data to get updated reporterName
-        await fetchPostDetails();
-        setIsEditingReporter(false);
-        console.log('Reporter name updated successfully');
-      } else {
-        throw new Error(response?.message || 'Update failed');
-      }
+      setPost(prev => ({
+        ...prev,
+        reporterName: reporterName.trim() || null,
+      }));
+      
+      setIsEditingReporter(false);
+      console.log('Reporter name updated successfully');
     } catch (error) {
       console.error('Failed to update reporter name:', error);
       // Extract error message from various possible error structures
@@ -553,6 +549,28 @@ const PostPage = () => {
       setReporterName(post.reporterName || post.authorDisplayName || `${post.author.firstName} ${post.author.lastName}`);
     } finally {
       setIsSavingReporter(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!post || !user || user.role !== 'admin') {
+      alert('Only admins can delete posts.');
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete "${post.title}"? This action cannot be undone and the post will be permanently removed.`
+    );
+    
+    if (!isConfirmed) return;
+
+    try {
+      await postService.deletePost(post._id);
+      alert('Post deleted successfully');
+      navigate('/admin/posts'); // Redirect to admin posts management
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Failed to delete post. Please try again.');
     }
   };
 
@@ -1066,8 +1084,42 @@ const PostPage = () => {
                             </>
                           )}
                         </button>
+                        <button
+                          onClick={handleDeletePost}
+                          disabled={isApproving || isRejecting}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50 font-medium"
+                          title="Delete this post permanently"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Admin Actions Section for Published Posts */}
+                {user?.role === 'admin' && post?.status === 'published' && (
+                  <div className="mb-3 p-3 sm:p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <h3 className="text-sm sm:text-base font-semibold text-green-900">
+                        Published Post Actions
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-green-800 mb-3">
+                      This post is published and visible to all users. You can manage or delete it from here.
+                    </p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <button
+                        onClick={handleDeletePost}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        title="Delete this post permanently"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete Post
+                      </button>
+                    </div>
                   </div>
                 )}
 
