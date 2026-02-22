@@ -156,6 +156,15 @@ function App() {
                         }
                       />
 
+                      <Route
+                        path="/edit-post/:postId"
+                        element={
+                          <ProtectedRoute requiredRole="admin">
+                            <NewPost />
+                          </ProtectedRoute>
+                        }
+                      />
+
                       {/* Public homepage - Dashboard */}
                       <Route path="/" element={<Dashboard />} />
 

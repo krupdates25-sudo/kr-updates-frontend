@@ -1,4 +1,4 @@
-import { Clock, Trash2 } from 'lucide-react';
+import { Clock, Trash2, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/postService';
@@ -16,6 +16,12 @@ const CompactArticleRowCard = ({ article }) => {
       return;
     }
     navigate(`/post/${postSlug}`);
+  };
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    const postId = article._id || article.id;
+    navigate(`/edit-post/${postId}`);
   };
 
   const handleDeletePost = async (e) => {
@@ -131,15 +137,24 @@ const CompactArticleRowCard = ({ article }) => {
               <span>{readTime}</span>
             </div>
           </div>
-          {/* Admin Delete Button */}
+          {/* Admin buttons */}
           {user?.role === 'admin' && (
-            <button
-              onClick={handleDeletePost}
-              className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
-              title="Delete post"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={handleEdit}
+                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                title="Edit post"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+              <button
+                onClick={handleDeletePost}
+                className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
+                title="Delete post"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
           )}
         </div>
       </div>

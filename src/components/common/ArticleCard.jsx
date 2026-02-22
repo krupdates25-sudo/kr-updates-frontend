@@ -1,6 +1,7 @@
 import {
   Clock,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -36,6 +37,13 @@ const ArticleCard = ({
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInHours < 48) return 'Yesterday';
     return date.toLocaleDateString();
+  };
+
+  const handleEdit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const postId = article._id || article.id;
+    navigate(`/edit-post/${postId}`);
   };
 
   const handleDelete = async (e) => {
@@ -170,15 +178,24 @@ const ArticleCard = ({
           </div>
 
           {/* Actions - Only Delete Button */}
-          <div className="flex items-center justify-end mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
             {user?.role === 'admin' && (
-              <button
-                onClick={handleDelete}
-                className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
-                title="Delete post"
-              >
-                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
+              <>
+                <button
+                  onClick={handleEdit}
+                  className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                  title="Edit post"
+                >
+                  <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+                  title="Delete post"
+                >
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+              </>
             )}
           </div>
 
