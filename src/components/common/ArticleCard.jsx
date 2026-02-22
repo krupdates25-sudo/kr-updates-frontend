@@ -2,6 +2,7 @@ import {
   Clock,
   Trash2,
   Pencil,
+  MapPin,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -174,6 +175,15 @@ const ArticleCard = ({
               <span className="text-xs">{article.readTime?.split(' ')[0] || '5'}m</span>
             </div>
             <span className="text-xs">•</span>
+            {article.location && (
+              <>
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <MapPin className="w-3 h-3 text-blue-500" />
+                  <span className="text-xs">{article.location}</span>
+                </div>
+                <span className="text-xs">•</span>
+              </>
+            )}
             <span className="text-xs">{formatDate(article.publishedAt || new Date())}</span>
           </div>
 
@@ -242,7 +252,7 @@ const ArticleCard = ({
             </div>
           </div> */}
         </div>
-      </article>
+      </article >
     </>
   );
 };

@@ -1,4 +1,4 @@
-import { Clock, Trash2, Pencil } from 'lucide-react';
+import { Clock, Trash2, Pencil, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import postService from '../../services/postService';
@@ -136,6 +136,12 @@ const CompactArticleRowCard = ({ article }) => {
               <Clock className="w-3 h-3" />
               <span>{readTime}</span>
             </div>
+            {article.location && (
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-blue-500" />
+                <span>{article.location}</span>
+              </div>
+            )}
           </div>
           {/* Admin buttons */}
           {user?.role === 'admin' && (

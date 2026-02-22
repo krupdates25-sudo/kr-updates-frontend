@@ -163,50 +163,6 @@ const Header = ({
 
         {/* Right side - Icons and User menu */}
         <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-3 flex-1">
-          {/* Location Selector */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setIsLocationMenuOpen(!isLocationMenuOpen);
-                setIsLanguageMenuOpen(false);
-                setIsUserMenuOpen(false);
-              }}
-              className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 group"
-              title="Filter by location"
-            >
-              <MapPin className={`w-5 h-5 ${currentLocation !== 'All' ? 'text-blue-600' : 'text-gray-600'} group-hover:scale-110 transition-transform`} />
-              <span className="hidden lg:inline text-xs font-medium text-gray-700 max-w-[100px] truncate">
-                {currentLocation}
-              </span>
-            </button>
-
-            {isLocationMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsLocationMenuOpen(false)} />
-                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden py-1">
-                  <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select Location</span>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto no-scrollbar">
-                    {locations.map((loc) => (
-                      <button
-                        key={loc}
-                        onClick={() => {
-                          setLocation(loc);
-                          setIsLocationMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 ${currentLocation === loc ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-700'
-                          }`}
-                      >
-                        {loc}
-                        {currentLocation === loc && <Check className="w-4 h-4" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
 
           {/* Language Selector */}
           <div className="relative">
@@ -338,8 +294,8 @@ const Header = ({
                           <p className="text-sm text-gray-600">{user?.email}</p>
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full mt-1 capitalize ${isAdmin
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-gray-100 text-gray-700'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-gray-100 text-gray-700'
                               }`}
                           >
                             {isAdmin && <Shield className="w-3 h-3" />}
@@ -387,9 +343,36 @@ const Header = ({
         </div>
       </div>
 
+      {/* Location Tabs Row */}
+      {(location.pathname === '/' || location.pathname === '/dashboard') && (
+        <div className="px-3 sm:px-4 md:px-6 pb-2 border-b border-gray-50">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
+            </div>
+            {locations.map((loc) => {
+              const isActive = currentLocation === loc;
+              return (
+                <button
+                  key={loc}
+                  onClick={() => setLocation(loc)}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${isActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-200 border-blue-600 scale-105'
+                      : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
+                    }`}
+                >
+                  {loc}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Tag chips row (max 5) */}
       {showTagRow && (
-        <div className="px-3 sm:px-4 md:px-6 pb-2 -mt-1">
+        <div className="px-3 sm:px-4 md:px-6 pb-2 mt-1">
           <div className="flex items-center justify-center gap-2 overflow-x-auto no-scrollbar py-1">
             {topTags.slice(0, 5).map((tag) => {
               const isActive = activeTag && String(activeTag).toLowerCase() === String(tag).toLowerCase();
@@ -398,8 +381,8 @@ const Header = ({
                   key={tag}
                   onClick={() => handleTagClick(tag)}
                   className={`whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${isActive
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                     }`}
                 >
                   {tag}

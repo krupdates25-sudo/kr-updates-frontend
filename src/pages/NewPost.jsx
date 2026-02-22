@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  MapPin,
   Save,
   Eye,
   Tag,
@@ -44,6 +45,7 @@ const NewPost = () => {
     excerpt: '',
     reporterName: '', // Reporter name (News by)
     category: '',
+    location: 'Kishangarh Renwal', // Where the news happened
     tags: [],
     featuredImage: null,
     featuredVideo: null,
@@ -89,6 +91,7 @@ const NewPost = () => {
           excerpt: post.excerpt || '',
           reporterName: post.reporterName || '',
           category: post.category || '',
+          location: post.location || 'Kishangarh Renwal',
           tags: Array.isArray(post.tags) ? post.tags : [],
           featuredImage: post.featuredImage || null,
           featuredVideo: post.featuredVideo || null,
@@ -147,6 +150,28 @@ const NewPost = () => {
       }));
     }
   }, [errors]);
+
+  const handleAutoDetectLocation = useCallback(() => {
+    const content = `${formData.title} ${formData.content}`.toLowerCase();
+    const possibleLocations = [
+      { name: 'Kishangarh Renwal', keywords: ['kishangarh', 'renwal', 'किशनगढ़', 'रेनवाल'] },
+      { name: 'Jaipur', keywords: ['jaipur', 'जयपुर'] },
+      { name: 'Rajasthan', keywords: ['rajasthan', 'राजस्थान'] },
+      { name: 'New Delhi', keywords: ['delhi', 'दिल्ली'] },
+      { name: 'Mumbai', keywords: ['mumbai', 'बंबई', 'मुंबई'] },
+      { name: 'Ahmedabad', keywords: ['ahmedabad', 'अहमदाबाद'] },
+      { name: 'Udaipur', keywords: ['udaipur', 'उदयपुर'] },
+      { name: 'Jodhpur', keywords: ['jodhpur', 'जोधपुर'] },
+      { name: 'Sikar', keywords: ['sikar', 'सीकर'] },
+    ];
+
+    for (const loc of possibleLocations) {
+      if (loc.keywords.some(k => content.includes(k))) {
+        handleInputChange('location', loc.name);
+        return;
+      }
+    }
+  }, [formData.title, formData.content, handleInputChange]);
 
   const handleAddTag = useCallback(() => {
     if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
@@ -281,21 +306,21 @@ const NewPost = () => {
       }
 
       // Show success message
-      const successMessage = 
+      const successMessage =
         finalStatus === 'published'
           ? 'Post published successfully!'
           : user?.role === 'admin'
-          ? 'Post saved as draft successfully!'
-          : 'Post saved as draft and submitted for review. Admin will review and publish it.';
-      
+            ? 'Post saved as draft successfully!'
+            : 'Post saved as draft and submitted for review. Admin will review and publish it.';
+
       alert(successMessage);
       navigate(isEditing ? '/admin/posts' : '/dashboard');
     } catch (error) {
       console.error('Error saving post:', error);
-      
+
       // Extract error message from various error formats
       let errorMessage = 'Error saving post. Please try again.';
-      
+
       if (error?.response?.data) {
         const errorData = error.response.data;
         if (errorData.message) {
@@ -310,7 +335,7 @@ const NewPost = () => {
       } else if (typeof error === 'string') {
         errorMessage = error;
       }
-      
+
       alert(errorMessage);
     } finally {
       setIsLoading(false);
@@ -487,485 +512,524 @@ const NewPost = () => {
         `
       }} />
       <div className="min-h-screen">
-          {/* Page Header */}
-          <div className="bg-white border-b border-gray-200">
-            <div className="px-4 sm:px-6 py-4 sm:py-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => navigate(isEditing ? '/admin/posts' : '/dashboard')}
-                    className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                      {isEditing ? 'Edit Post' : 'Create New Post'}
-                    </h1>
-                    <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                      {isEditing ? 'Update your post details' : 'Share your thoughts with the world'}
-                    </p>
-                  </div>
+        {/* Page Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => navigate(isEditing ? '/admin/posts' : '/dashboard')}
+                  className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                    {isEditing ? 'Edit Post' : 'Create New Post'}
+                  </h1>
+                  <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                    {isEditing ? 'Update your post details' : 'Share your thoughts with the world'}
+                  </p>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setShowPreview(!showPreview)}
-                    className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm sm:text-base"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span className="hidden sm:inline">{showPreview ? 'Edit' : 'Preview'}</span>
-                  </button>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="hidden sm:inline">{showPreview ? 'Edit' : 'Preview'}</span>
+                </button>
 
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm sm:text-base"
+                >
+                  <Save className="w-4 h-4" />
+                  <span className="hidden sm:inline">Save Draft</span>
+                  <span className="sm:hidden">Draft</span>
+                </button>
+
+                {/* Only show Publish button for Admin users */}
+                {user?.role === 'admin' && (
                   <button
-                    onClick={handleSaveDraft}
+                    onClick={handlePublish}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm sm:text-base"
+                    className="flex items-center gap-2 px-4 sm:px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
                   >
-                    <Save className="w-4 h-4" />
-                    <span className="hidden sm:inline">Save Draft</span>
-                    <span className="sm:hidden">Draft</span>
+                    <Sparkles className="w-4 h-4" />
+                    {isLoading ? 'Publishing...' : 'Publish'}
                   </button>
+                )}
 
-                  {/* Only show Publish button for Admin users */}
-                  {user?.role === 'admin' && (
-                    <button
-                      onClick={handlePublish}
-                      disabled={isLoading}
-                      className="flex items-center gap-2 px-4 sm:px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium text-sm sm:text-base"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      {isLoading ? 'Publishing...' : 'Publish'}
-                    </button>
-                  )}
-                  
-                  {/* Show info message for non-admin users */}
-                  {user?.role !== 'admin' && (
-                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs sm:text-sm">
-                      <span>Posts require admin approval</span>
-                    </div>
-                  )}
-                </div>
+                {/* Show info message for non-admin users */}
+                {user?.role !== 'admin' && (
+                  <div className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs sm:text-sm">
+                    <span>Posts require admin approval</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Breaking News Ticker removed from editor */}
+        {/* Breaking News Ticker removed from editor */}
 
-          {/* Content Area */}
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8">
-            <div className="w-full">
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
-                {/* Main Content */}
-                <div className="xl:col-span-2 space-y-4 sm:space-y-6">
-                  {/* Heading */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      <FileText className="w-4 h-4 inline mr-2" />
-                      Heading
+        {/* Content Area */}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-4 sm:py-6 md:py-8">
+          <div className="w-full">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+              {/* Main Content */}
+              <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+                {/* Heading */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <FileText className="w-4 h-4 inline mr-2" />
+                    Heading
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) =>
+                      handleInputChange('title', e.target.value)
+                    }
+                    placeholder="Enter your post heading..."
+                    className="w-full text-xl sm:text-2xl font-bold border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
+                  />
+                  {errors.title && (
+                    <p className="text-red-500 text-sm mt-2">
+                      {errors.title}
+                    </p>
+                  )}
+                </div>
+
+                {/* Description (Short Subheading) */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <FileText className="w-4 h-4 inline mr-2" />
+                    Description (Short Subheading)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.description}
+                    onChange={(e) =>
+                      handleInputChange('description', e.target.value)
+                    }
+                    placeholder="Enter a short description or subheading..."
+                    className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
+                    maxLength={200}
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    {formData.description.length}/200 characters
+                  </p>
+                </div>
+
+                {/* Rich Text Editor */}
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      <Hash className="w-4 h-4 inline mr-2" />
+                      Content
                     </label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) =>
-                        handleInputChange('title', e.target.value)
-                      }
-                      placeholder="Enter your post heading..."
-                      className="w-full text-xl sm:text-2xl font-bold border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
-                    />
-                    {errors.title && (
-                      <p className="text-red-500 text-sm mt-2">
-                        {errors.title}
-                      </p>
-                    )}
+
+                    {/* AI Buttons */}
+                    <div className="flex items-center gap-2">
+
+
+                      <button
+                        onClick={handleImproveContent}
+                        disabled={aiLoading || !formData.content.trim()}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Improve existing content"
+                      >
+                        {aiLoading ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Brain className="w-3 h-3" />
+                        )}
+                        <span className="hidden sm:inline">AI Improve</span>
+                      </button>
+                    </div>
                   </div>
+                  <RichTextEditor
+                    key={isEditing ? String(postId) : 'new-post'}
+                    content={formData.content}
+                    onChange={(content) =>
+                      handleInputChange('content', content)
+                    }
+                    placeholder="Start writing your amazing post..."
+                  />
+                  {errors.content && (
+                    <p className="text-red-500 text-sm p-4">
+                      {errors.content}
+                    </p>
+                  )}
+                </div>
 
-                  {/* Description (Short Subheading) */}
+                {/* Excerpt */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      <FileText className="w-4 h-4 inline mr-2" />
+                      Excerpt (Optional)
+                    </label>
+
+                    <button
+                      onClick={handleGenerateExcerpt}
+                      disabled={aiLoading || !formData.content.trim()}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Generate excerpt from content"
+                    >
+                      {aiLoading ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Lightbulb className="w-3 h-3" />
+                      )}
+                      AI Excerpt
+                    </button>
+                  </div>
+                  <textarea
+                    value={formData.excerpt}
+                    onChange={(e) =>
+                      handleInputChange('excerpt', e.target.value)
+                    }
+                    placeholder="Brief description of your post..."
+                    rows={3}
+                    className="w-full border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
+                  />
+                </div>
+
+                {/* Reporter Name (News by) - Admin only */}
+                {user?.role === 'admin' && (
                   <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      <FileText className="w-4 h-4 inline mr-2" />
-                      Description (Short Subheading)
+                      <User className="w-4 h-4 inline mr-2" />
+                      Reporter Name (News by)
                     </label>
                     <input
                       type="text"
-                      value={formData.description}
+                      value={formData.reporterName}
                       onChange={(e) =>
-                        handleInputChange('description', e.target.value)
+                        handleInputChange('reporterName', e.target.value)
                       }
-                      placeholder="Enter a short description or subheading..."
+                      placeholder="Enter reporter name (optional)..."
+                      maxLength={100}
                       className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
-                      maxLength={200}
                     />
                     <p className="text-xs text-gray-500 mt-2">
-                      {formData.description.length}/200 characters
+                      {formData.reporterName.length}/100 characters - Leave empty to use author name
                     </p>
                   </div>
+                )}
+              </div>
 
-                  {/* Rich Text Editor */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        <Hash className="w-4 h-4 inline mr-2" />
-                        Content
-                      </label>
+              {/* Sidebar */}
+              <div className="space-y-4 sm:space-y-6 xl:sticky xl:top-6">
+                {/* Featured Media (Image or Video) with Tabs */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  {/* Tabs */}
+                  <div className="flex gap-2 mb-4 p-1 bg-gray-100 rounded-lg">
+                    <button
+                      onClick={() => handleMediaTypeChange('image')}
+                      className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${mediaType === 'image'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                      <ImageIcon className="w-4 h-4 inline mr-2" />
+                      Image
+                    </button>
+                    <button
+                      onClick={() => handleMediaTypeChange('video')}
+                      className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${mediaType === 'video'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                      <Video className="w-4 h-4 inline mr-2" />
+                      Video
+                    </button>
+                  </div>
 
-                      {/* AI Buttons */}
-                      <div className="flex items-center gap-2">
-        
+                  {/* Media Upload Component */}
+                  {mediaType === 'image' ? (
+                    <CloudinaryUpload
+                      onUpload={handleImageUpload}
+                      currentImage={formData.featuredImage}
+                      onRemove={handleImageRemove}
+                      type="image"
+                    />
+                  ) : (
+                    <CloudinaryUpload
+                      onUpload={handleVideoUpload}
+                      currentImage={formData.featuredVideo}
+                      onRemove={handleVideoRemove}
+                      type="video"
+                    />
+                  )}
+                </div>
 
+                {/* Location Selection */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      <MapPin className="w-4 h-4 inline mr-2 text-blue-500" />
+                      News Location
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAutoDetectLocation}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
+                      title="Search title and content for location keywords"
+                    >
+                      <Wand2 className="w-3 h-3" />
+                      Detect
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      placeholder="Where did this happen?"
+                      className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
+                    />
+
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {['Kishangarh Renwal', 'Jaipur', 'Rajasthan', 'Sikar', 'New Delhi'].map((loc) => (
                         <button
-                          onClick={handleImproveContent}
-                          disabled={aiLoading || !formData.content.trim()}
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Improve existing content"
+                          key={loc}
+                          type="button"
+                          onClick={() => handleInputChange('location', loc)}
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${formData.location === loc
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
                         >
-                          {aiLoading ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Brain className="w-3 h-3" />
-                          )}
-                          <span className="hidden sm:inline">AI Improve</span>
+                          {loc}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-4">
+                    <Hash className="w-4 h-4 inline mr-2" />
+                    Category
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={formData.category}
+                      onChange={(e) =>
+                        handleInputChange('category', e.target.value)
+                      }
+                      placeholder="Enter custom category or select from suggestions below..."
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all duration-200 ease-in-out"
+                    />
+                    <div className="text-xs text-gray-500 mb-2">
+                      Popular categories:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() =>
+                            handleInputChange('category', category)
+                          }
+                          className="px-3 py-1 text-xs bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 rounded-full transition-colors"
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {errors.category && (
+                    <p className="text-red-500 text-sm mt-2">
+                      {errors.category}
+                    </p>
+                  )}
+                </div>
+
+                {/* Post Flags (Admin-only) */}
+                {user?.role === 'admin' && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-4">
+                      Feed Flags
+                    </label>
+
+                    <div className="space-y-4">
+                      {/* Trending toggle */}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">
+                            Trending
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Show this post in the Trending section
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleInputChange('isTrending', !formData.isTrending)
+                          }
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${formData.isTrending ? 'bg-blue-600' : 'bg-gray-200'
+                            }`}
+                          aria-label="Toggle Trending"
+                          aria-pressed={formData.isTrending}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${formData.isTrending ? 'translate-x-5' : 'translate-x-1'
+                              }`}
+                          />
                         </button>
                       </div>
-                    </div>
-                    <RichTextEditor
-                      key={isEditing ? String(postId) : 'new-post'}
-                      content={formData.content}
-                      onChange={(content) =>
-                        handleInputChange('content', content)
-                      }
-                      placeholder="Start writing your amazing post..."
-                    />
-                    {errors.content && (
-                      <p className="text-red-500 text-sm p-4">
-                        {errors.content}
+
+                      {/* Featured toggle */}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">
+                            Featured
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Highlight this post in Featured areas
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleInputChange('isFeatured', !formData.isFeatured)
+                          }
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${formData.isFeatured ? 'bg-blue-600' : 'bg-gray-200'
+                            }`}
+                          aria-label="Toggle Featured"
+                          aria-pressed={formData.isFeatured}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${formData.isFeatured ? 'translate-x-5' : 'translate-x-1'
+                              }`}
+                          />
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-gray-500">
+                        These flags control “Trending” and “Featured” sections in the feed.
                       </p>
-                    )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tags */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      <Tag className="w-4 h-4 inline mr-2" />
+                      Tags
+                    </label>
+
+                    <button
+                      onClick={handleSuggestTags}
+                      disabled={
+                        aiLoading ||
+                        !formData.title ||
+                        !formData.content.trim()
+                      }
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="AI suggest relevant tags"
+                    >
+                      {aiLoading ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3 h-3" />
+                      )}
+                      AI Tags
+                    </button>
                   </div>
 
-                  {/* Excerpt */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        <FileText className="w-4 h-4 inline mr-2" />
-                        Excerpt (Optional)
-                      </label>
-
-                      <button
-                        onClick={handleGenerateExcerpt}
-                        disabled={aiLoading || !formData.content.trim()}
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Generate excerpt from content"
-                      >
-                        {aiLoading ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Lightbulb className="w-3 h-3" />
-                        )}
-                        AI Excerpt
-                      </button>
-                    </div>
-                    <textarea
-                      value={formData.excerpt}
-                      onChange={(e) =>
-                        handleInputChange('excerpt', e.target.value)
-                      }
-                      placeholder="Brief description of your post..."
-                      rows={3}
-                      className="w-full border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={currentTag}
+                      onChange={(e) => setCurrentTag(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Add tags..."
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ease-in-out"
                     />
+                    <button
+                      onClick={handleAddTag}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      Add Tag
+                    </button>
                   </div>
 
-                  {/* Reporter Name (News by) - Admin only */}
-                  {user?.role === 'admin' && (
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">
-                        <User className="w-4 h-4 inline mr-2" />
-                        Reporter Name (News by)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.reporterName}
-                        onChange={(e) =>
-                          handleInputChange('reporterName', e.target.value)
-                        }
-                        placeholder="Enter reporter name (optional)..."
-                        maxLength={100}
-                        className="w-full text-base sm:text-lg border-0 bg-transparent placeholder-gray-400 focus:outline-none focus:ring-0 resize-none transition-all duration-200 ease-in-out"
-                      />
-                      <p className="text-xs text-gray-500 mt-2">
-                        {formData.reporterName.length}/100 characters - Leave empty to use author name
-                      </p>
+                  {formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {formData.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                        >
+                          {tag}
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 text-blue-500 hover:text-blue-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* Sidebar */}
-                <div className="space-y-4 sm:space-y-6 xl:sticky xl:top-6">
-                  {/* Featured Media (Image or Video) with Tabs */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                    {/* Tabs */}
-                    <div className="flex gap-2 mb-4 p-1 bg-gray-100 rounded-lg">
-                      <button
-                        onClick={() => handleMediaTypeChange('image')}
-                        className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          mediaType === 'image'
-                            ? 'bg-white text-blue-600 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <ImageIcon className="w-4 h-4 inline mr-2" />
-                        Image
-                      </button>
-                      <button
-                        onClick={() => handleMediaTypeChange('video')}
-                        className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          mediaType === 'video'
-                            ? 'bg-white text-blue-600 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        <Video className="w-4 h-4 inline mr-2" />
-                        Video
-                      </button>
-                    </div>
+                {/* Advanced Settings */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <button
+                    onClick={() =>
+                      setShowAdvancedSettings(!showAdvancedSettings)
+                    }
+                    className="flex items-center justify-between w-full text-sm font-semibold text-gray-700 mb-4"
+                  >
+                    <span>
+                      <Settings className="w-4 h-4 inline mr-2" />
+                      Advanced Settings
+                    </span>
+                    <span className={`transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`}>
+                      ▼
+                    </span>
+                  </button>
 
-                    {/* Media Upload Component */}
-                    {mediaType === 'image' ? (
-                      <CloudinaryUpload
-                        onUpload={handleImageUpload}
-                        currentImage={formData.featuredImage}
-                        onRemove={handleImageRemove}
-                        type="image"
-                      />
-                    ) : (
-                      <CloudinaryUpload
-                        onUpload={handleVideoUpload}
-                        currentImage={formData.featuredVideo}
-                        onRemove={handleVideoRemove}
-                        type="video"
-                      />
-                    )}
-                  </div>
-
-                  {/* Category */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-4">
-                      <Hash className="w-4 h-4 inline mr-2" />
-                      Category
-                    </label>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={formData.category}
-                        onChange={(e) =>
-                          handleInputChange('category', e.target.value)
-                        }
-                        placeholder="Enter custom category or select from suggestions below..."
-                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-all duration-200 ease-in-out"
-                      />
-                      <div className="text-xs text-gray-500 mb-2">
-                        Popular categories:
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {categories.map((category) => (
-                          <button
-                            key={category}
-                            type="button"
-                            onClick={() =>
-                              handleInputChange('category', category)
-                            }
-                            className="px-3 py-1 text-xs bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 rounded-full transition-colors"
-                          >
-                            {category}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {errors.category && (
-                      <p className="text-red-500 text-sm mt-2">
-                        {errors.category}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Post Flags (Admin-only) */}
-                  {user?.role === 'admin' && (
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                      <label className="block text-sm font-semibold text-gray-700 mb-4">
-                        Feed Flags
-                      </label>
-
-                      <div className="space-y-4">
-                        {/* Trending toggle */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">
-                              Trending
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Show this post in the Trending section
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleInputChange('isTrending', !formData.isTrending)
-                            }
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                              formData.isTrending ? 'bg-blue-600' : 'bg-gray-200'
-                            }`}
-                            aria-label="Toggle Trending"
-                            aria-pressed={formData.isTrending}
-                          >
-                            <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                                formData.isTrending ? 'translate-x-5' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        {/* Featured toggle */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">
-                              Featured
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Highlight this post in Featured areas
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleInputChange('isFeatured', !formData.isFeatured)
-                            }
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                              formData.isFeatured ? 'bg-blue-600' : 'bg-gray-200'
-                            }`}
-                            aria-label="Toggle Featured"
-                            aria-pressed={formData.isFeatured}
-                          >
-                            <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                                formData.isFeatured ? 'translate-x-5' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                        </div>
-
-                        <p className="text-xs text-gray-500">
-                          These flags control “Trending” and “Featured” sections in the feed.
-                        </p>
+                  {showAdvancedSettings && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          <Calendar className="w-4 h-4 inline mr-2" />
+                          Publish Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={formData.publishedAt}
+                          onChange={(e) =>
+                            handleInputChange('publishedAt', e.target.value)
+                          }
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+                        />
                       </div>
                     </div>
                   )}
-
-                  {/* Tags */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        <Tag className="w-4 h-4 inline mr-2" />
-                        Tags
-                      </label>
-
-                      <button
-                        onClick={handleSuggestTags}
-                        disabled={
-                          aiLoading ||
-                          !formData.title ||
-                          !formData.content.trim()
-                        }
-                        className="flex items-center gap-1 px-2 py-1 text-xs bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="AI suggest relevant tags"
-                      >
-                        {aiLoading ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Sparkles className="w-3 h-3" />
-                        )}
-                        AI Tags
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={currentTag}
-                        onChange={(e) => setCurrentTag(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Add tags..."
-                        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ease-in-out"
-                      />
-                      <button
-                        onClick={handleAddTag}
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                      >
-                        Add Tag
-                      </button>
-                    </div>
-
-                    {formData.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        {formData.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                          >
-                            {tag}
-                            <button
-                              onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 text-blue-500 hover:text-blue-700"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Advanced Settings */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                    <button
-                      onClick={() =>
-                        setShowAdvancedSettings(!showAdvancedSettings)
-                      }
-                      className="flex items-center justify-between w-full text-sm font-semibold text-gray-700 mb-4"
-                    >
-                      <span>
-                        <Settings className="w-4 h-4 inline mr-2" />
-                        Advanced Settings
-                      </span>
-                      <span className={`transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`}>
-                        ▼
-                      </span>
-                    </button>
-
-                    {showAdvancedSettings && (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-3">
-                            <Calendar className="w-4 h-4 inline mr-2" />
-                            Publish Date
-                          </label>
-                          <input
-                            type="datetime-local"
-                            value={formData.publishedAt}
-                            onChange={(e) =>
-                              handleInputChange('publishedAt', e.target.value)
-                            }
-                            className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
       </div>
     </PageLayout>
   );

@@ -30,7 +30,7 @@ const Dashboard = () => {
   const location = useLocation();
   const { user, refreshProfile } = useAuth();
   const { settings } = useSettings();
-  const { location: currentLocation } = useLanguageLocation();
+  const { location: currentLocation, setLocation } = useLanguageLocation();
   const [activeTab, setActiveTab] = useState('feed');
   const [sortBy, setSortBy] = useState('latest');
   const [filterBy, setFilterBy] = useState('all');
@@ -858,19 +858,97 @@ const Dashboard = () => {
         {!loading &&
           filteredAndSortedArticles.length === 0 &&
           articles.length === 0 && (
-            <div className="text-center py-16 px-6">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <span className="text-4xl">📝</span>
+            <div className="flex flex-col items-center justify-center py-20 px-6">
+
+              {/* Animated SVG Illustration */}
+              <div className="relative mb-8 select-none">
+                <svg
+                  width="220" height="180"
+                  viewBox="0 0 220 180"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="drop-shadow-lg"
+                >
+                  {/* Background blob */}
+                  <ellipse cx="110" cy="155" rx="80" ry="16" fill="#E8ECFF" />
+
+                  {/* Newspaper / document */}
+                  <rect x="45" y="28" width="130" height="115" rx="12" fill="#ffffff" stroke="#C7D2FE" strokeWidth="2" />
+                  {/* Header strip */}
+                  <rect x="45" y="28" width="130" height="28" rx="12" fill="#6366F1" />
+                  <rect x="45" y="44" width="130" height="12" fill="#6366F1" />
+                  {/* Lines of text */}
+                  <rect x="62" y="72" width="96" height="7" rx="3.5" fill="#E0E7FF" />
+                  <rect x="62" y="86" width="72" height="7" rx="3.5" fill="#E0E7FF" />
+                  <rect x="62" y="100" width="84" height="7" rx="3.5" fill="#E0E7FF" />
+                  <rect x="62" y="114" width="52" height="7" rx="3.5" fill="#E0E7FF" />
+                  {/* Newspaper header text (white bars) */}
+                  <rect x="62" y="35" width="60" height="5" rx="2.5" fill="white" opacity="0.8" />
+                  <rect x="130" y="35" width="28" height="5" rx="2.5" fill="white" opacity="0.5" />
+
+                  {/* Magnifying glass — animated */}
+                  <g style={{ transformOrigin: '155px 85px', animation: 'searchBob 2.4s ease-in-out infinite' }}>
+                    <circle cx="155" cy="72" r="26" fill="#EEF2FF" stroke="#6366F1" strokeWidth="3" />
+                    <circle cx="155" cy="72" r="18" fill="white" stroke="#A5B4FC" strokeWidth="2" />
+                    {/* X inside glass */}
+                    <line x1="148" y1="65" x2="162" y2="79" stroke="#F87171" strokeWidth="2.5" strokeLinecap="round" />
+                    <line x1="162" y1="65" x2="148" y2="79" stroke="#F87171" strokeWidth="2.5" strokeLinecap="round" />
+                    {/* Handle */}
+                    <line x1="174" y1="91" x2="182" y2="101" stroke="#6366F1" strokeWidth="3.5" strokeLinecap="round" />
+                  </g>
+
+                  {/* Floating dots */}
+                  <circle cx="38" cy="55" r="6" fill="#A5B4FC" style={{ animation: 'floatA 3s ease-in-out infinite' }} />
+                  <circle cx="185" cy="120" r="5" fill="#FCA5A5" style={{ animation: 'floatB 3.6s ease-in-out infinite' }} />
+                  <circle cx="60" cy="150" r="4" fill="#6EE7B7" style={{ animation: 'floatA 2.8s ease-in-out infinite 0.4s' }} />
+                </svg>
+
+                {/* Inline keyframes */}
+                <style>{`
+                  @keyframes searchBob {
+                    0%, 100% { transform: translateY(0) rotate(-6deg); }
+                    50% { transform: translateY(-10px) rotate(6deg); }
+                  }
+                  @keyframes floatA {
+                    0%, 100% { transform: translateY(0); opacity: 0.7; }
+                    50% { transform: translateY(-8px); opacity: 1; }
+                  }
+                  @keyframes floatB {
+                    0%, 100% { transform: translateY(0); opacity: 0.6; }
+                    50% { transform: translateY(10px); opacity: 1; }
+                  }
+                `}</style>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                No articles found
+
+              {/* Text */}
+              <h3 className="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">
+                No news found
+                {currentLocation && currentLocation !== 'All' ? ` in ${currentLocation}` : ''}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Try adjusting your filters or check back later for new
-                content.
+              <p className="text-sm sm:text-base text-gray-500 max-w-xs text-center leading-relaxed mb-8">
+                We couldn't find any stories for this location right now. Try a different area or browse all the latest news.
               </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  onClick={() => setLocation('All')}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition-all duration-200"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                  Browse All News
+                </button>
+                <button
+                  onClick={() => setLocation('Kishangarh Renwal')}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full border-2 border-indigo-200 text-indigo-700 text-sm font-semibold hover:bg-indigo-50 active:scale-95 transition-all duration-200"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                  Kishangarh Renwal
+                </button>
+              </div>
             </div>
           )}
+
       </div>
     </PageLayout>
   );
