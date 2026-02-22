@@ -68,7 +68,7 @@ const ArticleCard = ({
   return (
     <>
       <article
-        className="bg-white dark:bg-gray-800 rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col"
+        className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col"
         style={{ borderColor: '#e5e7eb' }}
         onClick={handleCardClick}
       >
@@ -157,19 +157,19 @@ const ArticleCard = ({
           )}
 
           {/* Title (Heading) */}
-          <h2 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2 leading-tight">
+          <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-1 line-clamp-2 leading-tight">
             {article.title || article.heading}
           </h2>
 
           {/* Subheading (Description) */}
           {article.description && (
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 sm:mb-2 line-clamp-2 leading-snug">
+            <p className="text-xs text-gray-600 mb-1.5 sm:mb-2 line-clamp-2 leading-snug">
               {article.description}
             </p>
           )}
 
           {/* Meta info */}
-          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-gray-500 mb-1.5 sm:mb-2">
             <div className="flex items-center gap-0.5 sm:gap-1">
               <Clock className="w-3 h-3" />
               <span className="text-xs">{article.readTime?.split(' ')[0] || '5'}m</span>

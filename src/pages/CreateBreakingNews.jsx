@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   Calendar,
   Tag,
+  MapPin,
 } from 'lucide-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
 import PageLayout from '../components/layout/PageLayout';
@@ -31,6 +32,7 @@ const CreateBreakingNews = () => {
     category: 'General',
     priority: 1,
     expiresAt: '',
+    location: 'Kishangarh Renwal',
     tags: [],
   });
   const [errors, setErrors] = useState({});
@@ -56,10 +58,10 @@ const CreateBreakingNews = () => {
       if (response.success && response.data) {
         const story = response.data;
         // Format expiresAt for datetime-local input (YYYY-MM-DDTHH:mm)
-        const expiresAtFormatted = story.expiresAt 
+        const expiresAtFormatted = story.expiresAt
           ? new Date(story.expiresAt).toISOString().slice(0, 16)
           : '';
-        
+
         setFormData({
           title: story.title || '',
           excerpt: story.excerpt || '',
@@ -68,6 +70,7 @@ const CreateBreakingNews = () => {
           category: story.category || 'General',
           priority: story.priority || 1,
           expiresAt: expiresAtFormatted,
+          location: story.location || 'Kishangarh Renwal',
           tags: story.tags || [],
         });
       }
@@ -138,6 +141,7 @@ const CreateBreakingNews = () => {
         category: formData.category,
         priority: formData.priority || 1,
         expiresAt: expiresAtDate,
+        location: formData.location || 'Kishangarh Renwal',
         tags: formData.tags || [],
       };
 
@@ -331,6 +335,36 @@ const CreateBreakingNews = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* Location */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <MapPin className="w-4 h-4 inline mr-2" />
+                    News Location
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    placeholder="Where did this happen?"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {['Kishangarh Renwal', 'Jaipur', 'Rajasthan', 'New Delhi'].map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => handleInputChange('location', loc)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${formData.location === loc
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                      >
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Priority */}

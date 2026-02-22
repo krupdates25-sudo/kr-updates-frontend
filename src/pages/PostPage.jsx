@@ -1253,42 +1253,35 @@ const PostPage = () => {
               {/* Mobile/Tablet: Recommendations below content (prevents empty-feel) */}
               <div className="lg:hidden mt-4 space-y-4">
                 {/* Similar Posts */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                    <h3 className="text-base font-bold text-blue-900 dark:text-blue-100">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50/30">
+                    <h3 className="text-base font-black text-blue-900 flex items-center gap-2">
+                      <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
                       Similar Posts
                     </h3>
                   </div>
-                  <div>
+                  <div className="divide-y divide-gray-50">
                     {loadingSimilarPosts ? (
-                      <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      <div className="p-6 text-center text-gray-400 text-sm italic">
                         Loading...
                       </div>
                     ) : similarPosts.length > 0 ? (
-                      similarPosts.slice(0, 6).map((item, idx, array) => {
+                      similarPosts.slice(0, 6).map((item, idx) => {
                         const postSlug = item.slug || String(item._id || '');
                         return (
                           <div
                             key={item._id || idx}
-                            className={`p-3 sm:p-4 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-colors ${idx !== array.length - 1
-                              ? 'border-b border-gray-200 dark:border-gray-700'
-                              : ''
-                              }`}
+                            className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all group"
                             onClick={() => navigate(`/post/${postSlug}`)}
                           >
-                            <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                            <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2 leading-tight">
                               {item.title}
                             </p>
-                            <div className="flex items-center gap-2 text-xs">
-                              {item.category && (
-                                <>
-                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
-                                    {item.category}
-                                  </span>
-                                  <span className="text-gray-400 dark:text-gray-500">•</span>
-                                </>
-                              )}
-                              <span className="text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center justify-between">
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded border border-blue-100">
+                                {item.category || 'News'}
+                              </span>
+                              <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
                                 {item.viewCount || item.views || 0} views
                               </span>
                             </div>
@@ -1296,7 +1289,7 @@ const PostPage = () => {
                         );
                       })
                     ) : (
-                      <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      <div className="p-6 text-center text-gray-400 text-sm">
                         No similar posts found
                       </div>
                     )}
@@ -1304,44 +1297,40 @@ const PostPage = () => {
                 </div>
 
                 {/* Breaking News */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
-                    <h3 className="text-base font-bold text-red-900 dark:text-red-100">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+                  <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-orange-50/30">
+                    <h3 className="text-lg font-black text-red-900 tracking-tight flex items-center gap-2">
+                      <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
                       Breaking News
                     </h3>
                   </div>
-                  <div>
+                  <div className="divide-y divide-gray-50">
                     {loadingBreakingNews ? (
-                      <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                        Loading breaking news...
+                      <div className="p-8 text-center text-gray-400 text-sm italic">
+                        Loading updates...
                       </div>
                     ) : breakingNews.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                      <div className="p-8 text-center text-gray-400 text-sm">
                         No breaking news available
                       </div>
                     ) : (
-                      breakingNews.slice(0, 6).map((item, idx, array) => (
+                      breakingNews.slice(0, 6).map((item, idx) => (
                         <div
                           key={item._id || idx}
-                          className={`p-3 sm:p-4 hover:bg-red-50 dark:hover:bg-red-900/10 cursor-pointer transition-colors ${idx !== array.length - 1
-                            ? 'border-b border-gray-200 dark:border-gray-700'
-                            : ''
-                            }`}
+                          className="p-4 hover:bg-red-50/50 cursor-pointer transition-all duration-300 group"
                           onClick={() => navigate(`/breaking-news/${item._id}`)}
                         >
-                          <div className="flex items-start gap-3">
-                            <span className="text-base font-bold text-red-600 dark:text-red-400 flex-shrink-0">
+                          <div className="flex items-start gap-4">
+                            <span className="text-xl font-black text-red-200 group-hover:text-red-600 transition-colors leading-none">
                               {idx + 1}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                              <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-red-600 line-clamp-2 leading-tight">
                                 {item.title}
                               </p>
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-medium">
-                                  {item.category}
-                                </span>
-                              </div>
+                              <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded border border-red-100">
+                                {item.category}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1353,44 +1342,37 @@ const PostPage = () => {
             </div>
 
             {/* Right Sidebar - Similar Posts, Breaking News */}
-            <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
+            <aside className="hidden lg:block w-85 flex-shrink-0 space-y-6">
               {/* Similar Posts */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
-                  <h3 className="text-base font-bold text-blue-900 dark:text-blue-100">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50/30">
+                  <h3 className="text-lg font-black text-blue-900 tracking-tight flex items-center gap-2">
+                    <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
                     Similar Posts
                   </h3>
                 </div>
-                <div>
+                <div className="divide-y divide-gray-50">
                   {loadingSimilarPosts ? (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                      Loading...
+                    <div className="p-8 text-center text-gray-400 text-sm italic">
+                      Finding related news...
                     </div>
                   ) : similarPosts.length > 0 ? (
-                    similarPosts.map((item, idx, array) => {
+                    similarPosts.map((item, idx) => {
                       const postSlug = item.slug || String(item._id || '');
                       return (
                         <div
                           key={item._id || idx}
-                          className={`p-3 sm:p-4 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-colors ${idx !== array.length - 1
-                            ? 'border-b border-gray-200 dark:border-gray-700'
-                            : ''
-                            }`}
+                          className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all duration-300 group"
                           onClick={() => navigate(`/post/${postSlug}`)}
                         >
-                          <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                          <p className="text-sm font-bold text-gray-900 mb-3 group-hover:text-blue-600 line-clamp-2 leading-tight">
                             {item.title}
                           </p>
-                          <div className="flex items-center gap-2 text-xs">
-                            {item.category && (
-                              <>
-                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded font-medium">
-                                  {item.category}
-                                </span>
-                                <span className="text-gray-400 dark:text-gray-500">•</span>
-                              </>
-                            )}
-                            <span className="text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded border border-blue-100">
+                              {item.category || 'News'}
+                            </span>
+                            <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
                               {item.viewCount || item.views || 0} views
                             </span>
                           </div>
@@ -1398,7 +1380,7 @@ const PostPage = () => {
                       );
                     })
                   ) : (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    <div className="p-8 text-center text-gray-400 text-sm">
                       No similar posts found
                     </div>
                   )}
@@ -1406,44 +1388,40 @@ const PostPage = () => {
               </div>
 
               {/* Breaking News */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
-                  <h3 className="text-base font-bold text-red-900 dark:text-red-100">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-orange-50/30">
+                  <h3 className="text-lg font-black text-red-900 tracking-tight flex items-center gap-2">
+                    <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
                     Breaking News
                   </h3>
                 </div>
-                <div>
+                <div className="divide-y divide-gray-50">
                   {loadingBreakingNews ? (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                      Loading breaking news...
+                    <div className="p-8 text-center text-gray-400 text-sm italic">
+                      Fetching latest...
                     </div>
                   ) : breakingNews.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                      No breaking news available
+                    <div className="p-8 text-center text-gray-400 text-sm">
+                      No breaking news active
                     </div>
                   ) : (
-                    breakingNews.map((item, idx, array) => (
+                    breakingNews.map((item, idx) => (
                       <div
                         key={item._id || idx}
-                        className={`p-3 sm:p-4 hover:bg-red-50 dark:hover:bg-red-900/10 cursor-pointer transition-colors ${idx !== array.length - 1
-                          ? 'border-b border-gray-200 dark:border-gray-700'
-                          : ''
-                          }`}
+                        className="p-4 hover:bg-red-50/50 cursor-pointer transition-all duration-300 group"
                         onClick={() => navigate(`/breaking-news/${item._id}`)}
                       >
-                        <div className="flex items-start gap-3">
-                          <span className="text-base font-bold text-red-600 dark:text-red-400 flex-shrink-0">
+                        <div className="flex items-start gap-4">
+                          <span className="text-xl font-black text-red-200 group-hover:text-red-600 transition-colors leading-none">
                             {idx + 1}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                            <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-red-600 line-clamp-2 leading-tight">
                               {item.title}
                             </p>
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-medium">
-                                {item.category}
-                              </span>
-                            </div>
+                            <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded border border-red-100">
+                              {item.category}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1451,7 +1429,6 @@ const PostPage = () => {
                   )}
                 </div>
               </div>
-
             </aside>
           </div>
         </div>
@@ -1466,32 +1443,32 @@ const PostPage = () => {
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
               <div
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 pointer-events-auto"
+                className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col border border-gray-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+                  <h3 className="text-lg font-semibold text-gray-900">
                     Share Article
                   </h3>
                   <button
                     onClick={() => setShowShareModal(false)}
-                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
                     aria-label="Close"
                   >
-                    <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <X className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
 
                 {/* Preview Section - Scrollable */}
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 overflow-y-auto flex-1 min-h-0">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                <div className="p-4 border-b border-gray-200 overflow-y-auto flex-1 min-h-0">
+                  <p className="text-xs text-gray-500 mb-3">
                     Preview of link preview card (as it will appear on WhatsApp/Facebook):
                   </p>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden shadow-sm">
+                  <div className="bg-white rounded-lg border border-gray-300 overflow-hidden shadow-sm">
                     {(displayPost?.featuredImage?.url || displayPost?.featuredVideo?.thumbnail) && (
                       <div
-                        className="w-full h-32 bg-gray-100 dark:bg-gray-700 overflow-hidden"
+                        className="w-full h-32 bg-gray-100 overflow-hidden"
                         data-protected-content
                       >
                         <img
@@ -1518,16 +1495,16 @@ const PostPage = () => {
                       </div>
                     )}
                     <div className="p-3 space-y-2">
-                      <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">
+                      <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">
                         {displayPost?.title}
                       </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
                         {displayPost?.excerpt || displayPost?.description || 'Read the full article on KR Updates'}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                      <p className="text-xs text-gray-500 font-medium">
                         KR Updates
                       </p>
-                      <p className="text-xs text-blue-600 dark:text-blue-400 break-all pt-1 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-xs text-blue-600 break-all pt-1 border-t border-gray-200">
                         {`${typeof window !== 'undefined' ? window.location.origin : ''}/post/${displayPost?.slug || String(displayPost?._id || '')}`}
                       </p>
                     </div>
@@ -1538,28 +1515,28 @@ const PostPage = () => {
                 <div className="p-4 space-y-3 flex-shrink-0">
                   <button
                     onClick={() => handleShare('whatsapp')}
-                    className="w-full flex items-center justify-center gap-3 p-3 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 rounded-lg transition-colors border border-green-200 dark:border-green-800"
+                    className="w-full flex items-center justify-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
                   >
                     <img
                       src={whatsappIcon}
                       alt="WhatsApp"
                       className="w-6 h-6 object-contain"
                     />
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <span className="text-sm font-medium text-gray-900">
                       Share on WhatsApp
                     </span>
                   </button>
 
                   <button
                     onClick={() => handleShare('copy')}
-                    className="w-full flex items-center justify-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
+                    className="w-full flex items-center justify-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
                   >
                     <img
                       src={linkIcon}
                       alt="Copy Link"
                       className="w-6 h-6 object-contain"
                     />
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <span className="text-sm font-medium text-gray-900">
                       Copy Link
                     </span>
                   </button>
