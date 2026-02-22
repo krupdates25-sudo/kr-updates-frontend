@@ -894,10 +894,21 @@ const PostPage = () => {
                     Translating...
                   </div>
                 )}
-                {translatedPost && (
+                {!isTranslating && translatedPost && (
                   <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded text-[10px] font-bold uppercase tracking-wider z-10">
                     Translated
                   </div>
+                )}
+                {/* Admin — Edit button */}
+                {user?.role === 'admin' && !isTranslating && !translatedPost && post?._id && (
+                  <button
+                    onClick={() => navigate(`/edit-post/${post._id}`)}
+                    className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white rounded-full text-xs font-semibold shadow hover:bg-blue-700 transition-colors"
+                    title="Edit this post"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    Edit
+                  </button>
                 )}
                 {/* Category and Tags */}
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
