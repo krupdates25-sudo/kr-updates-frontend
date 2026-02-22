@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, Share2, MapPin, Maximize2, X, Clock } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Share2, MapPin, Maximize2, X, Clock, Calendar, Eye, User } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import PageLayout from '../components/layout/PageLayout';
 import { breakingNewsService } from '../services/breakingNewsService';
 import postService from '../services/postService';
+import translateService from '../services/translateService';
 import AdContainer from '../components/common/AdContainer';
+import { useLanguageLocation } from '../contexts/LanguageLocationContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 const BreakingNewsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { settings } = useSettings();
+  const { language: currentLanguage } = useLanguageLocation();
   const [story, setStory] = useState(null);
+  const [translatedStory, setTranslatedStory] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [recommendedPosts, setRecommendedPosts] = useState([]);
@@ -31,6 +39,42 @@ const BreakingNewsPage = () => {
     fetchMoreBreaking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Translation logic
+  useEffect(() => {
+    const translateContent = async () => {
+      if (currentLanguage === 'en' && story && story.content) {
+        setIsTranslating(true);
+        try {
+          const [titleRes, contentRes, excerptRes] = await Promise.all([
+            translateService.translateText(story.title, 'en'),
+            translateService.translateText(story.content, 'en'),
+            story.excerpt
+              ? translateService.translateText(story.excerpt, 'en')
+              : Promise.resolve({ translatedText: '' })
+          ]);
+
+          setTranslatedStory({
+            ...story,
+            title: titleRes.translatedText || story.title,
+            content: contentRes.translatedText || story.content,
+            excerpt: story.excerpt ? (excerptRes.translatedText || story.excerpt) : story.excerpt
+          });
+        } catch (error) {
+          console.error('Translation failed:', error);
+        } finally {
+          setIsTranslating(false);
+        }
+      } else {
+        setTranslatedStory(null);
+      }
+    };
+
+    translateContent();
+  }, [currentLanguage, story]);
+
+  // Use translated content if available
+  const displayStory = translatedStory || story;
 
   // Update Open Graph meta tags for sharing previews (WhatsApp, Facebook, etc.)
   useEffect(() => {
@@ -335,6 +379,11 @@ const BreakingNewsPage = () => {
 
   return (
     <PageLayout activeTab="feed">
+      <Helmet>
+        <title>{displayStory?.title || 'Breaking News'} - KR Updates</title>
+        <meta name="description" content={displayStory?.excerpt || displayStory?.title} />
+      </Helmet>
+
       {/* Back Bar (matches PostPage style) */}
       <div className="bg-white border-b border-gray-200">
         <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
@@ -391,35 +440,78 @@ const BreakingNewsPage = () => {
                 <span className="px-3 py-1 bg-red-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-full shadow-sm animate-pulse">
                   Breaking News
                 </span>
-                {story?.category && (
+                {displayStory?.category && (
                   <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] sm:text-xs font-bold rounded-full border border-indigo-100">
-                    {story.category}
+                    {displayStory.category}
                   </span>
                 )}
-                {story.location && (
+                {displayStory?.location && (
                   <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] sm:text-xs font-bold rounded-full border border-emerald-100">
                     <MapPin className="w-3 h-3" />
-                    {story.location}
+                    {displayStory.location}
                   </span>
                 )}
-                <div className="flex items-center gap-2 text-gray-400">
-                  <span className="text-[10px] sm:text-xs">•</span>
-                  <div className="flex items-center gap-1.5 text-gray-500 text-[10px] sm:text-xs font-medium">
-                    <Clock className="w-3.5 h-3.5" />
-                    {formatDate(story?.createdAt || story?.updatedAt)}
-                  </div>
-                </div>
+                {isTranslating && (
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded animate-pulse">
+                    Translating...
+                  </span>
+                )}
+                {translatedStory && (
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">
+                    TRANSLATED
+                  </span>
+                )}
               </div>
 
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4 tracking-tight">
-                {story.title}
+                {displayStory?.title}
               </h1>
 
-              {story.excerpt && (
-                <p className="text-gray-600 text-base sm:text-lg leading-relaxed font-semibold italic border-l-4 border-red-500 pl-4 py-1">
-                  {story.excerpt}
+              {displayStory?.excerpt && (
+                <p className="text-gray-600 text-base sm:text-lg leading-relaxed font-semibold italic border-l-4 border-red-500 pl-4 py-1 mb-4">
+                  {displayStory.excerpt}
                 </p>
               )}
+
+              {/* Metadata - Premium Style like PostPage */}
+              <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate(displayStory?.publishedAt || displayStory?.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    <span>{displayStory?.readingTime || 2} min read</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="w-4 h-4" />
+                    <span>{displayStory?.viewCount || story?.views || 0} views</span>
+                  </div>
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
+                  </button>
+                </div>
+
+                {/* Publisher Row */}
+                <div className="flex items-center gap-3 pt-3 border-t border-gray-200">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
+                    <User className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
+                      Publisher
+                    </span>
+                    <span className="text-sm font-black text-gray-900 leading-none">
+                      {settings?.siteName || 'KR UPDATES'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Content */}
@@ -428,7 +520,7 @@ const BreakingNewsPage = () => {
                 <div
                   className="text-gray-800 leading-relaxed space-y-4"
                   dangerouslySetInnerHTML={{
-                    __html: story?.content || '',
+                    __html: displayStory?.content || '',
                   }}
                 />
               </div>

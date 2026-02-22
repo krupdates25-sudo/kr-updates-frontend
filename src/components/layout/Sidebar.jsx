@@ -40,7 +40,7 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
   // Check user permissions
   const isAdmin = user?.role === 'admin';
   const isModerator = user?.role === 'moderator';
-  
+
   // On mobile, sidebar should only be visible for Admin and Moderator
   // Regular users should use bottom navigation instead
   const shouldShowSidebarOnMobile = isAdmin || isModerator;
@@ -196,31 +196,28 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
             onTabChange(item.id);
           }
         }}
-        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors relative rounded-lg mx-2 ${
-          isActive
-            ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-        }`}
+        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors relative rounded-lg mx-2 ${isActive
+            ? 'bg-gray-100 text-gray-900 font-semibold'
+            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+          }`}
       >
         {/* Active indicator */}
         {isActive && (
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-800 dark:bg-gray-200 rounded-r-full"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-900 rounded-r-full"></div>
         )}
         <Icon
-          className={`w-5 h-5 transition-colors ${
-            isActive
-              ? 'text-gray-800 dark:text-gray-200'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}
+          className={`w-5 h-5 transition-colors ${isActive
+              ? 'text-gray-900'
+              : 'text-gray-500'
+            }`}
         />
         <span className="flex-1 font-medium truncate">{item.label}</span>
         {item.count && (
           <span
-            className={`text-xs px-2 py-1 rounded-full font-semibold transition-colors ${
-              isActive
-                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-            }`}
+            className={`text-xs px-2 py-1 rounded-full font-semibold transition-colors ${isActive
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-600'
+              }`}
           >
             {item.count}
           </span>
@@ -236,7 +233,7 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
       <button
         key={item.id}
         onClick={() => navigate(item.path)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors relative rounded-lg mx-2 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors relative rounded-lg mx-2 text-gray-700 hover:bg-red-50 hover:text-red-600"
       >
         <Icon className="w-5 h-5 text-red-500" />
         <span className="flex-1 font-medium truncate">{item.label}</span>
@@ -258,9 +255,9 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
       <div
         className={`
         fixed inset-y-0 left-0 z-50 w-72 
-        bg-white dark:bg-gray-800
+        bg-white
         transform transition-transform duration-300 ease-in-out flex-col h-screen 
-        shadow-xl border-r border-gray-200 dark:border-gray-700
+        shadow-xl border-r border-gray-200
         overflow-hidden
         hidden lg:flex
         ${isOpen ? 'lg:translate-x-0' : '-translate-x-full'}
@@ -268,14 +265,14 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
           <Logo size="md" />
           <button
             onClick={onToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Close sidebar"
           >
-            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
@@ -302,7 +299,7 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
           {isAdmin && (
             <div className="mt-8">
               <div className="px-6 py-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-red-600 flex items-center gap-2">
                   <Shield className="w-3 h-3" />
                   Administration
                 </h3>
@@ -316,21 +313,19 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
 
         {/* Settings - Admin Only */}
         {isAdmin && (
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="border-t border-gray-200 p-4">
             <button
               onClick={() => navigate('/admin/settings')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                activeTab === 'settings'
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'settings'
+                  ? 'bg-gray-100 text-gray-900 font-semibold'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
             >
               <Settings
-                className={`w-5 h-5 ${
-                  activeTab === 'settings'
-                    ? 'text-gray-800 dark:text-gray-200'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
+                className={`w-5 h-5 ${activeTab === 'settings'
+                    ? 'text-gray-900'
+                    : 'text-gray-500'
+                  }`}
               />
               <span className="font-medium truncate">Settings</span>
             </button>
