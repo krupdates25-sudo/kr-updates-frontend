@@ -67,46 +67,46 @@ const ArticleCard = ({
         {(article.featuredImage?.url ||
           article.featuredVideo?.url ||
           article.image) && (
-          <div
-            className="h-28 sm:h-32 md:h-36 overflow-hidden flex-shrink-0 relative bg-white flex items-center justify-center p-1.5 sm:p-2"
-          >
-            {article.featuredVideo?.url ? (
-              <video
-                src={article.featuredVideo.url}
-                className="w-full h-full object-contain"
-                muted
-                playsInline
-                poster={
-                  article.featuredVideo.thumbnail || article.featuredImage?.url
-                }
-              />
-            ) : (
-              <img
-                src={article.featuredImage?.url || article.image}
-                alt={article.featuredImage?.alt || article.title}
-                className="w-full h-full object-contain"
-                loading="lazy"
-                onError={(e) => {
-                  // Fallback to placeholder image if the main image fails to load
-                  e.target.src =
-                    'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=600&fit=crop&auto=format';
-                }}
-              />
-            )}
-            {article.featuredVideo?.url && (
-              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                </svg>
-                Video
-              </div>
-            )}
-          </div>
-        )}
+            <div
+              className="aspect-video overflow-hidden flex-shrink-0 relative bg-gray-100 flex items-center justify-center"
+            >
+              {article.featuredVideo?.url ? (
+                <video
+                  src={article.featuredVideo.url}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  poster={
+                    article.featuredVideo.thumbnail || article.featuredImage?.url
+                  }
+                />
+              ) : (
+                <img
+                  src={article.featuredImage?.url || article.image}
+                  alt={article.featuredImage?.alt || article.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Fallback to placeholder image if the main image fails to load
+                    e.target.src =
+                      'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=600&fit=crop&auto=format';
+                  }}
+                />
+              )}
+              {article.featuredVideo?.url && (
+                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                  <svg
+                    className="w-3 h-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                  </svg>
+                  Video
+                </div>
+              )}
+            </div>
+          )}
 
         {/* Placeholder for posts without media */}
         {!article.featuredImage?.url &&

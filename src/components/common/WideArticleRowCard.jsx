@@ -20,7 +20,7 @@ const WideArticleRowCard = ({ article }) => {
 
   const handleDeletePost = async (e) => {
     e.stopPropagation(); // Prevent card click
-    
+
     if (!user || user.role !== 'admin') {
       alert('Only admins can delete posts.');
       return;
@@ -35,7 +35,7 @@ const WideArticleRowCard = ({ article }) => {
     const isConfirmed = window.confirm(
       `Are you sure you want to delete "${article.title}"? This action cannot be undone.`
     );
-    
+
     if (!isConfirmed) return;
 
     try {
@@ -75,7 +75,7 @@ const WideArticleRowCard = ({ article }) => {
     >
       {/* Image on Left */}
       {imageUrl && (
-        <div className="w-32 sm:w-40 md:w-48 flex-shrink-0 overflow-hidden bg-gray-100">
+        <div className="w-32 sm:w-40 md:w-48 aspect-video flex-shrink-0 overflow-hidden bg-gray-100">
           {article.featuredVideo?.url ? (
             <video
               src={article.featuredVideo.url}
@@ -88,7 +88,7 @@ const WideArticleRowCard = ({ article }) => {
             <img
               src={imageUrl}
               alt={article.featuredImage?.alt || title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
               onError={(e) => {
                 e.target.src =

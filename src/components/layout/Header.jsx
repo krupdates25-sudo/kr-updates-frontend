@@ -5,7 +5,11 @@ import {
   LogOut,
   ChevronDown,
   Shield,
+  MapPin,
+  Globe,
+  Check,
 } from 'lucide-react';
+import { useLanguageLocation } from '../../contexts/LanguageLocationContext';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -34,6 +38,27 @@ const Header = ({
     email: '',
   });
   const { user, logout } = useAuth();
+  const { location: currentLocation, setLocation, language: currentLanguage, setLanguage } = useLanguageLocation();
+  const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+
+  const locations = [
+    'All',
+    'Kishangarh Renwal',
+    'Jaipur',
+    'Rajasthan',
+    'New Delhi',
+    'Mumbai',
+    'Ahmedabad',
+    'Udaipur',
+    'Jodhpur',
+    'Sikar'
+  ];
+
+  const languages = [
+    { code: 'hi', name: 'Hindi' },
+    { code: 'en', name: 'English' }
+  ];
   const isStaff = !!user && ['admin', 'moderator'].includes(user.role);
 
   const handleLogout = async () => {
@@ -91,9 +116,9 @@ const Header = ({
     } catch (e) {
       setUpdatesError(
         (typeof e === 'string' && e) ||
-          e?.message ||
-          e?.response?.data?.message ||
-          'Failed to save details. Please try again.'
+        e?.message ||
+        e?.response?.data?.message ||
+        'Failed to save details. Please try again.'
       );
     } finally {
       setUpdatesSubmitting(false);
@@ -117,13 +142,13 @@ const Header = ({
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
           {/* Burger Menu Button - Desktop only (only for authenticated users) */}
           {isStaff && (
-          <button
-            onClick={onSidebarToggle}
+            <button
+              onClick={onSidebarToggle}
               className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="w-5 h-5 text-gray-600" />
-          </button>
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="w-5 h-5 text-gray-600" />
+            </button>
           )}
         </div>
 
@@ -136,30 +161,117 @@ const Header = ({
           <Logo size="md" />
         </button>
 
-        {/* Right side - Notifications (Desktop) and User menu */}
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-3 flex-1">
+        {/* Right side - Icons and User menu */}
+        <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-3 flex-1">
+          {/* Location Selector */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsLocationMenuOpen(!isLocationMenuOpen);
+                setIsLanguageMenuOpen(false);
+                setIsUserMenuOpen(false);
+              }}
+              className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 group"
+              title="Filter by location"
+            >
+              <MapPin className={`w-5 h-5 ${currentLocation !== 'All' ? 'text-blue-600' : 'text-gray-600'} group-hover:scale-110 transition-transform`} />
+              <span className="hidden lg:inline text-xs font-medium text-gray-700 max-w-[100px] truncate">
+                {currentLocation}
+              </span>
+            </button>
+
+            {isLocationMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsLocationMenuOpen(false)} />
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                  <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select Location</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto no-scrollbar">
+                    {locations.map((loc) => (
+                      <button
+                        key={loc}
+                        onClick={() => {
+                          setLocation(loc);
+                          setIsLocationMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 ${currentLocation === loc ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-700'
+                          }`}
+                      >
+                        {loc}
+                        {currentLocation === loc && <Check className="w-4 h-4" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsLanguageMenuOpen(!isLanguageMenuOpen);
+                setIsLocationMenuOpen(false);
+                setIsUserMenuOpen(false);
+              }}
+              className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 group"
+              title="Select language"
+            >
+              <Globe className={`w-5 h-5 ${currentLanguage === 'hi' ? 'text-blue-600' : 'text-gray-600'} group-hover:rotate-12 transition-transform`} />
+              <span className="hidden lg:inline text-xs font-medium text-gray-700">
+                {languages.find(l => l.code === currentLanguage)?.name || 'Language'}
+              </span>
+            </button>
+
+            {isLanguageMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsLanguageMenuOpen(false)} />
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                  <div className="px-4 py-2 border-b border-gray-100 bg-gray-50">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Select Language</span>
+                  </div>
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setIsLanguageMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 ${currentLanguage === lang.code ? 'text-blue-600 font-semibold bg-blue-50/50' : 'text-gray-700'
+                        }`}
+                    >
+                      {lang.name}
+                      {currentLanguage === lang.code && <Check className="w-4 h-4" />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           {/* Notifications - Desktop only (only for authenticated users) */}
           {isStaff && (
             <div className="hidden lg:block relative">
-            <button
-              onClick={() => setIsAnnouncementOpen(!isAnnouncementOpen)}
+              <button
+                onClick={() => setIsAnnouncementOpen(!isAnnouncementOpen)}
                 className="relative p-2 md:p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
-            >
+              >
                 <Bell className="w-5 h-5 text-gray-600" />
-              {unreadCount > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold shadow-lg animate-pulse">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
 
-            <AnnouncementDropdown
-              isOpen={isAnnouncementOpen}
-              onClose={() => setIsAnnouncementOpen(false)}
-              unreadCount={unreadCount}
-              onUnreadCountChange={setUnreadCount}
-            />
-          </div>
+              <AnnouncementDropdown
+                isOpen={isAnnouncementOpen}
+                onClose={() => setIsAnnouncementOpen(false)}
+                unreadCount={unreadCount}
+                onUnreadCountChange={setUnreadCount}
+              />
+            </div>
           )}
 
           {/* Desktop: Want updates? CTA (Public users only) */}
@@ -198,9 +310,8 @@ const Header = ({
                   </p>
                 </div>
                 <ChevronDown
-                  className={`hidden md:block w-4 h-4 transition-transform duration-200 text-gray-500 ${
-                    isUserMenuOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`hidden md:block w-4 h-4 transition-transform duration-200 text-gray-500 ${isUserMenuOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
 
@@ -226,11 +337,10 @@ const Header = ({
                           </p>
                           <p className="text-sm text-gray-600">{user?.email}</p>
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full mt-1 capitalize ${
-                              isAdmin
+                            className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full mt-1 capitalize ${isAdmin
                                 ? 'bg-red-100 text-red-700'
                                 : 'bg-gray-100 text-gray-700'
-                            }`}
+                              }`}
                           >
                             {isAdmin && <Shield className="w-3 h-3" />}
                             {user?.role}
@@ -287,11 +397,10 @@ const Header = ({
                 <button
                   key={tag}
                   onClick={() => handleTagClick(tag)}
-                  className={`whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    isActive
+                  className={`whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${isActive
                       ? 'bg-blue-600 text-white border-blue-600'
                       : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   {tag}
                 </button>
@@ -340,89 +449,89 @@ const Header = ({
           />
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
             <div className="w-full sm:max-w-md bg-white shadow-2xl rounded-t-2xl sm:rounded-2xl">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-blue-600" />
-                <h2 className="text-base font-semibold text-gray-900">Want updates?</h2>
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-base font-semibold text-gray-900">Want updates?</h2>
+                </div>
+                <button
+                  onClick={() => setIsUpdatesOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Close"
+                >
+                  <span className="text-gray-500 text-xl leading-none">×</span>
+                </button>
               </div>
-              <button
-                onClick={() => setIsUpdatesOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Close"
-              >
-                <span className="text-gray-500 text-xl leading-none">×</span>
-              </button>
-            </div>
 
-            <div className="p-4 space-y-3">
-              {!updatesSubmitted ? (
-                <>
-                  <p className="text-sm text-gray-600">
-                    Share your details and we’ll keep you updated.
-                  </p>
+              <div className="p-4 space-y-3">
+                {!updatesSubmitted ? (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      Share your details and we’ll keep you updated.
+                    </p>
 
-                  {updatesError && (
-                    <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
-                      {updatesError}
+                    {updatesError && (
+                      <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
+                        {updatesError}
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <input
+                        value={updatesForm.name}
+                        onChange={(e) => setUpdatesForm((p) => ({ ...p, name: e.target.value }))}
+                        placeholder="Your name"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <input
+                        value={updatesForm.phone}
+                        onChange={(e) => setUpdatesForm((p) => ({ ...p, phone: e.target.value }))}
+                        placeholder="Mobile number"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <input
+                        value={updatesForm.email}
+                        onChange={(e) => setUpdatesForm((p) => ({ ...p, email: e.target.value }))}
+                        placeholder="Email (optional)"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
                     </div>
-                  )}
 
-                  <div className="space-y-2">
-                    <input
-                      value={updatesForm.name}
-                      onChange={(e) => setUpdatesForm((p) => ({ ...p, name: e.target.value }))}
-                      placeholder="Your name"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                    <input
-                      value={updatesForm.phone}
-                      onChange={(e) => setUpdatesForm((p) => ({ ...p, phone: e.target.value }))}
-                      placeholder="Mobile number"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                    <input
-                      value={updatesForm.email}
-                      onChange={(e) => setUpdatesForm((p) => ({ ...p, email: e.target.value }))}
-                      placeholder="Email (optional)"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => setIsUpdatesOpen(false)}
+                        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                      >
+                        Not now
+                      </button>
+                      <button
+                        onClick={handleUpdatesSubmit}
+                        disabled={updatesSubmitting}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {updatesSubmitting ? 'Saving...' : 'Submit'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-6 text-center">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                      <span className="text-green-700 text-2xl">✓</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">Thank you!</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      We received your details.
+                    </p>
                     <button
                       onClick={() => setIsUpdatesOpen(false)}
-                      className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+                      className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                     >
-                      Not now
-                    </button>
-                    <button
-                      onClick={handleUpdatesSubmit}
-                      disabled={updatesSubmitting}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {updatesSubmitting ? 'Saving...' : 'Submit'}
+                      Done
                     </button>
                   </div>
-                </>
-              ) : (
-                <div className="py-6 text-center">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
-                    <span className="text-green-700 text-2xl">✓</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Thank you!</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    We received your details.
-                  </p>
-                  <button
-                    onClick={() => setIsUpdatesOpen(false)}
-                    className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                  >
-                    Done
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
           </div>
         </>
       )}

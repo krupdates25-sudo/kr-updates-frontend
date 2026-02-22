@@ -12,6 +12,7 @@ import { useSocket } from '../contexts/SocketContext';
 import AdContainer from '../components/common/AdContainer';
 import BreakingNewsBanner from '../components/common/BreakingNewsBanner';
 import { useSettings } from '../contexts/SettingsContext';
+import { useLanguageLocation } from '../contexts/LanguageLocationContext';
 import { setHomepageSEO } from '../utils/seo';
 
 import usePagination from '../hooks/usePagination';
@@ -29,6 +30,7 @@ const Dashboard = () => {
   const location = useLocation();
   const { user, refreshProfile } = useAuth();
   const { settings } = useSettings();
+  const { location: currentLocation } = useLanguageLocation();
   const [activeTab, setActiveTab] = useState('feed');
   const [sortBy, setSortBy] = useState('latest');
   const [filterBy, setFilterBy] = useState('all');
@@ -167,7 +169,10 @@ const Dashboard = () => {
             response = await postService.getPostsByCategory(activeTab);
             break;
           default:
-            response = await postService.getAllPosts(params);
+            response = await postService.getAllPosts({
+              ...params,
+              location: currentLocation
+            });
         }
 
         // The postService returns the API response object which contains:
@@ -235,7 +240,7 @@ const Dashboard = () => {
         throw error;
       }
     },
-    [activeTab]
+    [activeTab, currentLocation]
   );
 
   // Use pagination hook with 8 posts per page
@@ -251,7 +256,7 @@ const Dashboard = () => {
     refresh,
   } = usePagination(fetchPosts, {
     limit: 20,
-    dependencies: [activeTab],
+    dependencies: [activeTab, currentLocation],
     transformData: transformArticleData,
   });
 
@@ -293,28 +298,28 @@ const Dashboard = () => {
   // Join/leave post rooms for real-time updates (only for authenticated users)
   useEffect(() => {
     if (!isAuthenticated || !articles || articles.length === 0) return;
-    
-      // Join rooms for all visible posts
+
+    // Join rooms for all visible posts
+    articles.forEach((article) => {
+      if (article._id) {
+        joinPost(article._id);
+      }
+    });
+
+    // Cleanup: leave rooms when articles change
+    return () => {
       articles.forEach((article) => {
         if (article._id) {
-          joinPost(article._id);
+          leavePost(article._id);
         }
       });
-
-      // Cleanup: leave rooms when articles change
-      return () => {
-        articles.forEach((article) => {
-          if (article._id) {
-            leavePost(article._id);
-          }
-        });
-      };
+    };
   }, [articles, joinPost, leavePost, isAuthenticated]);
 
   // Listen for real-time updates on posts (likes, comments, shares, trending status) - only for authenticated users
   useEffect(() => {
     if (!isAuthenticated || !socket || !connected) return;
-    
+
     const handlePostUpdate = (data) => {
       console.log('Post updated:', data);
       // Refresh posts when they're updated
@@ -452,19 +457,19 @@ const Dashboard = () => {
       profiles.length > 0
         ? profiles
         : [
-            {
-              platform: 'youtube',
-              url: settings?.socialLinks?.youtube || 'https://www.youtube.com/',
-              enabled: true,
-              placements: ['dashboard_follow'],
-            },
-            {
-              platform: 'facebook',
-              url: settings?.socialLinks?.facebook || 'https://www.facebook.com/',
-              enabled: true,
-              placements: ['dashboard_follow'],
-            },
-          ];
+          {
+            platform: 'youtube',
+            url: settings?.socialLinks?.youtube || 'https://www.youtube.com/',
+            enabled: true,
+            placements: ['dashboard_follow'],
+          },
+          {
+            platform: 'facebook',
+            url: settings?.socialLinks?.facebook || 'https://www.facebook.com/',
+            enabled: true,
+            placements: ['dashboard_follow'],
+          },
+        ];
 
     return derived.filter(
       (p) =>
@@ -591,8 +596,8 @@ const Dashboard = () => {
   }, [activeTab]);
 
   return (
-    <PageLayout 
-      activeTab={activeTab} 
+    <PageLayout
+      activeTab={activeTab}
       onTabChange={handleTabChange}
       hideSidebar={!isAuthenticated}
       hideBottomNav={!isAuthenticated}
@@ -672,31 +677,31 @@ const Dashboard = () => {
               ))}
             </div>
 
-                {/* Extra Sections (real content + modern cards) */}
-                <div className="mt-6 sm:mt-10 space-y-6">
-                  {/* Education (band background without viewport overflow) */}
-                  <section className="-mx-3 sm:-mx-4 md:-mx-6 border-y border-blue-100 bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50 py-5 sm:py-7">
-                    <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
-                      {/* OUTER header */}
-                      <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
-                        <div className="min-w-0">
-                          <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                            Education Updates
-                          </h3>
-                          <p className="text-sm sm:text-base text-gray-600">
-                            Latest exams, results, admissions & scholarships
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => navigate('/explore?category=education')}
-                          className="shrink-0 text-sm font-semibold text-blue-700 hover:text-blue-800"
-                        >
-                          View all
-                        </button>
-                      </div>
+            {/* Extra Sections (real content + modern cards) */}
+            <div className="mt-6 sm:mt-10 space-y-6">
+              {/* Education (band background without viewport overflow) */}
+              <section className="-mx-3 sm:-mx-4 md:-mx-6 border-y border-blue-100 bg-gradient-to-br from-blue-50/70 via-white to-indigo-50/50 py-5 sm:py-7">
+                <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
+                  {/* OUTER header */}
+                  <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+                    <div className="min-w-0">
+                      <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+                        Education Updates
+                      </h3>
+                      <p className="text-sm sm:text-base text-gray-600">
+                        Latest exams, results, admissions & scholarships
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/explore?category=education')}
+                      className="shrink-0 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                    >
+                      View all
+                    </button>
+                  </div>
 
-                      {/* Inner container (clean white for cards) */}
-                      <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur p-3 sm:p-4 shadow-sm">
+                  {/* Inner container (clean white for cards) */}
+                  <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur p-3 sm:p-4 shadow-sm">
 
                     {educationPosts.length > 0 ? (
                       <EducationCarousel posts={educationPosts} />
@@ -705,167 +710,167 @@ const Dashboard = () => {
                         No education posts yet. Seed posts and refresh.
                       </div>
                     )}
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Follow */}
-                  {followProfiles.length > 0 && (
-                    <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">
-                          Follow KRUPDATES
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {followLine || 'Get daily updates'}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {followProfiles.map((p) => {
-                          const platform = String(p.platform || '').toLowerCase();
-                          if (platform === 'youtube') {
-                            return (
-                              <a
-                                key="youtube"
-                                href={p.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group rounded-xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-4 hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-red-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                                    <Youtube className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-base font-extrabold text-gray-900">
-                                      YouTube
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-snug">
-                                      Subscribe for video updates and breaking clips
-                                    </p>
-                                    <p className="mt-2 inline-flex items-center text-sm font-semibold text-red-700 group-hover:text-red-800">
-                                      Subscribe →
-                                    </p>
-                                  </div>
-                                </div>
-                              </a>
-                            );
-                          }
-
-                          if (platform === 'facebook') {
-                            return (
-                              <a
-                                key="facebook"
-                                href={p.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                                    <Facebook className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-base font-extrabold text-gray-900">
-                                      Facebook
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-snug">
-                                      Follow for daily posts, reels, and community updates
-                                    </p>
-                                    <p className="mt-2 inline-flex items-center text-sm font-semibold text-blue-700 group-hover:text-blue-800">
-                                      Follow →
-                                    </p>
-                                  </div>
-                                </div>
-                              </a>
-                            );
-                          }
-
-                          if (platform === 'instagram') {
-                            return (
-                              <a
-                                key="instagram"
-                                href={p.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="group rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-white p-4 hover:shadow-md transition-shadow"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-sm flex-shrink-0">
-                                    <Instagram className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-base font-extrabold text-gray-900">
-                                      Instagram
-                                    </p>
-                                    <p className="text-sm text-gray-600 leading-snug">
-                                      Follow for photos, reels, and daily updates
-                                    </p>
-                                    <p className="mt-2 inline-flex items-center text-sm font-semibold text-pink-700 group-hover:text-pink-800">
-                                      Follow →
-                                    </p>
-                                  </div>
-                                </div>
-                              </a>
-                            );
-                          }
-
-                          return null;
-                        })}
-                      </div>
-                    </section>
-                  )}
+                  </div>
                 </div>
+              </section>
 
-                {/* Infinite scroll sentinel */}
-                {activeTab === 'feed' && (
-                  <div className="pt-6">
-                    <div ref={loadMoreSentinelRef} className="h-8" />
-                    {loadingMore && (
-                      <div className="text-center text-sm text-gray-500">
-                        Loading more…
-                      </div>
-                    )}
-                    {!!error && (
-                      <div className="text-center text-sm text-red-600 mt-3">
-                        Failed to load more posts.
-                        <button
-                          onClick={refresh}
-                          className="ml-2 font-semibold text-blue-700 hover:text-blue-800"
-                        >
-                          Retry
-                        </button>
-                      </div>
-                    )}
-                    {!hasMore && loadedCount > 0 && (
-                      <div className="text-center text-sm text-gray-400 mt-3">
-                        You’re all caught up.
-                      </div>
-                    )}
+              {/* Follow */}
+              {followProfiles.length > 0 && (
+                <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Follow KRUPDATES
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {followLine || 'Get daily updates'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {followProfiles.map((p) => {
+                      const platform = String(p.platform || '').toLowerCase();
+                      if (platform === 'youtube') {
+                        return (
+                          <a
+                            key="youtube"
+                            href={p.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group rounded-xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-red-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                                <Youtube className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-base font-extrabold text-gray-900">
+                                  YouTube
+                                </p>
+                                <p className="text-sm text-gray-600 leading-snug">
+                                  Subscribe for video updates and breaking clips
+                                </p>
+                                <p className="mt-2 inline-flex items-center text-sm font-semibold text-red-700 group-hover:text-red-800">
+                                  Subscribe →
+                                </p>
+                              </div>
+                            </div>
+                          </a>
+                        );
+                      }
+
+                      if (platform === 'facebook') {
+                        return (
+                          <a
+                            key="facebook"
+                            href={p.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                                <Facebook className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-base font-extrabold text-gray-900">
+                                  Facebook
+                                </p>
+                                <p className="text-sm text-gray-600 leading-snug">
+                                  Follow for daily posts, reels, and community updates
+                                </p>
+                                <p className="mt-2 inline-flex items-center text-sm font-semibold text-blue-700 group-hover:text-blue-800">
+                                  Follow →
+                                </p>
+                              </div>
+                            </div>
+                          </a>
+                        );
+                      }
+
+                      if (platform === 'instagram') {
+                        return (
+                          <a
+                            key="instagram"
+                            href={p.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-white p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                                <Instagram className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-base font-extrabold text-gray-900">
+                                  Instagram
+                                </p>
+                                <p className="text-sm text-gray-600 leading-snug">
+                                  Follow for photos, reels, and daily updates
+                                </p>
+                                <p className="mt-2 inline-flex items-center text-sm font-semibold text-pink-700 group-hover:text-pink-800">
+                                  Follow →
+                                </p>
+                              </div>
+                            </div>
+                          </a>
+                        );
+                      }
+
+                      return null;
+                    })}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Infinite scroll sentinel */}
+            {activeTab === 'feed' && (
+              <div className="pt-6">
+                <div ref={loadMoreSentinelRef} className="h-8" />
+                {loadingMore && (
+                  <div className="text-center text-sm text-gray-500">
+                    Loading more…
                   </div>
                 )}
-
-              </>
+                {!!error && (
+                  <div className="text-center text-sm text-red-600 mt-3">
+                    Failed to load more posts.
+                    <button
+                      onClick={refresh}
+                      className="ml-2 font-semibold text-blue-700 hover:text-blue-800"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+                {!hasMore && loadedCount > 0 && (
+                  <div className="text-center text-sm text-gray-400 mt-3">
+                    You’re all caught up.
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* Empty State */}
-            {!loading &&
-              filteredAndSortedArticles.length === 0 &&
-              articles.length === 0 && (
-                <div className="text-center py-16 px-6">
-                  <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-4xl">📝</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                    No articles found
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Try adjusting your filters or check back later for new
-                    content.
-                  </p>
-                </div>
-              )}
+          </>
+        )}
+
+        {/* Empty State */}
+        {!loading &&
+          filteredAndSortedArticles.length === 0 &&
+          articles.length === 0 && (
+            <div className="text-center py-16 px-6">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                <span className="text-4xl">📝</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                No articles found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Try adjusting your filters or check back later for new
+                content.
+              </p>
+            </div>
+          )}
       </div>
     </PageLayout>
   );
