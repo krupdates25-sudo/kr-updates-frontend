@@ -28,10 +28,10 @@
     // Force light mode immediately before React loads
     (function() {
       const root = document.documentElement;
-      root.classList.remove('dark');
-      root.classList.add('light');
-      root.setAttribute('data-theme', 'light');
-      document.body.className = 'light-mode';
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      document.documentElement.setAttribute('data-theme', 'light');
+      if (document.body) document.body.className = 'light-mode';
       localStorage.setItem('theme', 'light');
       localStorage.setItem('resolvedTheme', 'light');
       

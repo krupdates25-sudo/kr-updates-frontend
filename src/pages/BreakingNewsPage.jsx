@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, Share2, MapPin, Maximize2, X, Clock } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { breakingNewsService } from '../services/breakingNewsService';
