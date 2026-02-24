@@ -1,0 +1,20 @@
+{
+  "name": "KR Updates",
+  "short_name": "KR Updates",
+  "description": "KR Updates - Professional News Platform",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
+

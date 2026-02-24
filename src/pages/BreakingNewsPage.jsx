@@ -316,17 +316,39 @@ const BreakingNewsPage = () => {
         return;
       }
 
+      if (platform === 'facebook') {
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+          shareUrl
+        )}`;
+        window.open(facebookUrl, '_blank');
+        return;
+      }
+
       const shareData = {
         title: `${story?.title || 'Breaking News'} - KR Updates`,
         text: story?.excerpt || '',
         url: shareUrl,
       };
 
-      if (
-        navigator.share &&
-        navigator.canShare &&
-        navigator.canShare(shareData)
-      ) {
+      if (navigator.share) {
+        // Try to attach image if supported
+        const imageUrl = story?.image?.url || null;
+        if (imageUrl && navigator.canShare) {
+          try {
+            const resp = await fetch(imageUrl, { mode: 'cors' });
+            if (resp.ok) {
+              const blob = await resp.blob();
+              const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
+              const file = new File([blob], `kr-breaking.${ext}`, { type: blob.type || 'image/jpeg' });
+              if (navigator.canShare({ files: [file] })) {
+                await navigator.share({ ...shareData, files: [file] });
+                return;
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(shareUrl);
@@ -735,22 +757,28 @@ const BreakingNewsPage = () => {
 
               <div className="p-6 space-y-4">
                 <button
+                  onClick={() => handleShare(null)}
+                  className="w-full px-6 py-4 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  Share (More options)
+                </button>
+                <button
                   onClick={() => handleShare('whatsapp')}
                   className="w-full px-6 py-4 rounded-xl bg-[#25D366] text-white font-black hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-3"
                 >
                   Share on WhatsApp
                 </button>
                 <button
+                  onClick={() => handleShare('facebook')}
+                  className="w-full px-6 py-4 rounded-xl bg-[#1877F2] text-white font-black hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-3"
+                >
+                  Share on Facebook
+                </button>
+                <button
                   onClick={() => handleShare('copy')}
                   className="w-full px-6 py-4 rounded-xl border-2 border-gray-100 text-gray-800 font-black hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
                   Copy Link
-                </button>
-                <button
-                  onClick={() => handleShare(null)}
-                  className="w-full px-6 py-4 rounded-xl bg-gray-900 text-white font-black hover:bg-black active:scale-95 transition-all flex items-center justify-center gap-3"
-                >
-                  Other Options
                 </button>
               </div>
             </div>

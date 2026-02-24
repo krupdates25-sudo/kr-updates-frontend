@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -29,11 +29,13 @@ import CloudinaryUpload from '../components/common/CloudinaryUpload';
 import postService from '../services/postService';
 import aiService from '../services/aiService';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguageLocation } from '../contexts/LanguageLocationContext';
 
 const NewPost = () => {
   const navigate = useNavigate();
   const { postId } = useParams();
   const { user } = useAuth();
+  const { availableLocations, refreshLocations } = useLanguageLocation();
   const isEditing = !!postId;
   const [isLoading, setIsLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -61,6 +63,14 @@ const NewPost = () => {
   const [errors, setErrors] = useState({});
   const [currentTag, setCurrentTag] = useState('');
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
+  const suggestedLocations = useMemo(() => {
+    const locs = Array.isArray(availableLocations) ? availableLocations : [];
+    return locs
+      .map((l) => String(l || '').trim())
+      .filter((l) => l && l.toLowerCase() !== 'all')
+      .slice(0, 12);
+  }, [availableLocations]);
 
   // NOTE: The breaking news ticker should only appear on the home feed, not on the editor.
 
@@ -303,6 +313,13 @@ const NewPost = () => {
         await postService.updatePost(postId, postData);
       } else {
         await postService.createPost(postData);
+      }
+
+      // Refresh location list so new locations show up in the Region tabs immediately
+      try {
+        await refreshLocations();
+      } catch {
+        // ignore
       }
 
       // Show success message
@@ -799,7 +816,7 @@ const NewPost = () => {
                     />
 
                     <div className="flex flex-wrap gap-1.5 mt-3">
-                      {['Kishangarh Renwal', 'Jaipur', 'Rajasthan', 'Sikar', 'New Delhi'].map((loc) => (
+                      {suggestedLocations.map((loc) => (
                         <button
                           key={loc}
                           type="button"

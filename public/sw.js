@@ -17,6 +17,13 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Allow the page to trigger an immediate update (when a new SW is waiting)
+self.addEventListener('message', (event) => {
+  if (event?.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {

@@ -656,23 +656,45 @@ const PostPage = () => {
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(whatsappUrl, '_blank');
         await trackShare('whatsapp');
+      } else if (platform === 'facebook') {
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+          shareUrl
+        )}`;
+        window.open(facebookUrl, '_blank');
+        await trackShare('facebook');
       } else if (platform === 'copy') {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
         await trackShare('clipboard');
       } else {
-        const shareData = {
-          title: `${post?.title} - KR Updates`,
-          text: post?.excerpt || post?.description,
-          url: shareUrl,
-        };
+        if (navigator.share) {
+          const baseShareData = {
+            title: `${post?.title} - KR Updates`,
+            text: post?.excerpt || post?.description || '',
+            url: shareUrl,
+          };
 
-        if (
-          navigator.share &&
-          navigator.canShare &&
-          navigator.canShare(shareData)
-        ) {
-          await navigator.share(shareData);
+          // Try to attach the thumbnail image (supported on many mobile browsers)
+          const imageUrl = post?.featuredImage?.url || post?.featuredVideo?.thumbnail || null;
+          if (imageUrl && navigator.canShare) {
+            try {
+              const resp = await fetch(imageUrl, { mode: 'cors' });
+              if (resp.ok) {
+                const blob = await resp.blob();
+                const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
+                const file = new File([blob], `kr-updates.${ext}`, { type: blob.type || 'image/jpeg' });
+                if (navigator.canShare({ files: [file] })) {
+                  await navigator.share({ ...baseShareData, files: [file] });
+                  await trackShare('native_share');
+                  return;
+                }
+              }
+            } catch {
+              // fall back to sharing URL only
+            }
+          }
+
+          await navigator.share(baseShareData);
           await trackShare('native_share');
         } else {
           await navigator.clipboard.writeText(shareUrl);
@@ -690,6 +712,16 @@ const PostPage = () => {
         alert(`Share this link: ${shareUrl}`);
       }
     }
+  };
+
+  const handleOpenShare = async () => {
+    // Prefer native/system share for the main Share action
+    // Fallback to our share modal if Web Share API isn't available.
+    if (navigator.share) {
+      await handleShare('native');
+      return;
+    }
+    setShowShareModal(true);
   };
 
   const formatDate = (dateString) => {
@@ -807,7 +839,7 @@ const PostPage = () => {
             </button>
 
             <button
-              onClick={() => setShowShareModal(true)}
+              onClick={handleOpenShare}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold"
             >
               <Share2 className="w-4 h-4" />
@@ -966,7 +998,7 @@ const PostPage = () => {
                       <span>{displayPost?.viewCount || 0} views</span>
                     </div>
                     <button
-                      onClick={() => setShowShareModal(true)}
+                      onClick={handleOpenShare}
                       className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors"
                       aria-label="Share"
                     >
@@ -1514,6 +1546,16 @@ const PostPage = () => {
                 {/* Share Options */}
                 <div className="p-4 space-y-3 flex-shrink-0">
                   <button
+                    onClick={() => handleShare('native')}
+                    className="w-full flex items-center justify-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                  >
+                    <Share2 className="w-5 h-5 text-blue-700" />
+                    <span className="text-sm font-medium text-gray-900">
+                      Share (More options)
+                    </span>
+                  </button>
+
+                  <button
                     onClick={() => handleShare('whatsapp')}
                     className="w-full flex items-center justify-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
                   >
@@ -1524,6 +1566,20 @@ const PostPage = () => {
                     />
                     <span className="text-sm font-medium text-gray-900">
                       Share on WhatsApp
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => handleShare('facebook')}
+                    className="w-full flex items-center justify-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                  >
+                    <img
+                      src={facebookIcon}
+                      alt="Facebook"
+                      className="w-6 h-6 object-contain"
+                    />
+                    <span className="text-sm font-medium text-gray-900">
+                      Share on Facebook
                     </span>
                   </button>
 

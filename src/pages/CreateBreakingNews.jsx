@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -14,11 +14,13 @@ import PageLayout from '../components/layout/PageLayout';
 import CloudinaryUpload from '../components/common/CloudinaryUpload';
 import { breakingNewsService } from '../services/breakingNewsService';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguageLocation } from '../contexts/LanguageLocationContext';
 
 const CreateBreakingNews = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { availableLocations, refreshLocations } = useLanguageLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -36,6 +38,14 @@ const CreateBreakingNews = () => {
     tags: [],
   });
   const [errors, setErrors] = useState({});
+
+  const suggestedLocations = useMemo(() => {
+    const locs = Array.isArray(availableLocations) ? availableLocations : [];
+    return locs
+      .map((l) => String(l || '').trim())
+      .filter((l) => l && l.toLowerCase() !== 'all')
+      .slice(0, 10);
+  }, [availableLocations]);
 
   // Check if user is admin
   useEffect(() => {
@@ -149,6 +159,13 @@ const CreateBreakingNews = () => {
         await breakingNewsService.updateStory(id, storyData);
       } else {
         await breakingNewsService.createStory(storyData);
+      }
+
+      // Refresh locations list so newly used locations can appear in filter tabs
+      try {
+        await refreshLocations();
+      } catch {
+        // ignore
       }
 
       navigate('/admin/breaking-news');
@@ -351,7 +368,7 @@ const CreateBreakingNews = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {['Kishangarh Renwal', 'Jaipur', 'Rajasthan', 'New Delhi'].map((loc) => (
+                    {suggestedLocations.map((loc) => (
                       <button
                         key={loc}
                         type="button"

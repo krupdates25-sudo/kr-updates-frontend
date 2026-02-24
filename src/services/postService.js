@@ -43,6 +43,16 @@ api.interceptors.response.use(
 );
 
 const postService = {
+  // Get location options (distinct locations derived from posts)
+  getLocationOptions: async () => {
+    try {
+      const response = await api.get('/posts/locations');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get all published posts
   getAllPosts: async (params = {}) => {
     try {

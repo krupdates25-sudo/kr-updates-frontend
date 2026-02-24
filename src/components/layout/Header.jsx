@@ -8,9 +8,11 @@ import {
   MapPin,
   Globe,
   Check,
+  Download,
+  RefreshCw,
 } from 'lucide-react';
 import { useLanguageLocation } from '../../contexts/LanguageLocationContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AnnouncementDropdown from '../common/AnnouncementDropdown';
@@ -32,34 +34,218 @@ const Header = ({
   const [updatesSubmitted, setUpdatesSubmitted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+  const [isInstallAvailable, setIsInstallAvailable] = useState(false);
+  const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
+  const [swRegistration, setSwRegistration] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [pwaToast, setPwaToast] = useState(null);
   const [updatesForm, setUpdatesForm] = useState({
     name: '',
     phone: '',
     email: '',
   });
   const { user, logout } = useAuth();
-  const { location: currentLocation, setLocation, language: currentLanguage, setLanguage } = useLanguageLocation();
+  const {
+    location: currentLocation,
+    setLocation,
+    language: currentLanguage,
+    setLanguage,
+    availableLocations,
+  } = useLanguageLocation();
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
 
-  const locations = [
-    'All',
-    'Kishangarh Renwal',
-    'Jaipur',
-    'Rajasthan',
-    'New Delhi',
-    'Mumbai',
-    'Ahmedabad',
-    'Udaipur',
-    'Jodhpur',
-    'Sikar'
-  ];
+  const locations = useMemo(() => {
+    const locs = Array.isArray(availableLocations) ? availableLocations : [];
+    // Ensure "All" is always first (and not duplicated)
+    const withoutAll = locs.filter((l) => String(l).toLowerCase() !== 'all');
+    return ['All', ...withoutAll];
+  }, [availableLocations]);
+
+  const locationsRowRef = useRef(null);
 
   const languages = [
     { code: 'hi', name: 'Hindi' },
     { code: 'en', name: 'English' }
   ];
   const isStaff = !!user && ['admin', 'moderator'].includes(user.role);
+
+  // PWA: capture install prompt, and detect service worker updates
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+      setIsInstallAvailable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredInstallPrompt(null);
+      setIsInstallAvailable(false);
+      setPwaToast('App installed');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Detect "already installed" / standalone mode (Android, desktop, iOS)
+    const standalone =
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true;
+    if (standalone) setIsInstalled(true);
+
+    if (!('serviceWorker' in navigator)) return;
+    let cleanupUpdateFound = null;
+
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          setSwRegistration(reg);
+          if (reg.waiting) setIsUpdateAvailable(true);
+
+          const onUpdateFound = () => {
+            const installing = reg.installing;
+            if (!installing) return;
+            const onStateChange = () => {
+              if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                setIsUpdateAvailable(true);
+              }
+            };
+            installing.addEventListener('statechange', onStateChange);
+            cleanupUpdateFound = () => installing.removeEventListener('statechange', onStateChange);
+          };
+
+          reg.addEventListener('updatefound', onUpdateFound);
+          cleanupUpdateFound = () => reg.removeEventListener('updatefound', onUpdateFound);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      if (typeof cleanupUpdateFound === 'function') cleanupUpdateFound();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pwaToast) return;
+    const t = window.setTimeout(() => setPwaToast(null), 2200);
+    return () => window.clearTimeout(t);
+  }, [pwaToast]);
+
+  const checkForPwaUpdate = async () => {
+    if (!('serviceWorker' in navigator)) return false;
+    try {
+      const reg = swRegistration || (await navigator.serviceWorker.getRegistration());
+      if (!reg) return false;
+      setSwRegistration(reg);
+
+      await reg.update();
+      if (reg.waiting) {
+        setIsUpdateAvailable(true);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const handlePwaAction = async () => {
+    // If there's an update waiting, activate it and reload.
+    if (isUpdateAvailable && swRegistration?.waiting) {
+      try {
+        const onControllerChange = () => {
+          window.location.reload();
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', onControllerChange, { once: true });
+        swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        return;
+      } catch {
+        // fall through
+      }
+    }
+
+    // Otherwise, try install prompt if available
+    if (!isInstalled && deferredInstallPrompt) {
+      try {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice?.outcome === 'accepted') {
+          setPwaToast('Installing…');
+        }
+      } catch {
+        // ignore
+      } finally {
+        setDeferredInstallPrompt(null);
+        setIsInstallAvailable(false);
+      }
+      return;
+    }
+
+    // If installed: check for updates on demand; apply if found
+    const updateReady = await checkForPwaUpdate();
+    if (updateReady) {
+      try {
+        const reg = swRegistration || (await navigator.serviceWorker.getRegistration());
+        if (reg?.waiting) {
+          setIsUpdateAvailable(true);
+          navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Quiet UX: no blocking alert
+    setPwaToast(isInstalled ? 'No update available' : 'Install not available on this device');
+  };
+
+  // Auto-slide locations row on mobile if there are lots of tags
+  useEffect(() => {
+    const el = locationsRowRef.current;
+    if (!el) return;
+    if (!Array.isArray(locations) || locations.length <= 10) return;
+    if (typeof window === 'undefined') return;
+
+    const isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+    if (!isMobile) return;
+
+    let dir = 1;
+    const step = 120;
+    const interval = window.setInterval(() => {
+      if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 0) return;
+      const next = el.scrollLeft + dir * step;
+      if (next >= max - 4) {
+        dir = -1;
+        el.scrollTo({ left: max, behavior: 'smooth' });
+        return;
+      }
+      if (next <= 4) {
+        dir = 1;
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+        return;
+      }
+      el.scrollTo({ left: next, behavior: 'smooth' });
+    }, 2200);
+
+    return () => window.clearInterval(interval);
+  }, [locations]);
 
   const handleLogout = async () => {
     await logout();
@@ -206,6 +392,42 @@ const Header = ({
               </>
             )}
           </div>
+
+          {/* PWA Install / Update (always visible) */}
+          <button
+            onClick={handlePwaAction}
+            className={`p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 ${
+              isUpdateAvailable ? 'text-orange-600' : isInstallAvailable ? 'text-blue-600' : 'text-gray-600'
+            }`}
+            title={
+              isUpdateAvailable
+                ? 'Update app'
+                : isInstallAvailable
+                  ? 'Install app'
+                  : isInstalled
+                    ? 'Check for updates'
+                    : 'Install app'
+            }
+            aria-label="Install or update app"
+          >
+            {isUpdateAvailable ? (
+              <span className="relative inline-flex">
+                <RefreshCw className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />
+              </span>
+            ) : isInstalled ? (
+              <RefreshCw className="w-5 h-5 opacity-70" />
+            ) : (
+              <Download className="w-5 h-5" />
+            )}
+          </button>
+
+          {/* PWA toast (non-blocking) */}
+          {pwaToast && (
+            <div className="fixed top-16 sm:top-[72px] right-3 z-[80] px-3 py-2 rounded-lg shadow-lg border border-gray-200 bg-white text-gray-800 text-sm font-medium">
+              {pwaToast}
+            </div>
+          )}
           {/* Notifications - Desktop only (only for authenticated users) */}
           {isStaff && (
             <div className="hidden lg:block relative">
@@ -346,7 +568,7 @@ const Header = ({
       {/* Location Tabs Row */}
       {(location.pathname === '/' || location.pathname === '/dashboard') && (
         <div className="px-3 sm:px-4 md:px-6 pb-2 border-b border-gray-50">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          <div ref={locationsRowRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
             <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
               <MapPin className="w-3.5 h-3.5" />
               <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
