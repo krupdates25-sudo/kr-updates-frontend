@@ -607,30 +607,21 @@ const PostPage = () => {
 
     try {
       if (platform === 'whatsapp') {
-        // Create share text with title, subtitle, and content preview
+        // Create share text with title and subheading prominently
         let shareText = '';
 
-        // Add title
+        // Add title (prominent)
         if (post?.title) {
-          shareText += `📰 ${post.title}\n\n`;
+          shareText += `📰 *${post.title}*\n\n`;
         }
 
-        // Add subtitle/description
-        if (post?.description || post?.subheading || post?.excerpt) {
-          const subtitle = post.description || post.subheading || post.excerpt;
+        // Add subheading/description (prominent)
+        if (post?.subheading || post?.description || post?.excerpt) {
+          const subtitle = post.subheading || post.description || post.excerpt;
           shareText += `${subtitle}\n\n`;
         }
 
-        // Add content preview (first 150 characters, strip HTML) - shorter to leave room for image preview
-        if (post?.content) {
-          const textContent = post.content.replace(/<[^>]*>/g, '').trim();
-          const preview = textContent.length > 150
-            ? textContent.substring(0, 150) + '...'
-            : textContent;
-          shareText += `${preview}\n\n`;
-        }
-
-        // Add link at the end - WhatsApp will automatically fetch image preview from OG tags
+        // Add link - WhatsApp will automatically fetch image preview from OG tags
         shareText += `${shareUrl}`;
 
         // WhatsApp will automatically show image preview from Open Graph tags when link is shared
@@ -649,9 +640,13 @@ const PostPage = () => {
         await trackShare('clipboard');
       } else {
         if (navigator.share) {
+          // Include title and subheading in share
+          const shareTitle = post?.title || 'KR Updates';
+          const shareText = post?.subheading || post?.description || post?.excerpt || '';
+          
           const baseShareData = {
-            title: `${post?.title} - KR Updates`,
-            text: post?.excerpt || post?.description || '',
+            title: shareTitle,
+            text: shareText,
             url: shareUrl,
           };
 
@@ -889,18 +884,18 @@ const PostPage = () => {
                   )}
                 </div>
 
-                {/* Article Title */}
+                {/* Article Title - Bigger font size */}
                 <h1
-                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight mb-2 sm:mb-3 select-none"
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
                   style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 >
                   {displayPost?.title}
                 </h1>
 
-                {/* Subheading (backend usually provides `excerpt`) */}
+                {/* Subheading - Bigger font size */}
                 {(displayPost?.subheading || displayPost?.description || displayPost?.excerpt) && (
                   <p
-                    className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed mb-3 sm:mb-4 font-medium select-none"
+                    className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed mb-3 sm:mb-4 font-medium select-none"
                     style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                   >
                     {displayPost.subheading || displayPost.description || displayPost.excerpt}
@@ -1479,54 +1474,20 @@ const PostPage = () => {
                   </button>
                 </div>
 
-                {/* Preview Section - Scrollable */}
+                {/* Preview Section - Show title and subheading only */}
                 <div className="p-4 border-b border-gray-200 overflow-y-auto flex-1 min-h-0">
                   <p className="text-xs text-gray-500 mb-3">
-                    Preview of link preview card (as it will appear on WhatsApp/Facebook):
+                    Share Preview:
                   </p>
-                  <div className="bg-white rounded-lg border border-gray-300 overflow-hidden shadow-sm">
-                    {(displayPost?.featuredImage?.url || displayPost?.featuredVideo?.thumbnail) && (
-                      <div
-                        className="w-full h-32 bg-gray-100 overflow-hidden"
-                        data-protected-content
-                      >
-                        <img
-                          src={displayPost.featuredImage?.url || displayPost.featuredVideo?.thumbnail}
-                          alt={displayPost.title}
-                          className="w-full h-full object-cover select-none"
-                          style={{
-                            userSelect: 'none',
-                            WebkitUserSelect: 'none',
-                            pointerEvents: 'auto',
-                            WebkitUserDrag: 'none',
-                            userDrag: 'none'
-                          }}
-                          draggable="false"
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            return false;
-                          }}
-                          onDragStart={(e) => {
-                            e.preventDefault();
-                            return false;
-                          }}
-                        />
-                      </div>
+                  <div className="bg-white rounded-lg border border-gray-300 overflow-hidden shadow-sm p-4">
+                    <h4 className="text-base font-bold text-gray-900 mb-2 leading-tight">
+                      {displayPost?.title}
+                    </h4>
+                    {(displayPost?.subheading || displayPost?.description || displayPost?.excerpt) && (
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {displayPost.subheading || displayPost.description || displayPost.excerpt}
+                      </p>
                     )}
-                    <div className="p-3 space-y-2">
-                      <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">
-                        {displayPost?.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
-                        {displayPost?.excerpt || displayPost?.description || 'Read the full article on KR Updates'}
-                      </p>
-                      <p className="text-xs text-gray-500 font-medium">
-                        KR Updates
-                      </p>
-                      <p className="text-xs text-blue-600 break-all pt-1 border-t border-gray-200">
-                        {`${typeof window !== 'undefined' ? window.location.origin : ''}/post/${displayPost?._id || ''}`}
-                      </p>
-                    </div>
                   </div>
                 </div>
 
