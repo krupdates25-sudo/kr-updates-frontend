@@ -36,7 +36,7 @@ import OptimisticImage from '../components/common/OptimisticImage';
 import { Helmet } from 'react-helmet-async';
 
 const PostPage = () => {
-  const { slug } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -73,10 +73,10 @@ const PostPage = () => {
   }, [user?.role, isEditingAuthor]);
 
   useEffect(() => {
-    if (slug) {
+    if (id) {
       fetchPostDetails();
     }
-  }, [slug]);
+  }, [id]);
 
   // Scroll to top immediately when navigating to post details page
   useEffect(() => {
@@ -90,7 +90,7 @@ const PostPage = () => {
     scrollableElements.forEach(el => {
       el.scrollTop = 0;
     });
-  }, [slug]);
+  }, [id]);
 
   // Also scroll to top on component mount
   useEffect(() => {
@@ -256,7 +256,7 @@ const PostPage = () => {
 
     // Use current window location for dynamic URL
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${baseUrl}/post/${displayPost.slug || String(displayPost._id || '')}`;
+    const shareUrl = `${baseUrl}/post/${displayPost._id || ''}`;
     const rawImageUrl = displayPost.featuredImage?.url || displayPost.featuredVideo?.thumbnail || displayPost.featuredVideo?.url || '';
     const title = displayPost.title || 'Post - KR Updates';
 
@@ -351,29 +351,20 @@ const PostPage = () => {
   }, [post?.author, post?.authorDisplayName]);
 
   const fetchPostDetails = async () => {
-    if (!slug) return;
+    if (!id) return;
 
     // If we already have an optimistic post (from navigation state), don't blank the UI.
     if (!post) setIsLoading(true);
     try {
-      let response;
-
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(slug);
-
-      if (isObjectId) {
-        console.log('Fetching post by ID:', slug);
-        response = await postService.getPostById(slug);
-      } else {
-        console.log('Fetching post by slug:', slug);
-        response = await postService.getPostBySlug(slug);
-      }
+      // Always use ID lookup (faster than slug)
+      const response = await postService.getPostById(id);
 
       if (response?.data) {
         setPost(response.data);
         console.log('Post fetched successfully:', response.data.title, 'Status:', response.data.status);
         // Fetch similar posts after current post is loaded (defer so details page paints faster)
         const runSimilar = () =>
-          fetchSimilarPosts(response.data._id, response.data.slug);
+          fetchSimilarPosts(response.data._id);
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
           window.requestIdleCallback(runSimilar, { timeout: 1500 });
         } else {
@@ -397,7 +388,7 @@ const PostPage = () => {
     }
   };
 
-  const fetchSimilarPosts = async (currentPostId, currentPostSlug) => {
+  const fetchSimilarPosts = async (currentPostId) => {
     if (!currentPostId) return;
 
     setLoadingSimilarPosts(true);
@@ -405,32 +396,22 @@ const PostPage = () => {
       // Fetch latest posts (we'll exclude current one and take 5)
       const response = await postService.getAllPosts({
         page: 1,
-        limit: 10 // Fetch more to ensure we have enough after filtering
+        limit: 10, // Fetch more to ensure we have enough after filtering
+        noCount: true // Fast mode - skip count query
       });
 
       // Backend returns: { data: { data: [...posts], pagination: {...} } }
       const posts = response?.data?.data || response?.data || [];
 
       if (Array.isArray(posts) && posts.length > 0) {
-        // Filter out current post by both ID and slug to ensure it's excluded
+        // Filter out current post by ID (faster - no slug comparison needed)
         const filtered = posts
           .filter(p => {
             const postId = p._id || p.id;
-            const postSlug = p.slug || '';
             const currentId = currentPostId || '';
-            const currentSlug = currentPostSlug || '';
 
             // Exclude if ID matches (checking both string and object comparisons)
-            if (String(postId) === String(currentId) || postId === currentId) {
-              return false;
-            }
-
-            // Exclude if slug matches (and both are non-empty)
-            if (currentSlug && postSlug && postSlug === currentSlug) {
-              return false;
-            }
-
-            return true;
+            return String(postId) !== String(currentId) && postId !== currentId;
           })
           .slice(0, 5); // Take first 5 after filtering
         setSimilarPosts(filtered);
@@ -1299,12 +1280,11 @@ const PostPage = () => {
                       </div>
                     ) : similarPosts.length > 0 ? (
                       similarPosts.slice(0, 6).map((item, idx) => {
-                        const postSlug = item.slug || String(item._id || '');
-                        return (
-                          <div
-                            key={item._id || idx}
-                            className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all group"
-                            onClick={() => navigate(`/post/${postSlug}`)}
+                            return (
+                              <div
+                                key={item._id || idx}
+                                className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all group"
+                                onClick={() => navigate(`/post/${item._id}`)}
                           >
                             <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2 leading-tight">
                               {item.title}
@@ -1390,12 +1370,11 @@ const PostPage = () => {
                     </div>
                   ) : similarPosts.length > 0 ? (
                     similarPosts.map((item, idx) => {
-                      const postSlug = item.slug || String(item._id || '');
-                      return (
-                        <div
-                          key={item._id || idx}
-                          className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all duration-300 group"
-                          onClick={() => navigate(`/post/${postSlug}`)}
+                          return (
+                            <div
+                              key={item._id || idx}
+                              className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all duration-300 group"
+                              onClick={() => navigate(`/post/${item._id}`)}
                         >
                           <p className="text-sm font-bold text-gray-900 mb-3 group-hover:text-blue-600 line-clamp-2 leading-tight">
                             {item.title}
@@ -1537,7 +1516,7 @@ const PostPage = () => {
                         KR Updates
                       </p>
                       <p className="text-xs text-blue-600 break-all pt-1 border-t border-gray-200">
-                        {`${typeof window !== 'undefined' ? window.location.origin : ''}/post/${displayPost?.slug || String(displayPost?._id || '')}`}
+                        {`${typeof window !== 'undefined' ? window.location.origin : ''}/post/${displayPost?._id || ''}`}
                       </p>
                     </div>
                   </div>

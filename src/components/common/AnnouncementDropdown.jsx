@@ -322,7 +322,7 @@ const AnnouncementDropdown = ({
                                   // Backend sends /post/:id format
                                   if (announcement.actionUrl.includes('/post/')) {
                                     const postId = announcement.actionUrl.split('/post/')[1];
-                                    // Navigate to post details page
+                                    // Navigate to post details page (ObjectId)
                                     navigate(`/post/${postId}`);
                                     onClose();
                                   } else if (announcement.actionUrl.includes('/posts/')) {

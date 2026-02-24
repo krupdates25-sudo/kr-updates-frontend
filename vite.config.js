@@ -10,6 +10,15 @@ export default defineConfig({
     minify: 'esbuild',
     // Console.logs are disabled via disableConsole.js utility
     // esbuild will also remove them during minification
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['lucide-react', 'framer-motion'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     host: true, // Allow external connections

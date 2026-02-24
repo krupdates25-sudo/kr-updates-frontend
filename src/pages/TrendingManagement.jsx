@@ -474,7 +474,7 @@ const TrendingManagement = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => navigate(`/post/${post.slug || post._id}`)}
+                            onClick={() => navigate(`/post/${post._id}`)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="View Post"
                           >

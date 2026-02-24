@@ -115,12 +115,12 @@ const Bookmarks = () => {
   const handlePostClick = (post) => {
     // Navigate directly to post details page
     // Always use slug if available, otherwise use MongoDB _id (ensure it's a string)
-    const postSlug = post.slug || String(post._id || post.id || '');
-    if (!postSlug) {
-      console.error('No valid post identifier found:', post);
+    const postId = post._id || post.id;
+    if (!postId) {
+      console.error('No valid post ID found:', post);
       return;
     }
-    navigate(`/post/${postSlug}`);
+    navigate(`/post/${postId}`);
   };
 
   const filteredBookmarks = bookmarks.filter(

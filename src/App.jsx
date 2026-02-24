@@ -1,32 +1,43 @@
+import { lazy, Suspense } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from 'react-router-dom';
-import AuthPage from './pages/AuthPage';
-import Dashboard from './pages/Dashboard';
-import NewPost from './pages/NewPost';
-import UserProfile from './pages/UserProfile';
-import ProfilePage from './pages/ProfilePage';
-import AdminManagement from './pages/AdminManagement';
-import PostsManagement from './pages/PostsManagement';
-import BreakingNewsManagement from './pages/BreakingNewsManagement';
-import CreateBreakingNews from './pages/CreateBreakingNews';
-import BreakingNewsPage from './pages/BreakingNewsPage';
-import TrendingManagement from './pages/TrendingManagement';
-import WhatsAppIntegration from './pages/WhatsAppIntegration';
-import History from './pages/History';
-// import Trending from './pages/Trending'; // Commented out as trending functionality is disabled
-// import Bookmarks from './pages/Bookmarks'; // Removed - bookmarks page disabled
-import AdManagement from './pages/AdManagement';
-import AnnouncementManagement from './pages/AnnouncementManagement';
-import NotificationManagement from './pages/NotificationManagement';
-import Settings from './pages/Settings';
-import PostPage from './pages/PostPage';
-import VerifyEmail from './pages/VerifyEmail';
-import VerifyEmailSuccess from './pages/VerifyEmailSuccess';
 import ProtectedRoute from './components/common/ProtectedRoute';
+
+// Lazy load pages for code splitting and faster initial load
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const NewPost = lazy(() => import('./pages/NewPost'));
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AdminManagement = lazy(() => import('./pages/AdminManagement'));
+const PostsManagement = lazy(() => import('./pages/PostsManagement'));
+const BreakingNewsManagement = lazy(() => import('./pages/BreakingNewsManagement'));
+const CreateBreakingNews = lazy(() => import('./pages/CreateBreakingNews'));
+const BreakingNewsPage = lazy(() => import('./pages/BreakingNewsPage'));
+const TrendingManagement = lazy(() => import('./pages/TrendingManagement'));
+const WhatsAppIntegration = lazy(() => import('./pages/WhatsAppIntegration'));
+const History = lazy(() => import('./pages/History'));
+const AdManagement = lazy(() => import('./pages/AdManagement'));
+const AnnouncementManagement = lazy(() => import('./pages/AnnouncementManagement'));
+const NotificationManagement = lazy(() => import('./pages/NotificationManagement'));
+const Settings = lazy(() => import('./pages/Settings'));
+const PostPage = lazy(() => import('./pages/PostPage'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const VerifyEmailSuccess = lazy(() => import('./pages/VerifyEmailSuccess'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -118,8 +129,9 @@ function App() {
             <SocketProvider>
               <AdProvider>
                 <Router>
-                  <div className="App">
-                    <Routes>
+                  <Suspense fallback={<PageLoader />}>
+                    <div className="App">
+                      <Routes>
                       {/* Public routes */}
                       <Route path="/auth" element={<AuthPage />} />
                       <Route path="/verify-email" element={<VerifyEmail />} />
@@ -171,8 +183,8 @@ function App() {
                       {/* Public user profile route */}
                       <Route path="/profile/:userId" element={<UserProfile />} />
 
-                      {/* Post page route */}
-                      <Route path="/post/:slug" element={<PostPage />} />
+                      {/* Post page route - using ObjectId for faster lookups */}
+                      <Route path="/post/:id" element={<PostPage />} />
 
                       {/* Breaking News page route */}
                       <Route path="/breaking-news/:id" element={<BreakingNewsPage />} />
@@ -338,7 +350,7 @@ function App() {
                       {/* Catch all route - redirect to homepage instead of login */}
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
-                  </div>
+                  </Suspense>
                 </Router>
               </AdProvider>
             </SocketProvider>

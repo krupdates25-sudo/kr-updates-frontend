@@ -19,14 +19,13 @@ const ArticleCard = ({
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    // Navigate directly to post details page
-    // Always use slug if available, otherwise use MongoDB _id (ensure it's a string)
-    const postSlug = article.slug || String(article._id || article.id || '');
-    if (!postSlug) {
-      console.error('No valid post identifier found:', article);
+    // Navigate directly to post details page using ObjectId (faster)
+    const postId = article._id || article.id;
+    if (!postId) {
+      console.error('No valid post ID found:', article);
       return;
     }
-    navigate(`/post/${postSlug}`);
+    navigate(`/post/${postId}`);
   };
 
   const formatDate = (dateString) => {
@@ -95,6 +94,7 @@ const ArticleCard = ({
                   alt={article.featuredImage?.alt || article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     // Fallback to placeholder image if the main image fails to load
                     e.target.src =

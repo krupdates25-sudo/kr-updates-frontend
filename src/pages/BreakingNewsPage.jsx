@@ -565,12 +565,11 @@ const BreakingNewsPage = () => {
                     </div>
                   ) : recommendedPosts.length > 0 ? (
                     recommendedPosts.slice(0, 6).map((item, idx) => {
-                      const postSlug = item.slug || String(item._id || '');
                       return (
                         <div
                           key={item._id || idx}
                           className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all group"
-                          onClick={() => navigate(`/post/${postSlug}`)}
+                          onClick={() => navigate(`/post/${item._id}`)}
                         >
                           <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2 leading-tight">
                             {item.title}
@@ -656,12 +655,11 @@ const BreakingNewsPage = () => {
                   </div>
                 ) : recommendedPosts.length > 0 ? (
                   recommendedPosts.map((item, idx) => {
-                    const postSlug = item.slug || String(item._id || '');
                     return (
                       <div
                         key={item._id || idx}
                         className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all duration-300 group"
-                        onClick={() => navigate(`/post/${postSlug}`)}
+                        onClick={() => navigate(`/post/${item._id}`)}
                       >
                         <p className="text-sm font-bold text-gray-900 mb-3 group-hover:text-blue-600 line-clamp-2 leading-tight">
                           {item.title}

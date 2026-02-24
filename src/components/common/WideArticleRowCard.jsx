@@ -8,14 +8,13 @@ const WideArticleRowCard = ({ article }) => {
   const { user } = useAuth();
 
   const handleCardClick = () => {
-    // Navigate directly to post details page
-    // Always use slug if available, otherwise use MongoDB _id (ensure it's a string)
-    const postSlug = article.slug || String(article._id || article.id || '');
-    if (!postSlug) {
-      console.error('No valid post identifier found:', article);
+    // Navigate directly to post details page using ObjectId (faster)
+    const postId = article._id || article.id;
+    if (!postId) {
+      console.error('No valid post ID found:', article);
       return;
     }
-    navigate(`/post/${postSlug}`);
+    navigate(`/post/${postId}`);
   };
 
   const handleEdit = (e) => {
@@ -96,6 +95,7 @@ const WideArticleRowCard = ({ article }) => {
               alt={article.featuredImage?.alt || title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
+              decoding="async"
               onError={(e) => {
                 e.target.src =
                   'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=600&fit=crop&auto=format';
