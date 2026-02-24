@@ -349,7 +349,8 @@ function App() {
 
                       {/* Catch all route - redirect to homepage instead of login */}
                       <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+                      </Routes>
+                    </div>
                   </Suspense>
                 </Router>
               </AdProvider>
