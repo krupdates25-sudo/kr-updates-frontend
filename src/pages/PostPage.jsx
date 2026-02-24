@@ -764,7 +764,38 @@ const PostPage = () => {
     );
   }
 
-  if (!post) {
+  if (error && !post) {
+    return (
+      <PageLayout hideSidebar={!user} hideBottomNav={!user}>
+        <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-red-900 mb-2">Error Loading Post</h2>
+            <p className="text-red-700 mb-4">{error}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setError(null);
+                  fetchPostDetails();
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => navigate(user ? '/dashboard' : '/')}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!post && !error) {
     return (
       <PageLayout hideSidebar={!user} hideBottomNav={!user}>
         <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8">
