@@ -110,21 +110,29 @@ const BreakingNewsBanner = ({ onCurrentStoryChange } = {}) => {
   };
 
   return (
-    <div className="relative w-ful mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-lg sm:rounded-xl shadow-lg">
+    <div className="relative w-full mb-3 sm:mb-4 md:mb-6 overflow-hidden rounded-lg sm:rounded-xl shadow-lg">
       {/* Banner Container */}
       <div
-        className="relative min-h-[180px] sm:min-h-[220px] md:min-h-[280px] lg:min-h-[320px] bg-gradient-to-r from-red-600 via-red-500 to-orange-500 flex items-center cursor-pointer group"
-        style={{
-          backgroundImage: currentStory.image?.url
-            ? `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${currentStory.image.url})`
-            : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className="relative min-h-[180px] sm:min-h-[220px] md:min-h-[280px] lg:min-h-[320px] bg-gradient-to-r from-red-600 via-red-500 to-orange-500 flex items-center cursor-pointer group overflow-hidden"
         onClick={handleReadMore}
       >
+        {/* Background Image with proper cover cropping */}
+        {currentStory.image?.url && (
+          <img
+            src={currentStory.image.url}
+            alt={currentStory.image.alt || currentStory.title}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{
+              objectFit: 'cover',
+              objectPosition: 'center',
+            }}
+            loading="eager"
+            decoding="async"
+          />
+        )}
+        
         {/* Overlay Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent z-10" />
 
         {/* Content */}
         <div className="relative z-10 w-full px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
@@ -231,7 +239,7 @@ const BreakingNewsBanner = ({ onCurrentStoryChange } = {}) => {
                 e.stopPropagation();
                 handlePrevious();
               }}
-              className="sm:hidden absolute left-1.5 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white flex items-center justify-center"
+              className="sm:hidden absolute left-1.5 sm:left-2 top-1/2 -translate-y-1/2 z-30 w-7 h-7 sm:w-8 sm:h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white flex items-center justify-center"
               aria-label="Previous story"
             >
               <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -241,7 +249,7 @@ const BreakingNewsBanner = ({ onCurrentStoryChange } = {}) => {
                 e.stopPropagation();
                 handleNext();
               }}
-              className="sm:hidden absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-8 sm:h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white flex items-center justify-center"
+              className="sm:hidden absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 z-30 w-7 h-7 sm:w-8 sm:h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white flex items-center justify-center"
               aria-label="Next story"
             >
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
