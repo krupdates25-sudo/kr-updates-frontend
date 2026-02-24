@@ -172,6 +172,8 @@ const Dashboard = () => {
             response = await postService.getAllPosts({
               ...params,
               location: currentLocation
+              // Backend optimization: avoid expensive countDocuments; backend computes hasMore via limit+1
+              ,noCount: true
             });
         }
 
