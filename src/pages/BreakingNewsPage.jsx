@@ -9,6 +9,10 @@ import translateService from '../services/translateService';
 import AdContainer from '../components/common/AdContainer';
 import { useLanguageLocation } from '../contexts/LanguageLocationContext';
 import { useSettings } from '../contexts/SettingsContext';
+// Custom share icons from assets
+import whatsappIcon from '../assets/whatsapp.png';
+import facebookIcon from '../assets/facebook.png';
+import linkIcon from '../assets/link.png';
 
 const BreakingNewsPage = () => {
   const { id } = useParams();
@@ -280,12 +284,12 @@ const BreakingNewsPage = () => {
 
     try {
       if (platform === 'whatsapp') {
-        // Create share text with title, subtitle, and content preview
+        // Create share text with title (bold) and excerpt
         let shareText = '';
 
-        // Add title
+        // Add title in bold (WhatsApp uses * for bold)
         if (story?.title) {
-          shareText += `🚨 BREAKING: ${story.title}\n\n`;
+          shareText += `*${story.title}*\n\n`;
         }
 
         // Add excerpt/description
@@ -293,26 +297,11 @@ const BreakingNewsPage = () => {
           shareText += `${story.excerpt}\n\n`;
         }
 
-        // Add content preview (first 150 characters, strip HTML) - shorter to leave room for image preview
-        if (story?.content) {
-          const textContent = story.content.replace(/<[^>]*>/g, '').trim();
-          const preview = textContent.length > 150
-            ? textContent.substring(0, 150) + '...'
-            : textContent;
-          shareText += `${preview}\n\n`;
-        }
-
-        // Add link at the end - WhatsApp will automatically fetch image preview from OG tags
+        // Add link - WhatsApp will automatically fetch image preview from OG tags
         shareText += `${shareUrl}`;
 
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
         window.open(whatsappUrl, '_blank');
-        return;
-      }
-
-      if (platform === 'copy') {
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Link copied to clipboard!');
         return;
       }
 
@@ -324,14 +313,35 @@ const BreakingNewsPage = () => {
         return;
       }
 
-      const shareData = {
-        title: `${story?.title || 'Breaking News'} - KR Updates`,
-        text: story?.excerpt || '',
-        url: shareUrl,
-      };
+      if (platform === 'copy') {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link copied to clipboard!');
+        return;
+      }
 
+      // Native/system share (default)
       if (navigator.share) {
-        // Try to attach image if supported
+        // Include title and excerpt in share text
+        const shareTitle = story?.title || 'Breaking News - KR Updates';
+        let shareText = '';
+        
+        // Add title prominently
+        if (story?.title) {
+          shareText += `${story.title}\n\n`;
+        }
+        
+        // Add excerpt/description
+        if (story?.excerpt) {
+          shareText += `${story.excerpt}\n\n`;
+        }
+        
+        const baseShareData = {
+          title: shareTitle,
+          text: shareText.trim() || shareTitle,
+          url: shareUrl,
+        };
+
+        // Try to attach image if supported (system-level sharing with image)
         const imageUrl = story?.image?.url || null;
         if (imageUrl && navigator.canShare) {
           try {
@@ -341,20 +351,22 @@ const BreakingNewsPage = () => {
               const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
               const file = new File([blob], `kr-breaking.${ext}`, { type: blob.type || 'image/jpeg' });
               if (navigator.canShare({ files: [file] })) {
-                await navigator.share({ ...shareData, files: [file] });
+                await navigator.share({ ...baseShareData, files: [file] });
                 return;
               }
             }
           } catch {
-            // ignore
+            // fall back to sharing URL only
           }
         }
-        await navigator.share(shareData);
+        
+        await navigator.share(baseShareData);
       } else {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
       }
     } catch (shareError) {
+      console.error('Share failed:', shareError);
       try {
         await navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
@@ -418,7 +430,15 @@ const BreakingNewsPage = () => {
           </button>
 
           <button
-            onClick={() => setShowShareModal(true)}
+            onClick={async () => {
+              // Prefer native/system share for the main Share action
+              // Fallback to our share modal if Web Share API isn't available
+              if (navigator.share) {
+                await handleShare(null);
+                return;
+              }
+              setShowShareModal(true);
+            }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
           >
             <Share2 className="w-4 h-4" />
@@ -511,7 +531,15 @@ const BreakingNewsPage = () => {
                     <span>{displayStory?.viewCount || story?.views || 0} views</span>
                   </div>
                   <button
-                    onClick={() => setShowShareModal(true)}
+                    onClick={async () => {
+                      // Prefer native/system share for the main Share action
+                      // Fallback to our share modal if Web Share API isn't available
+                      if (navigator.share) {
+                        await handleShare(null);
+                        return;
+                      }
+                      setShowShareModal(true);
+                    }}
                     className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors"
                   >
                     <Share2 className="w-4 h-4" />
@@ -729,54 +757,102 @@ const BreakingNewsPage = () => {
         </div>
       </div>
 
-      {/* Share Modal */}
+      {/* Share Modal - Matching PostPage style */}
       {showShareModal && (
         <>
           <div
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-gray-800/50 backdrop-blur-sm z-50"
             onClick={() => setShowShareModal(false)}
+            aria-hidden="true"
           />
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-100"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col border border-gray-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                <h3 className="text-xl font-black text-gray-900">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-gray-900">
                   Share Breaking News
                 </h3>
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              {/* Preview Section - Show title and excerpt */}
+              <div className="p-4 border-b border-gray-200 overflow-y-auto flex-1 min-h-0">
+                <p className="text-xs text-gray-500 mb-3">
+                  Share Preview:
+                </p>
+                <div className="bg-white rounded-lg border border-gray-300 overflow-hidden shadow-sm p-4">
+                  <h4 className="text-lg font-bold text-gray-900 mb-2 leading-tight">
+                    {displayStory?.title}
+                  </h4>
+                  {displayStory?.excerpt && (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {displayStory.excerpt}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Share Options */}
+              <div className="p-4 space-y-3 flex-shrink-0">
                 <button
                   onClick={() => handleShare(null)}
-                  className="w-full px-6 py-4 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-3"
+                  className="w-full flex items-center justify-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
                 >
-                  Share (More options)
+                  <Share2 className="w-5 h-5 text-blue-700" />
+                  <span className="text-sm font-medium text-gray-900">
+                    Share (More options)
+                  </span>
                 </button>
+
                 <button
                   onClick={() => handleShare('whatsapp')}
-                  className="w-full px-6 py-4 rounded-xl bg-[#25D366] text-white font-black hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-3"
+                  className="w-full flex items-center justify-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
                 >
-                  Share on WhatsApp
+                  <img
+                    src={whatsappIcon}
+                    alt="WhatsApp"
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span className="text-sm font-medium text-gray-900">
+                    Share on WhatsApp
+                  </span>
                 </button>
+
                 <button
                   onClick={() => handleShare('facebook')}
-                  className="w-full px-6 py-4 rounded-xl bg-[#1877F2] text-white font-black hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-3"
+                  className="w-full flex items-center justify-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
                 >
-                  Share on Facebook
+                  <img
+                    src={facebookIcon}
+                    alt="Facebook"
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span className="text-sm font-medium text-gray-900">
+                    Share on Facebook
+                  </span>
                 </button>
+
                 <button
                   onClick={() => handleShare('copy')}
-                  className="w-full px-6 py-4 rounded-xl border-2 border-gray-100 text-gray-800 font-black hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-3"
+                  className="w-full flex items-center justify-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
                 >
-                  Copy Link
+                  <img
+                    src={linkIcon}
+                    alt="Copy Link"
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span className="text-sm font-medium text-gray-900">
+                    Copy Link
+                  </span>
                 </button>
               </div>
             </div>
