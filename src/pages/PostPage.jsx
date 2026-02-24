@@ -1546,13 +1546,13 @@ const PostPage = () => {
                   </button>
                 </div>
 
-                {/* Preview Section - Show title and subheading only */}
+                {/* Preview Section - Show title (bold) and subheading */}
                 <div className="p-4 border-b border-gray-200 overflow-y-auto flex-1 min-h-0">
                   <p className="text-xs text-gray-500 mb-3">
                     Share Preview:
                   </p>
                   <div className="bg-white rounded-lg border border-gray-300 overflow-hidden shadow-sm p-4">
-                    <h4 className="text-base font-bold text-gray-900 mb-2 leading-tight">
+                    <h4 className="text-lg font-bold text-gray-900 mb-2 leading-tight">
                       {displayPost?.title}
                     </h4>
                     {(displayPost?.subheading || displayPost?.description || displayPost?.excerpt) && (
