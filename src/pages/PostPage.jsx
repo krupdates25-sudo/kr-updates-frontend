@@ -600,8 +600,7 @@ const PostPage = () => {
   const handleShare = async (platform = null) => {
     // Use current window location for dynamic URL
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${baseUrl}/post/${post?.slug || String(post?._id || '')
-      }`;
+    const shareUrl = `${baseUrl}/post/${post?._id || ''}`;
 
     setShowShareModal(false);
 
