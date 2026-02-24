@@ -161,12 +161,29 @@ const postService = {
         return cachedData;
       }
 
-      const response = await api.get(`/posts/${postId}`);
+      // Add timeout to request (10 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      // Cache the response
-      detailsCache.set(cacheKey, response.data);
+      try {
+        const response = await api.get(`/posts/${postId}`, {
+          signal: controller.signal,
+          timeout: 10000, // 10 second timeout
+        });
 
-      return response.data;
+        clearTimeout(timeoutId);
+
+        // Cache the response
+        detailsCache.set(cacheKey, response.data);
+
+        return response.data;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError' || fetchError.code === 'ECONNABORTED') {
+          throw new Error('Request timeout - The server took too long to respond. Please try again.');
+        }
+        throw fetchError;
+      }
     } catch (error) {
       throw error.response?.data || error;
     }

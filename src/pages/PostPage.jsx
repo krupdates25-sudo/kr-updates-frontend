@@ -44,6 +44,7 @@ const PostPage = () => {
   const initialPost = location?.state?.initialPost || null;
   const [post, setPost] = useState(initialPost);
   const [isLoading, setIsLoading] = useState(!initialPost);
+  const [error, setError] = useState(null);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
@@ -354,14 +355,26 @@ const PostPage = () => {
     if (!id) return;
 
     // If we already have an optimistic post (from navigation state), don't blank the UI.
-    if (!post) setIsLoading(true);
+    if (!post) {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    // Create timeout promise (10 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout - The server took too long to respond. Please try again.')), 10000);
+    });
+
     try {
-      // Always use ID lookup (faster than slug)
-      const response = await postService.getPostById(id);
+      // Race between API call and timeout
+      const response = await Promise.race([
+        postService.getPostById(id),
+        timeoutPromise
+      ]);
 
       if (response?.data) {
         setPost(response.data);
-        console.log('Post fetched successfully:', response.data.title, 'Status:', response.data.status);
+        setError(null);
         // Fetch similar posts after current post is loaded (defer so details page paints faster)
         const runSimilar = () =>
           fetchSimilarPosts(response.data._id);
@@ -376,12 +389,30 @@ const PostPage = () => {
     } catch (error) {
       console.error('Error fetching post details:', error);
       setPost(null);
+      
+      // Set user-friendly error message
+      let errorMessage = 'Failed to load post. ';
+      if (error.message?.includes('timeout')) {
+        errorMessage = error.message;
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Post not found. It may have been deleted or moved.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to view this post.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += 'Please check your connection and try again.';
+      }
+      
+      setError(errorMessage);
 
-      // For non-admins (including logged-out users), send them back safely.
+      // For non-admins (including logged-out users), send them back after showing error
       if (user?.role !== 'admin') {
         setTimeout(() => {
           navigate(user ? '/dashboard' : '/');
-        }, 2000);
+        }, 3000);
       }
     } finally {
       setIsLoading(false);
