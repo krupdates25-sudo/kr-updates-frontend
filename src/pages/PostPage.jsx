@@ -839,63 +839,8 @@ const PostPage = () => {
               <div className="mb-4 sm:mb-6">
                 <AdContainer position="top" postIndex={0} />
               </div>
-              {/* Featured Media */}
-              {(displayPost?.featuredImage?.url || displayPost?.featuredVideo?.url) && (
-                <div
-                  className="mb-3 sm:mb-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
-                  data-protected-content
-                >
-                  {displayPost?.featuredVideo?.url ? (
-                    <video
-                      src={displayPost.featuredVideo.url}
-                      controls
-                      className="w-full object-cover select-none"
-                      style={{
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none',
-                        pointerEvents: 'auto',
-                        WebkitUserDrag: 'none',
-                        userDrag: 'none',
-                      }}
-                      draggable="false"
-                      onContextMenu={(e) => { e.preventDefault(); return false; }}
-                      onDragStart={(e) => { e.preventDefault(); return false; }}
-                      poster={displayPost.featuredVideo.thumbnail || displayPost.featuredImage?.url}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  ) : (
-                    <div
-                      className="cursor-zoom-in relative group"
-                      onClick={() => setLightboxImage(displayPost?.featuredImage?.url)}
-                      title="Click to view full image"
-                    >
-                      <OptimisticImage
-                        src={displayPost?.featuredImage?.url}
-                        alt={displayPost?.title || 'Post image'}
-                        className="w-full h-[240px] sm:h-[340px] md:h-[420px]"
-                        imgClassName="w-full h-full object-cover select-none"
-                        loading="eager"
-                        style={{
-                          userSelect: 'none',
-                          WebkitUserSelect: 'none',
-                          pointerEvents: 'auto',
-                          WebkitUserDrag: 'none',
-                          userDrag: 'none',
-                        }}
-                      />
-                      {/* Zoom hint overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="bg-black/50 text-white rounded-full p-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
-              {/* Article Header */}
+              {/* Article Header - Heading and Subheading */}
               <div
                 className="bg-white rounded-lg shadow-sm p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 relative"
                 data-protected-content
@@ -961,7 +906,70 @@ const PostPage = () => {
                     {displayPost.subheading || displayPost.description || displayPost.excerpt}
                   </p>
                 )}
+              </div>
 
+              {/* Featured Media - Image/Video (after heading and subheading) */}
+              {(displayPost?.featuredImage?.url || displayPost?.featuredVideo?.url) && (
+                <div
+                  className="mb-3 sm:mb-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
+                  data-protected-content
+                >
+                  {displayPost?.featuredVideo?.url ? (
+                    <video
+                      src={displayPost.featuredVideo.url}
+                      controls
+                      className="w-full object-cover select-none"
+                      style={{
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        pointerEvents: 'auto',
+                        WebkitUserDrag: 'none',
+                        userDrag: 'none',
+                      }}
+                      draggable="false"
+                      onContextMenu={(e) => { e.preventDefault(); return false; }}
+                      onDragStart={(e) => { e.preventDefault(); return false; }}
+                      poster={displayPost.featuredVideo.thumbnail || displayPost.featuredImage?.url}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div
+                      className="cursor-zoom-in relative group"
+                      onClick={() => setLightboxImage(displayPost?.featuredImage?.url)}
+                      title="Click to view full image"
+                    >
+                      <OptimisticImage
+                        src={displayPost?.featuredImage?.url}
+                        alt={displayPost?.title || 'Post image'}
+                        className="w-full h-[240px] sm:h-[340px] md:h-[420px]"
+                        imgClassName="w-full h-full object-cover select-none"
+                        loading="eager"
+                        style={{
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          pointerEvents: 'auto',
+                          WebkitUserDrag: 'none',
+                          userDrag: 'none',
+                        }}
+                      />
+                      {/* Zoom hint overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="bg-black/50 text-white rounded-full p-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Metadata Section */}
+              <div
+                className="bg-white rounded-lg shadow-sm p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 relative"
+                data-protected-content
+                style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+              >
                 {/* Metadata */}
                 <div className="flex flex-col gap-3 sm:gap-4 mb-3 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                   {/* Date, Reading Time, Views, Share */}
