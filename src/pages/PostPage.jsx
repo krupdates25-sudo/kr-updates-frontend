@@ -637,15 +637,15 @@ const PostPage = () => {
 
     try {
       if (platform === 'whatsapp') {
-        // Create share text with title and subheading prominently
+        // Create share text with title (bold) and subheading prominently
         let shareText = '';
 
-        // Add title (prominent)
+        // Add title in bold (WhatsApp uses * for bold)
         if (post?.title) {
-          shareText += `📰 *${post.title}*\n\n`;
+          shareText += `*${post.title}*\n\n`;
         }
 
-        // Add subheading/description (prominent)
+        // Add subheading/description
         if (post?.subheading || post?.description || post?.excerpt) {
           const subtitle = post.subheading || post.description || post.excerpt;
           shareText += `${subtitle}\n\n`;
@@ -670,13 +670,24 @@ const PostPage = () => {
         await trackShare('clipboard');
       } else {
         if (navigator.share) {
-          // Include title and subheading in share
+          // Include title (bold) and subheading in share text
           const shareTitle = post?.title || 'KR Updates';
-          const shareText = post?.subheading || post?.description || post?.excerpt || '';
+          let shareText = '';
+          
+          // Add title prominently
+          if (post?.title) {
+            shareText += `${post.title}\n\n`;
+          }
+          
+          // Add subheading/description
+          if (post?.subheading || post?.description || post?.excerpt) {
+            const subtitle = post.subheading || post.description || post.excerpt;
+            shareText += `${subtitle}\n\n`;
+          }
           
           const baseShareData = {
             title: shareTitle,
-            text: shareText,
+            text: shareText.trim() || shareTitle,
             url: shareUrl,
           };
 
