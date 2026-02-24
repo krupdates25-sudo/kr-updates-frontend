@@ -161,7 +161,7 @@ const postService = {
         return cachedData;
       }
 
-      const response = await api.get(`/posts/details/${postId}`);
+      const response = await api.get(`/posts/${postId}`);
 
       // Cache the response
       detailsCache.set(cacheKey, response.data);
