@@ -338,17 +338,18 @@ const Header = ({
           )}
         </div>
 
-        {/* Centered logo - own column so it never overlaps right-side icons */}
+        {/* Centered logo - smaller on mobile so right-side icons (language, etc.) fit */}
         <button
           onClick={() => navigate(isStaff ? '/dashboard' : '/')}
           className="flex items-center justify-center shrink-0"
           aria-label="Go to home"
         >
-          <Logo size="md" />
+          <span className="sm:hidden"><Logo size="sm" /></span>
+          <span className="hidden sm:inline"><Logo size="md" /></span>
         </button>
 
-        {/* Right side - Icons and User menu (starts after logo, so language icon stays visible) */}
-        <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-3 min-w-0">
+        {/* Right side - Icons and User menu; min width on mobile so language icon stays visible */}
+        <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-3 min-w-[160px] sm:min-w-0">
 
           {/* Language Selector - shrink-0 so it never hides behind logo */}
           <div className="relative shrink-0">
@@ -396,7 +397,7 @@ const Header = ({
           {/* PWA Install / Update (always visible) */}
           <button
             onClick={handlePwaAction}
-            className={`p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 ${
+            className={`shrink-0 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 ${
               isUpdateAvailable ? 'text-orange-600' : isInstallAvailable ? 'text-blue-600' : 'text-gray-600'
             }`}
             title={
@@ -430,10 +431,10 @@ const Header = ({
           )}
           {/* Notifications - Admin/Moderator (visible on all screen sizes) */}
           {isStaff && (
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setIsAnnouncementOpen(!isAnnouncementOpen)}
-                className="relative p-2 md:p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                className="relative p-1.5 sm:p-2 md:p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Bell className="w-5 h-5 text-gray-600" />
                 {unreadCount > 0 && (
@@ -466,14 +467,14 @@ const Header = ({
             </button>
           )}
 
-          {/* Staff user menu (admin/moderator only) */}
+          {/* Staff user menu (admin/moderator only) - compact on mobile so language icon fits */}
           {isStaff && (
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-1.5 sm:gap-2 md:gap-3 p-1 sm:p-1.5 md:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-1 sm:gap-2 md:gap-3 p-1 sm:p-1.5 md:p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center shadow-lg">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shrink-0">
                   <span className="text-white font-bold text-xs sm:text-sm">
                     {user?.firstName?.charAt(0) || 'U'}
                   </span>
