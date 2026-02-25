@@ -631,28 +631,28 @@ const PostPage = () => {
   const handleShare = async (platform = null) => {
     // Use current window location for dynamic URL
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${baseUrl}/post/${post?._id || ''}`;
+    const shareUrl = `${baseUrl}/post/${post?.slug || post?._id || ''}`;
 
     setShowShareModal(false);
 
     try {
       if (platform === 'whatsapp') {
-        // Create share text with title (bold) and subheading prominently
+        // Bold heading + normal subheading (WhatsApp: *text* = bold)
         let shareText = '';
 
-        // Add title in bold (WhatsApp uses * for bold)
+        // Heading in bold
         if (post?.title) {
           shareText += `*${post.title}*\n\n`;
         }
 
-        // Add subheading/description
+        // Subheading in normal weight
         if (post?.subheading || post?.description || post?.excerpt) {
           const subtitle = post.subheading || post.description || post.excerpt;
           shareText += `${subtitle}\n\n`;
         }
 
-        // Add link - WhatsApp will automatically fetch image preview from OG tags
-        shareText += `${shareUrl}`;
+        // Link - WhatsApp fetches image preview from OG tags
+        shareText += shareUrl;
 
         // WhatsApp will automatically show image preview from Open Graph tags when link is shared
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
@@ -956,10 +956,10 @@ const PostPage = () => {
                   )}
                 </div>
 
-                {/* Article Title - Bigger font size */}
+                {/* Article Title - Bolder heading */}
                 <h1
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
-                  style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
+                  style={{ userSelect: 'none', WebkitUserSelect: 'none', fontWeight: 800 }}
                 >
                   {displayPost?.title}
                 </h1>

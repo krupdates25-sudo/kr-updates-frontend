@@ -189,15 +189,15 @@ const PostModal = ({ isOpen, onClose, postId, post: initialPost }) => {
       post?.slug || String(post?._id || '')
     }`;
     
-    // Create share text with title, subtitle, and content preview
+    // Bold heading + normal subheading for WhatsApp (*text* = bold)
     let shareText = '';
     
-    // Add title
+    // Heading in bold
     if (post?.title) {
-      shareText += `📰 ${post.title}\n\n`;
+      shareText += `*${post.title}*\n\n`;
     }
     
-    // Add subtitle/description
+    // Subheading in normal weight
     if (post?.description || post?.subheading || post?.excerpt) {
       const subtitle = post.description || post.subheading || post.excerpt;
       shareText += `${subtitle}\n\n`;
