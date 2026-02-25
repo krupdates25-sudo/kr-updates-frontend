@@ -323,14 +323,14 @@ const Header = ({
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 w-full shadow-sm">
-      <div className="relative flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 w-full">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center h-14 sm:h-16 px-3 sm:px-4 md:px-6 w-full gap-2">
         {/* Left side */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
           {/* Burger Menu Button - Desktop only (only for authenticated users) */}
           {isStaff && (
             <button
               onClick={onSidebarToggle}
-              className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
               aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5 text-gray-600" />
@@ -338,20 +338,20 @@ const Header = ({
           )}
         </div>
 
-        {/* Centered logo */}
+        {/* Centered logo - own column so it never overlaps right-side icons */}
         <button
           onClick={() => navigate(isStaff ? '/dashboard' : '/')}
-          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
+          className="flex items-center justify-center shrink-0"
           aria-label="Go to home"
         >
           <Logo size="md" />
         </button>
 
-        {/* Right side - Icons and User menu */}
-        <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-3 flex-1">
+        {/* Right side - Icons and User menu (starts after logo, so language icon stays visible) */}
+        <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-3 min-w-0">
 
-          {/* Language Selector */}
-          <div className="relative">
+          {/* Language Selector - shrink-0 so it never hides behind logo */}
+          <div className="relative shrink-0">
             <button
               onClick={() => {
                 setIsLanguageMenuOpen(!isLanguageMenuOpen);
