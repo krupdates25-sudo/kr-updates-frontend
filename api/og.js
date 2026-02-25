@@ -211,8 +211,9 @@ export default async function handler(req, res) {
       imageUrl = imageUrl.replace('http://', 'https://');
     }
 
-    // Generate title and description
+    // Generate title and description; use bold Unicode for OG title (bolder in WhatsApp preview)
     const title = post.title || 'Post - KR Updates';
+    const ogTitle = toBoldUnicode(title);
     let description = post.excerpt || post.description || post.subheading || '';
     
     if (!description && post.content) {
@@ -255,7 +256,7 @@ export default async function handler(req, res) {
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="article">
   <meta property="og:url" content="${escapeHtml(shareUrl)}">
-  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:title" content="${escapeHtml(ogTitle)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:site_name" content="KR Updates">
   <meta property="og:locale" content="en_US">
@@ -267,7 +268,7 @@ export default async function handler(req, res) {
   <meta property="og:image:type" content="${escapeHtml(imageType)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="${escapeHtml(title)}">
+  <meta property="og:image:alt" content="${escapeHtml(ogTitle)}">
   <!-- Additional image meta for compatibility -->
   <meta name="image" content="${escapeHtml(imageUrl)}">
   <link rel="image_src" href="${escapeHtml(imageUrl)}">` : '  <!-- No image URL available, using default -->'}
@@ -275,7 +276,7 @@ export default async function handler(req, res) {
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="${escapeHtml(shareUrl)}">
-  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:title" content="${escapeHtml(ogTitle)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   ${imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : ''}
   
@@ -345,6 +346,18 @@ function generateDefaultOG(req) {
   <script>window.location.href = '${escapeHtml(shareUrl)}';</script>
 </body>
 </html>`;
+}
+
+// Convert Latin letters and digits to Unicode mathematical bold for bolder title in link previews (WhatsApp)
+function toBoldUnicode(str) {
+  if (!str || typeof str !== 'string') return str;
+  return str.split('').map((char) => {
+    const code = char.charCodeAt(0);
+    if (code >= 0x41 && code <= 0x5a) return String.fromCodePoint(0x1d400 + (code - 0x41)); // A-Z
+    if (code >= 0x61 && code <= 0x7a) return String.fromCodePoint(0x1d41a + (code - 0x61)); // a-z
+    if (code >= 0x30 && code <= 0x39) return String.fromCodePoint(0x1d7ce + (code - 0x30)); // 0-9
+    return char;
+  }).join('');
 }
 
 // Escape HTML to prevent XSS

@@ -35,6 +35,18 @@ import { useSettings } from '../contexts/SettingsContext';
 import OptimisticImage from '../components/common/OptimisticImage';
 import { Helmet } from 'react-helmet-async';
 
+/** Convert Latin letters and digits to Unicode mathematical bold for bolder appearance in link previews (WhatsApp, etc.) */
+function toBoldUnicode(str) {
+  if (!str || typeof str !== 'string') return str;
+  return str.split('').map((char) => {
+    const code = char.charCodeAt(0);
+    if (code >= 0x41 && code <= 0x5a) return String.fromCodePoint(0x1d400 + (code - 0x41)); // A-Z
+    if (code >= 0x61 && code <= 0x7a) return String.fromCodePoint(0x1d41a + (code - 0x61)); // a-z
+    if (code >= 0x30 && code <= 0x39) return String.fromCodePoint(0x1d7ce + (code - 0x30)); // 0-9
+    return char;
+  }).join('');
+}
+
 const PostPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -314,6 +326,7 @@ const PostPage = () => {
 
     return {
       title,
+      ogTitle: toBoldUnicode(title), // Bolder title in WhatsApp/link preview card
       description,
       url: shareUrl,
       image: finalImageUrl,
@@ -842,7 +855,7 @@ const PostPage = () => {
           {/* Open Graph / Facebook / WhatsApp */}
           <meta property="og:type" content="article" />
           <meta property="og:url" content={ogData.url} />
-          <meta property="og:title" content={ogData.title} />
+          <meta property="og:title" content={ogData.ogTitle ?? ogData.title} />
           <meta property="og:description" content={ogData.description} />
           <meta property="og:site_name" content={ogData.siteName} />
           <meta property="og:locale" content="en_US" />
@@ -856,7 +869,7 @@ const PostPage = () => {
               <meta property="og:image:type" content="image/jpeg" />
               <meta property="og:image:width" content="1200" />
               <meta property="og:image:height" content="630" />
-              <meta property="og:image:alt" content={ogData.title} />
+              <meta property="og:image:alt" content={ogData.ogTitle ?? ogData.title} />
               <meta name="image" content={ogData.image} />
               <link rel="image_src" href={ogData.image} />
             </>
