@@ -428,9 +428,9 @@ const Header = ({
               {pwaToast}
             </div>
           )}
-          {/* Notifications - Desktop only (only for authenticated users) */}
+          {/* Notifications - Admin/Moderator (visible on all screen sizes) */}
           {isStaff && (
-            <div className="hidden lg:block relative">
+            <div className="relative">
               <button
                 onClick={() => setIsAnnouncementOpen(!isAnnouncementOpen)}
                 className="relative p-2 md:p-2.5 rounded-lg hover:bg-gray-100 transition-colors"
