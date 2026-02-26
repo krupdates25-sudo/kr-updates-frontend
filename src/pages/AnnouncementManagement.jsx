@@ -205,23 +205,23 @@ const AnnouncementManagement = () => {
 
   const getTypeColor = (type, priority) => {
     if (priority === 'urgent')
-      return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
+      return 'text-red-600 bg-red-100 dark:bg-red-100 dark:text-red-800';
     if (priority === 'high')
-      return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
+      return 'text-orange-600 bg-orange-100 dark:bg-orange-100 dark:text-orange-800';
 
     const colorMap = {
-      info: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+      info: 'text-blue-600 bg-blue-100 dark:bg-blue-100 dark:text-blue-800',
       warning:
-        'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
+        'text-yellow-600 bg-yellow-100 dark:bg-yellow-100 dark:text-yellow-800',
       success:
-        'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
-      error: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
+        'text-green-600 bg-green-100 dark:bg-green-100 dark:text-green-800',
+      error: 'text-red-600 bg-red-100 dark:bg-red-100 dark:text-red-800',
       update:
-        'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+        'text-purple-600 bg-purple-100 dark:bg-purple-100 dark:text-purple-800',
     };
     return (
       colorMap[type] ||
-      'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'
+      'text-gray-600 bg-gray-100 dark:bg-gray-100 dark:text-gray-800'
     );
   };
 
@@ -236,77 +236,77 @@ const AnnouncementManagement = () => {
     <>
     <PageLayout activeTab="admin-announcements" hideBottomNav={true}>
       {/* Main Content */}
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8 bg-gray-50 dark:bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-900 mb-2">
             Announcement Management
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-600">
             Create and manage website announcements for your users
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-white p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-200">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-100 rounded-lg">
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-800" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-600">
                   Total
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-900">
                   {stats.totalAnnouncements || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-white p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-200">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-green-100 dark:bg-green-100 rounded-lg">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-800" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-600">
                   Active
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-900">
                   {stats.activeAnnouncements || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-white p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-200">
             <div className="flex items-center">
-              <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" />
+              <div className="p-2 bg-gray-100 dark:bg-white rounded-lg">
+                <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-600" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-600">
                   Inactive
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-900">
                   {stats.inactiveAnnouncements || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-white p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-200">
             <div className="flex items-center">
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
+              <div className="p-2 bg-red-100 dark:bg-red-100 rounded-lg">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-800" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-600">
                   Expired
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-900">
                   {stats.expiredAnnouncements || 0}
                 </p>
               </div>
@@ -315,7 +315,7 @@ const AnnouncementManagement = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="bg-white dark:bg-white p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-200 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               {/* Search */}
@@ -326,7 +326,7 @@ const AnnouncementManagement = () => {
                   placeholder="Search announcements..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full sm:w-64 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+                  className="pl-9 sm:pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full sm:w-64 bg-white dark:bg-white text-gray-900 dark:text-gray-900 text-sm sm:text-base"
                 />
               </div>
 
@@ -334,7 +334,7 @@ const AnnouncementManagement = () => {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+                className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900 text-sm sm:text-base"
               >
                 <option value="all">All Types</option>
                 <option value="info">Info</option>
@@ -347,7 +347,7 @@ const AnnouncementManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+                className="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900 text-sm sm:text-base"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -371,21 +371,21 @@ const AnnouncementManagement = () => {
         </div>
 
         {/* Announcements List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-white rounded-lg border border-gray-200 dark:border-gray-200 overflow-hidden">
           {loading && announcements.length === 0 ? (
             <div className="p-8 text-center">
               <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-gray-500 dark:text-gray-600">
                 Loading announcements...
               </p>
             </div>
           ) : error ? (
             <div className="p-8 text-center">
               <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+              <p className="text-red-600 dark:text-red-800 mb-4">{error}</p>
               <button
                 onClick={fetchAnnouncements}
-                className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                className="text-purple-600 dark:text-purple-600 hover:text-purple-700 dark:hover:text-purple-800"
               >
                 Try again
               </button>
@@ -393,7 +393,7 @@ const AnnouncementManagement = () => {
           ) : filteredAnnouncements.length === 0 ? (
             <div className="p-8 text-center">
               <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-2">
+              <p className="text-gray-500 dark:text-gray-600 mb-2">
                 No announcements found
               </p>
               <p className="text-gray-400 dark:text-gray-500 text-sm">
@@ -405,29 +405,29 @@ const AnnouncementManagement = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-gray-50 dark:bg-white">
                   <tr>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                       Announcement
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden md:table-cell">
                       Type & Priority
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden lg:table-cell">
                       Audience
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden sm:table-cell">
                       Status
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden xl:table-cell">
                       Reads
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-white dark:bg-white divide-y divide-gray-200 dark:divide-gray-200">
                       {filteredAnnouncements.map((announcement) => {
                         const IconComponent = getTypeIcon(
                           announcement.type,
@@ -441,7 +441,7 @@ const AnnouncementManagement = () => {
                         return (
                           <tr
                             key={announcement._id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                            className="hover:bg-gray-50 dark:hover:bg-gray-50 transition-colors"
                           >
                             <td className="px-3 sm:px-6 py-3 sm:py-4">
                               <div className="flex items-start gap-2 sm:gap-3">
@@ -451,10 +451,10 @@ const AnnouncementManagement = () => {
                                   <IconComponent className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-900 line-clamp-1">
                                     {announcement.title}
                                   </div>
-                                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-600 line-clamp-2 mt-1">
                                     {announcement.message}
                                   </div>
                                   <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
@@ -473,12 +473,12 @@ const AnnouncementManagement = () => {
                                     <span
                                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                         announcement.priority === 'urgent'
-                                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                          ? 'bg-red-100 text-red-800 dark:bg-red-100 dark:text-red-800'
                                           : announcement.priority === 'high'
-                                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-100 dark:text-orange-800'
                                           : announcement.priority === 'medium'
-                                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-100 dark:text-blue-800'
+                                          : 'bg-gray-100 text-gray-800 dark:bg-gray-100 dark:text-gray-800'
                                       }`}
                                     >
                                       {announcement.priority}
@@ -497,12 +497,12 @@ const AnnouncementManagement = () => {
                                 <div
                                   className={`text-xs px-2 py-1 rounded-full font-medium ${
                                     announcement.priority === 'urgent'
-                                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                      ? 'bg-red-100 text-red-800 dark:bg-red-100 dark:text-red-800'
                                       : announcement.priority === 'high'
-                                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-100 dark:text-orange-800'
                                       : announcement.priority === 'medium'
-                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-100 dark:text-blue-800'
+                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-100 dark:text-gray-800'
                                   }`}
                                 >
                                   {announcement.priority}
@@ -512,7 +512,7 @@ const AnnouncementManagement = () => {
                             <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
                               <div className="flex items-center gap-1">
                                 <Users className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm text-gray-900 dark:text-gray-100 capitalize">
+                                <span className="text-sm text-gray-900 dark:text-gray-900 capitalize">
                                   {announcement.targetAudience}
                                 </span>
                               </div>
@@ -522,10 +522,10 @@ const AnnouncementManagement = () => {
                                 <span
                                   className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                     announcement.isCurrentlyActive
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-100 dark:text-green-800'
                                       : announcement.isActive
-                                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-100 dark:text-yellow-800'
+                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-100 dark:text-gray-800'
                                   }`}
                                 >
                                   {announcement.isCurrentlyActive
@@ -534,7 +534,7 @@ const AnnouncementManagement = () => {
                                     ? 'Scheduled'
                                     : 'Inactive'}
                                 </span>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-xs text-gray-500 dark:text-gray-600">
                                   {new Date(
                                     announcement.endDate
                                   ).toLocaleDateString()}
@@ -544,7 +544,7 @@ const AnnouncementManagement = () => {
                             <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden xl:table-cell">
                               <div className="flex items-center gap-1">
                                 <Eye className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm text-gray-900 dark:text-gray-100">
+                                <span className="text-sm text-gray-900 dark:text-gray-900">
                                   {announcement.readCount || 0}
                                 </span>
                               </div>
@@ -564,8 +564,8 @@ const AnnouncementManagement = () => {
                                   }
                                   className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                                     announcement.isActive
-                                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                      : 'text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30'
+                                      ? 'text-gray-600 dark:text-gray-600 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-50'
+                                      : 'text-green-600 dark:text-green-800 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30'
                                   }`}
                                   title={
                                     announcement.isActive
@@ -583,7 +583,7 @@ const AnnouncementManagement = () => {
                                   onClick={() =>
                                     handleDeleteAnnouncement(announcement._id)
                                   }
-                                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                  className="text-red-600 dark:text-red-800 hover:text-red-900 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -612,11 +612,11 @@ const AnnouncementManagement = () => {
           }}
         >
                 <div 
-                  className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                  className="bg-white dark:bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  <div className="p-6 border-b border-gray-200 dark:border-gray-200 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900">
                       {editingAnnouncement
                         ? 'Edit Announcement'
                         : 'Create New Announcement'}
@@ -644,7 +644,7 @@ const AnnouncementManagement = () => {
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Title *
                         </label>
                         <input
@@ -654,13 +654,13 @@ const AnnouncementManagement = () => {
                           onChange={(e) =>
                             setFormData({ ...formData, title: e.target.value })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                           placeholder="Enter announcement title"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Type
                         </label>
                         <select
@@ -668,7 +668,7 @@ const AnnouncementManagement = () => {
                           onChange={(e) =>
                             setFormData({ ...formData, type: e.target.value })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         >
                           <option value="info">Info</option>
                           <option value="warning">Warning</option>
@@ -679,7 +679,7 @@ const AnnouncementManagement = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Priority
                         </label>
                         <select
@@ -690,7 +690,7 @@ const AnnouncementManagement = () => {
                               priority: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         >
                           <option value="low">Low</option>
                           <option value="medium">Medium</option>
@@ -700,7 +700,7 @@ const AnnouncementManagement = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Target Audience
                         </label>
                         <select
@@ -711,7 +711,7 @@ const AnnouncementManagement = () => {
                               targetAudience: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         >
                           <option value="all">All Users</option>
                           <option value="admin">Admins Only</option>
@@ -721,7 +721,7 @@ const AnnouncementManagement = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Start Date
                         </label>
                         <input
@@ -733,12 +733,12 @@ const AnnouncementManagement = () => {
                               startDate: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           End Date
                         </label>
                         <input
@@ -750,13 +750,13 @@ const AnnouncementManagement = () => {
                               endDate: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                         Message *
                       </label>
                       <textarea
@@ -766,14 +766,14 @@ const AnnouncementManagement = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, message: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         placeholder="Enter announcement message"
                       />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Action URL (optional)
                         </label>
                         <input
@@ -785,13 +785,13 @@ const AnnouncementManagement = () => {
                               actionUrl: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                           placeholder="https://example.com"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                           Action Text (optional)
                         </label>
                         <input
@@ -803,14 +803,14 @@ const AnnouncementManagement = () => {
                               actionText: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                           placeholder="Learn More"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                         Icon
                       </label>
                       <select
@@ -818,7 +818,7 @@ const AnnouncementManagement = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, icon: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       >
                         <option value="bell">Bell</option>
                         <option value="info">Info</option>
@@ -830,7 +830,7 @@ const AnnouncementManagement = () => {
                       </select>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-200">
                       <button
                         type="button"
                         onClick={() => {
@@ -838,7 +838,7 @@ const AnnouncementManagement = () => {
                           setEditingAnnouncement(null);
                           resetForm();
                         }}
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="px-4 py-2 text-gray-700 dark:text-gray-700 bg-gray-100 dark:bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-200 rounded-lg transition-colors"
                       >
                         Cancel
                       </button>

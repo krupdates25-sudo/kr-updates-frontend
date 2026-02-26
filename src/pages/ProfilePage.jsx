@@ -987,14 +987,14 @@ const ProfilePage = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8"
+          className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8 bg-gray-50 dark:bg-gray-50 min-h-screen"
         >
-          {/* Header */}
+          {/* Header - forced light theme */}
           <motion.div variants={itemVariants} className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-900 mb-2">
               Profile Settings
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600 dark:text-gray-600">
               Manage your account settings and preferences
             </p>
           </motion.div>
@@ -1034,7 +1034,7 @@ const ProfilePage = () => {
               variants={itemVariants}
               className="lg:w-64 flex-shrink-0"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-white rounded-xl shadow-sm border border-gray-200 dark:border-gray-200 p-6">
                 <nav className="space-y-2">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -1044,8 +1044,8 @@ const ProfilePage = () => {
                         onClick={() => setActiveTab(tab.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg transition-colors ${
                           activeTab === tab.id
-                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            ? 'bg-purple-50 dark:bg-purple-50 text-purple-700 dark:text-purple-700 border border-purple-200 dark:border-purple-200'
+                            : 'text-gray-600 dark:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-50'
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -1057,9 +1057,9 @@ const ProfilePage = () => {
               </div>
             </motion.div>
 
-            {/* Content */}
+            {/* Content - forced light theme */}
             <motion.div variants={itemVariants} className="flex-1">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+              <div className="bg-white dark:bg-white rounded-xl shadow-sm border border-gray-200 dark:border-gray-200 p-8">
                 <AnimatePresence mode="wait">
                   {activeTab === 'personal' && renderPersonalInfoTab()}
                   {activeTab === 'security' && renderSecurityTab()}

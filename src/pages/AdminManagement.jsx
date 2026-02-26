@@ -437,16 +437,16 @@ const AdminManagement = () => {
     <>
     <PageLayout activeTab="admin-users" hideBottomNav={true}>
       {/* Main Content */}
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8 bg-gray-50 dark:bg-gray-50 min-h-screen">
         {/* Page Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-6 rounded-lg">
+        <div className="bg-white dark:bg-white border-b border-gray-200 dark:border-gray-200 mb-6 rounded-lg">
           <div className="px-4 sm:px-6 py-4 sm:py-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-900">
                   User Management
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-gray-600 dark:text-gray-600 mt-1">
                   Create and manage sub-administrators and users
                 </p>
               </div>
@@ -473,7 +473,7 @@ const AdminManagement = () => {
         <div className="w-full space-y-6">
           {/* Filters */}
               <div
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6"
+                className="bg-white dark:bg-white rounded-2xl border border-gray-200 dark:border-gray-200 p-4 sm:p-6"
                 style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
               >
                 <div className="flex flex-col lg:flex-row gap-4">
@@ -485,7 +485,7 @@ const AdminManagement = () => {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search users by name or email..."
-                      className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                      className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 border border-gray-200 dark:border-gray-200 dark:bg-white dark:text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                     />
                   </div>
 
@@ -495,7 +495,7 @@ const AdminManagement = () => {
                     <select
                       value={filterRole}
                       onChange={(e) => setFilterRole(e.target.value)}
-                      className="pl-9 sm:pl-10 pr-8 py-2 sm:py-3 border border-gray-200 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white dark:bg-gray-700 w-full sm:min-w-[150px] text-sm sm:text-base"
+                      className="pl-9 sm:pl-10 pr-8 py-2 sm:py-3 border border-gray-200 dark:border-gray-200 dark:bg-white dark:text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white dark:bg-white w-full sm:min-w-[150px] text-sm sm:text-base"
                     >
                       <option value="all">All Roles</option>
                       <option value="moderator">Moderator</option>
@@ -508,11 +508,11 @@ const AdminManagement = () => {
 
               {/* Users Table */}
               <div
-                className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                className="bg-white dark:bg-white rounded-2xl border border-gray-200 dark:border-gray-200 overflow-hidden"
                 style={{ boxShadow: '0 8px 32px rgba(87, 85, 254, 0.1)' }}
               >
-                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
+                <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-200">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-900">
                     Users ({filteredUsers.length})
                   </h2>
                 </div>
@@ -530,36 +530,36 @@ const AdminManagement = () => {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50 dark:bg-gray-900">
+                      <thead className="bg-gray-50 dark:bg-gray-100">
                         <tr>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                             User
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden sm:table-cell">
                             Role
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden md:table-cell">
                             Status
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden lg:table-cell">
                             Created
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden xl:table-cell">
                             Last Login
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider hidden lg:table-cell">
                             Publishing
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      <tbody className="bg-white dark:bg-white divide-y divide-gray-200 dark:divide-gray-200">
                         {filteredUsers.map((user) => (
                           <tr
                             key={user._id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            className="hover:bg-gray-50 dark:hover:bg-gray-50 transition-colors"
                           >
                             <td className="px-3 sm:px-6 py-3 sm:py-4">
                               <div className="flex items-center">
@@ -570,10 +570,10 @@ const AdminManagement = () => {
                                   </span>
                                 </div>
                                 <div className="ml-3 sm:ml-4 min-w-0">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-900 truncate">
                                     {user.firstName} {user.lastName}
                                   </div>
-                                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-600 truncate">
                                     {user.email}
                                   </div>
                                   {/* Show role badge on mobile */}
@@ -590,8 +590,8 @@ const AdminManagement = () => {
                               <span
                                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                                   user.isActive
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-100 dark:text-green-800'
+                                    : 'bg-red-100 text-red-800 dark:bg-red-100 dark:text-red-800'
                                 }`}
                               >
                                 <div
@@ -604,10 +604,10 @@ const AdminManagement = () => {
                                 {user.isActive ? 'Active' : 'Inactive'}
                               </span>
                             </td>
-                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-600 hidden lg:table-cell">
                               {new Date(user.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden xl:table-cell">
+                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-600 hidden xl:table-cell">
                               {user.lastLogin
                                 ? new Date(user.lastLogin).toLocaleDateString()
                                 : 'Never'}
@@ -625,8 +625,8 @@ const AdminManagement = () => {
                                 }
                                 className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                                   user.canPublish
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-200'
-                                    : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-200'
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-100 dark:text-green-800'
+                                    : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-100 dark:text-red-800'
                                 } ${
                                   actionLoading || user.role === 'admin'
                                     ? 'opacity-50 cursor-not-allowed'
@@ -659,21 +659,21 @@ const AdminManagement = () => {
                               <div className="flex items-center justify-end gap-1 sm:gap-2">
                                 <button
                                   onClick={() => handleViewDetails(user)}
-                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-600 dark:hover:text-blue-800 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-50 transition-colors"
                                   title="View Details"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleEditClick(user)}
-                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 p-1.5 sm:p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
+                                  className="text-green-600 hover:text-green-800 dark:text-green-600 dark:hover:text-green-800 p-1.5 sm:p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-50 transition-colors"
                                   title="Edit User"
                                 >
                                   <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteUser(user._id)}
-                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                  className="text-red-600 hover:text-red-800 dark:text-red-600 dark:hover:text-red-800 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-50 transition-colors"
                                   title="Delete User"
                                   disabled={actionLoading}
                                 >
