@@ -58,13 +58,9 @@ const AnnouncementDropdown = ({
 
       await announcementService.markAsRead(announcementId);
 
-      // Update local state
+      // Remove from list (we only show unread; read items are hidden)
       setAnnouncements((prev) =>
-        prev.map((announcement) =>
-          announcement._id === announcementId
-            ? { ...announcement, isRead: true }
-            : announcement
-        )
+        prev.filter((announcement) => announcement._id !== announcementId)
       );
 
       // Update unread count
@@ -86,10 +82,8 @@ const AnnouncementDropdown = ({
       setLoading(true);
       await announcementService.markAllAsRead();
 
-      // Update all announcements to read
-      setAnnouncements((prev) =>
-        prev.map((announcement) => ({ ...announcement, isRead: true }))
-      );
+      // Remove all from list (we only show unread; read items are hidden)
+      setAnnouncements([]);
 
       // Reset unread count
       onUnreadCountChange(0);
@@ -158,8 +152,8 @@ const AnnouncementDropdown = ({
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  // Only show unread announcements; when all are read, list is empty
   const unreadAnnouncements = announcements.filter((a) => !a.isRead);
-  const readAnnouncements = announcements.filter((a) => a.isRead);
 
   if (!isOpen) return null;
 
@@ -222,7 +216,7 @@ const AnnouncementDropdown = ({
                 Try again
               </button>
             </div>
-          ) : announcements.length === 0 ? (
+          ) : unreadAnnouncements.length === 0 ? (
             <div className="p-6 text-center">
               <Bell className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
               <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -337,87 +331,6 @@ const AnnouncementDropdown = ({
                                   }
                                 }}
                                 className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-1"
-                              >
-                                {announcement.actionText}
-                                <ExternalLink className="w-3 h-3" />
-                              </button>
-                            )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Read announcements */}
-              {readAnnouncements.map((announcement) => {
-                const IconComponent = getAnnouncementIcon(
-                  announcement.type,
-                  announcement.icon
-                );
-                const colorClasses = getAnnouncementColor(
-                  announcement.type,
-                  announcement.priority
-                );
-
-                return (
-                  <div
-                    key={announcement._id}
-                    className="m-3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all opacity-75 border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${colorClasses} flex-shrink-0`}
-                      >
-                        <IconComponent className="w-4 h-4" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm flex-1">
-                            {announcement.title}
-                          </h4>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityBadge(
-                              announcement.priority
-                            )}`}
-                          >
-                            {announcement.priority}
-                          </span>
-                        </div>
-
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                          {announcement.message}
-                        </p>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                            <Clock className="w-3 h-3" />
-                            <span>{formatTimeAgo(announcement.createdAt)}</span>
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-3 h-3" />
-                              <span>Read</span>
-                            </div>
-                          </div>
-
-                          {announcement.actionUrl &&
-                            announcement.actionText && (
-                              <button
-                                onClick={() => {
-                                  if (announcement.actionUrl.includes('/post/')) {
-                                    const postId = announcement.actionUrl.split('/post/')[1];
-                                    navigate(`/post/${postId}`);
-                                    onClose();
-                                  } else if (announcement.actionUrl.includes('/posts/')) {
-                                    const postId = announcement.actionUrl.split('/posts/')[1];
-                                    navigate(`/post/${postId}`);
-                                    onClose();
-                                  } else {
-                                    navigate(announcement.actionUrl);
-                                    onClose();
-                                  }
-                                }}
-                                className="text-xs text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 font-medium flex items-center gap-1"
                               >
                                 {announcement.actionText}
                                 <ExternalLink className="w-3 h-3" />
