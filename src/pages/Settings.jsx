@@ -21,6 +21,7 @@ import {
   EyeOff,
   Palette,
   Type,
+  X,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import CloudinaryUpload from '../components/common/CloudinaryUpload';

@@ -127,7 +127,7 @@ const WideArticleRowCard = ({ article }) => {
         )}
 
         {/* Title */}
-        <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
           {title}
         </h3>
 
