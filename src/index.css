@@ -1,7 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
-/* Apply news website fonts */
+/* White-labeling: theme/typography from Site Settings (set by SettingsContext) */
+:root {
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Playfair Display', serif;
+  --text-base: 16px;
+}
+
+/* Apply news website fonts (use CSS vars from Site Settings when set) */
 html,
 body,
 div,
@@ -83,8 +90,8 @@ time,
 mark,
 audio,
 video {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    sans-serif !important;
+  font-family: var(--font-body) !important;
+  font-size: var(--text-base);
 }
 
 h1,
@@ -93,7 +100,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Playfair Display', serif !important;
+  font-family: var(--font-heading) !important;
 }
 
 /* Override Tailwind font classes */

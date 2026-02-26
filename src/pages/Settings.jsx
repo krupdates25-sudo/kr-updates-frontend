@@ -19,6 +19,8 @@ import {
   Wrench,
   Eye,
   EyeOff,
+  Palette,
+  Type,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import CloudinaryUpload from '../components/common/CloudinaryUpload';
@@ -127,6 +129,12 @@ const Settings = () => {
     },
     maintenanceMode: false,
     maintenanceMessage: '',
+    theme: 'light',
+    typography: {
+      fontFamily: 'Inter',
+      headingFontFamily: 'Playfair Display',
+      baseFontSize: '16px',
+    },
   });
 
   const [keywordInput, setKeywordInput] = useState('');
@@ -157,6 +165,12 @@ const Settings = () => {
           },
           maintenanceMode: response.data.maintenanceMode || false,
           maintenanceMessage: response.data.maintenanceMessage || '',
+          theme: response.data.theme || 'light',
+          typography: {
+            fontFamily: response.data.typography?.fontFamily || 'Inter',
+            headingFontFamily: response.data.typography?.headingFontFamily || 'Playfair Display',
+            baseFontSize: response.data.typography?.baseFontSize || '16px',
+          },
         });
       }
     } catch (error) {
@@ -170,14 +184,29 @@ const Settings = () => {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setSettings((prev) => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: type === 'checkbox' ? checked : value,
-        },
-      }));
+      const parts = name.split('.');
+      if (parts.length === 2) {
+        const [parent, child] = parts;
+        setSettings((prev) => ({
+          ...prev,
+          [parent]: {
+            ...(prev[parent] || {}),
+            [child]: type === 'checkbox' ? checked : value,
+          },
+        }));
+      } else if (parts.length === 3) {
+        const [parent, mid, child] = parts;
+        setSettings((prev) => ({
+          ...prev,
+          [parent]: {
+            ...(prev[parent] || {}),
+            [mid]: {
+              ...(prev[parent]?.[mid] || {}),
+              [child]: type === 'checkbox' ? checked : value,
+            },
+          },
+        }));
+      }
     } else {
       setSettings((prev) => ({
         ...prev,
@@ -238,29 +267,36 @@ const Settings = () => {
   };
 
   const handleAddKeyword = () => {
-    if (
-      keywordInput.trim() &&
-      !settings.seo.metaKeywords.includes(keywordInput.trim())
-    ) {
-      setSettings((prev) => ({
-        ...prev,
-        seo: {
-          ...prev.seo,
-          metaKeywords: [...prev.seo.metaKeywords, keywordInput.trim()],
-        },
-      }));
+    const keywords = Array.isArray(settings.seo?.metaKeywords) ? settings.seo.metaKeywords : [];
+    const trimmed = keywordInput.trim();
+    if (trimmed && !keywords.includes(trimmed)) {
+      setSettings((prev) => {
+        const prevSeo = prev.seo || {};
+        const prevKeywords = Array.isArray(prevSeo.metaKeywords) ? prevSeo.metaKeywords : [];
+        return {
+          ...prev,
+          seo: {
+            ...prevSeo,
+            metaKeywords: [...prevKeywords, trimmed],
+          },
+        };
+      });
       setKeywordInput('');
     }
   };
 
   const handleRemoveKeyword = (keyword) => {
-    setSettings((prev) => ({
-      ...prev,
-      seo: {
-        ...prev.seo,
-        metaKeywords: prev.seo.metaKeywords.filter((k) => k !== keyword),
-      },
-    }));
+    setSettings((prev) => {
+      const prevSeo = prev.seo || {};
+      const prevKeywords = Array.isArray(prevSeo.metaKeywords) ? prevSeo.metaKeywords : [];
+      return {
+        ...prev,
+        seo: {
+          ...prevSeo,
+          metaKeywords: prevKeywords.filter((k) => k !== keyword),
+        },
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -272,6 +308,11 @@ const Settings = () => {
 
       const payload = {
         ...settings,
+        // Ensure seo.metaKeywords is always an array for the API
+        seo: {
+          ...settings.seo,
+          metaKeywords: Array.isArray(settings.seo?.metaKeywords) ? settings.seo.metaKeywords : [],
+        },
         // Keep legacy fields in sync (backend also syncs, but this helps older code)
         socialLinks: socialProfilesToLinks(settings.socialProfiles),
       };
@@ -299,58 +340,70 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-50 flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
+  const FONT_OPTIONS = [
+    'Inter',
+    'Roboto',
+    'Open Sans',
+    'Lato',
+    'Montserrat',
+    'Poppins',
+    'Playfair Display',
+    'Merriweather',
+    'Noto Sans Devanagari',
+  ];
+
   return (
-    <PageLayout activeTab="settings" contentClassName="bg-gray-50 dark:bg-gray-900" defaultSidebarOpen={false}>
-      <div className="p-4 md:p-6 lg:p-8">
+    <PageLayout activeTab="settings" contentClassName="bg-gray-50 dark:bg-gray-50" defaultSidebarOpen={false}>
+      <div className="p-4 md:p-6 lg:p-8 bg-gray-50 dark:bg-gray-50 min-h-screen">
         <div className="w-full max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
-                <SettingsIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <SettingsIcon className="w-8 h-8 text-blue-600 dark:text-blue-600" />
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-900">
                   Site Settings
                 </h1>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-600">
                 Manage your site information, branding, and configuration
               </p>
             </div>
 
             {/* Messages */}
             {successMessage && (
-              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <p className="text-green-800 dark:text-green-200">
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-50 border border-green-200 dark:border-green-200 rounded-lg flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-700" />
+                <p className="text-green-800 dark:text-green-800">
                   {successMessage}
                 </p>
               </div>
             )}
 
             {errorMessage && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                <p className="text-red-800 dark:text-red-200">{errorMessage}</p>
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-50 border border-red-200 dark:border-red-200 rounded-lg flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-700" />
+                <p className="text-red-800 dark:text-red-800">{errorMessage}</p>
               </div>
             )}
 
             {/* Settings Form */}
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Basic Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
                   <Globe className="w-5 h-5" />
                   Basic Information
                 </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Site Name *
                     </label>
                     <input
@@ -359,13 +412,13 @@ const Settings = () => {
                       value={settings.siteName}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="Your Site Name"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Site Description
                     </label>
                     <textarea
@@ -374,26 +427,117 @@ const Settings = () => {
                       onChange={handleInputChange}
                       rows={3}
                       maxLength={500}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="A brief description of your site"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                       {settings.siteDescription.length}/500 characters
                     </p>
                   </div>
                 </div>
               </div>
 
+              {/* Theme - White-labeling */}
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Theme
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-600 mb-4">
+                  Choose the default theme for your website. This applies across the entire frontend.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {['light', 'dark', 'system'].map((option) => (
+                    <label
+                      key={option}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="theme"
+                        value={option}
+                        checked={settings.theme === option}
+                        onChange={(e) =>
+                          setSettings((prev) => ({ ...prev, theme: e.target.value }))
+                        }
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-700 capitalize">
+                        {option === 'system' ? 'System (follow device)' : option}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Typography - White-labeling */}
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
+                  <Type className="w-5 h-5" />
+                  Typography
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-600 mb-4">
+                  Set fonts and base font size for the whole website. Changes apply across the frontend.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
+                      Body font
+                    </label>
+                    <select
+                      name="typography.fontFamily"
+                      value={settings.typography.fontFamily}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
+                    >
+                      {FONT_OPTIONS.map((font) => (
+                        <option key={font} value={font}>{font}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
+                      Heading font
+                    </label>
+                    <select
+                      name="typography.headingFontFamily"
+                      value={settings.typography.headingFontFamily}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
+                    >
+                      {FONT_OPTIONS.map((font) => (
+                        <option key={font} value={font}>{font}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
+                      Base font size
+                    </label>
+                    <select
+                      name="typography.baseFontSize"
+                      value={settings.typography.baseFontSize}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900"
+                    >
+                      {['14px', '15px', '16px', '17px', '18px'].map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Logo & Favicon */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
                   Branding
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Site Logo
                     </label>
                     <CloudinaryUpload
@@ -414,7 +558,7 @@ const Settings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Favicon
                     </label>
                     <CloudinaryUpload
@@ -437,15 +581,15 @@ const Settings = () => {
               </div>
 
               {/* Contact Information */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
                   <Mail className="w-5 h-5" />
                   Contact Information
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       <Mail className="w-4 h-4 inline mr-1" />
                       Email
                     </label>
@@ -454,13 +598,13 @@ const Settings = () => {
                       name="contactEmail"
                       value={settings.contactEmail}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="contact@example.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       <Phone className="w-4 h-4 inline mr-1" />
                       Phone
                     </label>
@@ -469,13 +613,13 @@ const Settings = () => {
                       name="contactPhone"
                       value={settings.contactPhone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       <MapPin className="w-4 h-4 inline mr-1" />
                       Address
                     </label>
@@ -484,7 +628,7 @@ const Settings = () => {
                       name="address"
                       value={settings.address}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="123 Main St, City, State, ZIP"
                     />
                   </div>
@@ -492,8 +636,8 @@ const Settings = () => {
               </div>
 
               {/* Social Links */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6">
                   Social Media Links
                 </h2>
 
@@ -510,18 +654,18 @@ const Settings = () => {
                     return (
                       <div
                         key={platform}
-                        className="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+                        className="rounded-lg border border-gray-200 dark:border-gray-200 p-4"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                           <div className="flex items-center gap-2">
                             <Icon className={`w-4 h-4 ${iconClassName}`} />
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-900">
                               {label}
                             </p>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-4">
-                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-700">
                               <input
                                 type="checkbox"
                                 checked={!!profile.enabled}
@@ -533,7 +677,7 @@ const Settings = () => {
                               Enabled
                             </label>
 
-                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-700">
                               <input
                                 type="checkbox"
                                 checked={inFollowSection}
@@ -557,10 +701,10 @@ const Settings = () => {
                           onChange={(e) =>
                             updateSocialProfile(platform, { url: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                           placeholder={placeholder}
                         />
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-600">
                           Tip: To hide this icon everywhere it’s used, turn off <b>Enabled</b>.
                         </p>
                       </div>
@@ -570,51 +714,51 @@ const Settings = () => {
               </div>
 
               {/* SEO Settings */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
                   <Search className="w-5 h-5" />
                   SEO Settings
                 </h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Meta Title
                     </label>
                     <input
                       type="text"
                       name="seo.metaTitle"
-                      value={settings.seo.metaTitle}
+                      value={settings.seo?.metaTitle ?? ''}
                       onChange={handleInputChange}
                       maxLength={60}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="SEO Title (max 60 characters)"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {settings.seo.metaTitle.length}/60 characters
+                    <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
+                      {(settings.seo?.metaTitle ?? '').length}/60 characters
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Meta Description
                     </label>
                     <textarea
                       name="seo.metaDescription"
-                      value={settings.seo.metaDescription}
+                      value={settings.seo?.metaDescription ?? ''}
                       onChange={handleInputChange}
                       rows={3}
                       maxLength={160}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                       placeholder="SEO Description (max 160 characters)"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {settings.seo.metaDescription.length}/160 characters
+                    <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
+                      {(settings.seo?.metaDescription ?? '').length}/160 characters
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Meta Keywords
                     </label>
                     <div className="flex gap-2 mb-2">
@@ -628,7 +772,7 @@ const Settings = () => {
                             handleAddKeyword();
                           }
                         }}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         placeholder="Add keyword and press Enter"
                       />
                       <button
@@ -640,16 +784,16 @@ const Settings = () => {
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {settings.seo.metaKeywords.map((keyword, index) => (
+                      {(Array.isArray(settings.seo?.metaKeywords) ? settings.seo.metaKeywords : []).map((keyword, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-100 text-blue-800 dark:text-blue-800 rounded-full text-sm"
                         >
                           {keyword}
                           <button
                             type="button"
                             onClick={() => handleRemoveKeyword(keyword)}
-                            className="hover:text-blue-600 dark:hover:text-blue-300"
+                            className="hover:text-blue-600 dark:hover:text-blue-700"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -661,8 +805,8 @@ const Settings = () => {
               </div>
 
               {/* Maintenance Mode */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
                   <Wrench className="w-5 h-5" />
                   Maintenance Mode
                 </h2>
@@ -676,7 +820,7 @@ const Settings = () => {
                       onChange={handleInputChange}
                       className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-700 flex items-center gap-2">
                       {settings.maintenanceMode ? (
                         <EyeOff className="w-4 h-4 text-red-600" />
                       ) : (
@@ -688,7 +832,7 @@ const Settings = () => {
 
                   {settings.maintenanceMode && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                         Maintenance Message
                       </label>
                       <textarea
@@ -697,10 +841,10 @@ const Settings = () => {
                         onChange={handleInputChange}
                         rows={3}
                         maxLength={500}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
                         placeholder="We'll be back soon! Site is under maintenance."
                       />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                         {settings.maintenanceMessage.length}/500 characters
                       </p>
                     </div>
@@ -713,7 +857,7 @@ const Settings = () => {
                 <button
                   type="button"
                   onClick={fetchSettings}
-                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-300 text-gray-700 dark:text-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>

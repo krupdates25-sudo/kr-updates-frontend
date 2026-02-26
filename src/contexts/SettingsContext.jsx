@@ -15,6 +15,52 @@ export const SettingsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Apply theme and typography from settings to the document (white-labeling)
+  const applyThemeAndTypography = useCallback((data) => {
+    const root = document.documentElement;
+    const theme = data?.theme || 'light';
+
+    const applySystem = () => {
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (dark) {
+        root.classList.add('dark');
+        root.classList.remove('light');
+        root.setAttribute('data-theme', 'dark');
+        root.style.colorScheme = 'dark';
+      } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
+        root.setAttribute('data-theme', 'light');
+        root.style.colorScheme = 'light';
+      }
+    };
+
+    // Theme: light | dark | system
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'dark');
+      root.style.colorScheme = 'dark';
+    } else if (theme === 'system') {
+      applySystem();
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq.addEventListener) mq.addEventListener('change', applySystem);
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.setAttribute('data-theme', 'light');
+      root.style.colorScheme = 'light';
+    }
+
+    // Typography: CSS variables for whole frontend
+    const t = data?.typography;
+    if (t) {
+      root.style.setProperty('--font-body', t.fontFamily ? `"${t.fontFamily}", sans-serif` : 'Inter, sans-serif');
+      root.style.setProperty('--font-heading', t.headingFontFamily ? `"${t.headingFontFamily}", serif` : '"Playfair Display", serif');
+      root.style.setProperty('--text-base', t.baseFontSize || '16px');
+    }
+  }, []);
+
   // Fetch settings on mount
   const fetchSettings = useCallback(async () => {
     try {
@@ -22,16 +68,20 @@ export const SettingsProvider = ({ children }) => {
       setError(null);
       const response = await settingsService.getSettings();
       if (response.success && response.data) {
-        setSettings(response.data);
+        const data = response.data;
+        setSettings(data);
+
+        // Apply theme and typography from backend (white-labeling)
+        applyThemeAndTypography(data);
 
         // Update favicon if available
-        if (response.data.siteFavicon) {
-          updateFavicon(response.data.siteFavicon);
+        if (data.siteFavicon) {
+          updateFavicon(data.siteFavicon);
         }
 
         // Update page title if site name is available
-        if (response.data.siteName) {
-          document.title = response.data.siteName;
+        if (data.siteName) {
+          document.title = data.siteName;
         }
       }
     } catch (err) {
@@ -46,7 +96,7 @@ export const SettingsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyThemeAndTypography]);
 
   // Update favicon in document head
   const updateFavicon = (faviconUrl) => {
