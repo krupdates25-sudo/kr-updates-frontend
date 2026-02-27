@@ -192,12 +192,12 @@ const BottomNavigation = () => {
         className={`flex flex-col items-center justify-center transition-all duration-200 relative ${
           isMain
             ? 'flex-1 h-full min-w-0 px-1'
-            : 'w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700'
+            : 'w-full px-4 py-3 hover:bg-gray-50'
         } ${
           isActive || (isMoreButton && isExpanded)
-                      ? 'text-[var(--color-primary)]'
-            : 'text-gray-600 dark:text-gray-400'
-                  }`}
+            ? 'text-[var(--color-primary)]'
+            : 'text-gray-600'
+        }`}
                 >
         {isMoreButton && isExpanded ? (
           <X className={`${isMain ? 'w-5 h-5 mb-1' : 'w-6 h-6 mb-1.5'}`} />
@@ -238,15 +238,15 @@ const BottomNavigation = () => {
       <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bottom-nav-container">
         {/* Expanded Menu Panel */}
         {isExpanded && (isAdmin || isModerator) && expandedNavItems.length > 0 && (
-          <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-gray-800 rounded-t-3xl border-t border-x border-gray-200 dark:border-gray-700 max-h-[60vh] overflow-y-auto animate-slide-up" style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
+          <div className="absolute bottom-full left-0 right-0 bg-white rounded-t-3xl border-t border-x border-gray-200 max-h-[60vh] overflow-y-auto animate-slide-up" style={{ borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
             {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-2">
-              <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+              <div className="w-12 h-1 bg-gray-300 rounded-full" />
             </div>
 
             {/* Menu Header */}
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900">
                 More Options
               </h3>
             </div>
@@ -259,8 +259,8 @@ const BottomNavigation = () => {
                   onClick={() => handleNavClick(item.path)}
                   className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 relative ${
                     activeTab === item.id
-                      ? 'bg-gray-100 dark:bg-gray-700 text-[var(--color-primary)]'
-                      : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                      ? 'bg-gray-100 text-[var(--color-primary)]'
+                      : 'hover:bg-gray-50 text-gray-700'
                   }`}
                 >
                   <item.icon className="w-6 h-6 mb-1.5" />
@@ -277,7 +277,7 @@ const BottomNavigation = () => {
         )}
 
         {/* Main Navigation Bar - Curved Top */}
-        <div className={`bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl safe-area-bottom transition-all duration-300 ${isExpanded ? 'border-t-0' : ''}`} style={{ borderTopLeftRadius: isExpanded ? '0' : '24px', borderTopRightRadius: isExpanded ? '0' : '24px' }}>
+        <div className={`bg-white border-t border-gray-200 shadow-2xl safe-area-bottom transition-all duration-300 ${isExpanded ? 'border-t-0' : ''}`} style={{ borderTopLeftRadius: isExpanded ? '0' : '24px', borderTopRightRadius: isExpanded ? '0' : '24px' }}>
           <div className="flex items-center justify-between h-16 px-1 pb-safe">
             {/* Main 3 Navigation Items - No gaps */}
             {mainNavItems.map((item) => renderNavItem(item, true))}

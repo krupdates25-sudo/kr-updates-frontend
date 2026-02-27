@@ -68,14 +68,13 @@ const Header = ({
     return ['All', ...withoutAll];
   }, [availableLocations]);
 
-  // Location strip: smooth auto-scroll, pause on user scroll/touch, infinite loop
+  // Location strip: smooth auto-scroll, pause on user scroll/touch, loop without duplicate tabs
   useEffect(() => {
     if (locations.length === 0) return;
     const el = locationStripRef.current;
     if (!el) return;
 
     const step = 0.4;
-    const fps = 60;
     let rafId = null;
 
     const tick = () => {
@@ -89,7 +88,7 @@ const Header = ({
         return;
       }
       el.scrollLeft += step;
-      if (el.scrollLeft >= max / 2) {
+      if (el.scrollLeft >= max) {
         el.scrollLeft = 0;
       }
       rafId = requestAnimationFrame(tick);
@@ -624,11 +623,11 @@ const Header = ({
               className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-hide flex items-center gap-2 py-0.5"
             >
               <div className="flex items-center gap-2 py-0.5 w-max min-w-full">
-                {[...locations, ...locations].map((loc, idx) => {
+                {locations.map((loc) => {
                   const isActive = currentLocation === loc;
                   return (
                     <button
-                      key={`${loc}-${idx}`}
+                      key={loc}
                       type="button"
                       onClick={() => setLocation(loc)}
                       className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 ${
