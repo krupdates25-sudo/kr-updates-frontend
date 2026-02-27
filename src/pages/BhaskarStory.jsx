@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { getStateNewsFeed } from '../services/bhaskarService';
 
@@ -69,30 +70,31 @@ export default function BhaskarStory() {
   return (
     <PageLayout>
       <div className="w-full max-w-3xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
-          >
-            <span aria-hidden="true">←</span>
-            Back
-          </button>
-
-          {url && (
-            <a
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
-              title="Open full story on Bhaskar"
-            >
-              Read on Bhaskar
-              <span aria-hidden="true">↗</span>
-            </a>
-          )}
-        </div>
-
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          {/* Top bar */}
+          <div className="px-4 sm:px-6 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+                title="Open full story on Bhaskar"
+              >
+                Read on Bhaskar
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+
           {loading ? (
             <div className="p-5 sm:p-6">
               <div className="h-5 w-2/3 bg-gray-100 rounded animate-pulse" />
@@ -111,34 +113,42 @@ export default function BhaskarStory() {
             </div>
           ) : (
             <>
-              {story.image ? (
-                <div className="h-52 sm:h-72 bg-gray-100 overflow-hidden">
+              {/* Hero (full image, no crop) */}
+              <div className="relative h-72 sm:h-[420px] bg-black overflow-hidden">
+                {story.image ? (
                   <img
                     src={story.image}
                     alt={story.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     loading="lazy"
                   />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/85">
+                    {story.location && (
+                      <span className="inline-flex items-center rounded-full bg-white/15 ring-1 ring-white/20 px-2 py-0.5 backdrop-blur">
+                        {story.location}
+                      </span>
+                    )}
+                    {story.publishTime && (
+                      <span className="text-white/75">
+                        {formatTime(story.publishTime)}
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="mt-2 text-xl sm:text-2xl font-extrabold text-white leading-snug">
+                    {story.title}
+                  </h1>
                 </div>
-              ) : (
-                <div className="h-52 sm:h-72 bg-gradient-to-br from-gray-50 to-white" />
-              )}
+              </div>
 
+              {/* Body */}
               <div className="p-5 sm:p-6">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-snug">
-                  {story.title}
-                </h1>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                  {story.location && (
-                    <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5">
-                      {story.location}
-                    </span>
-                  )}
-                  {story.publishTime && <span>{formatTime(story.publishTime)}</span>}
-                </div>
-
-                <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 sm:p-5">
+                  <p className="text-sm text-gray-800 leading-relaxed">
                     This is a Bhaskar story preview inside KRUPDATES. For the complete article content, open the full story.
                   </p>
                   {url && (
@@ -146,9 +156,10 @@ export default function BhaskarStory() {
                       href={url}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-[0.99] transition-all"
+                      className="mt-4 inline-flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl bg-indigo-600 text-white text-sm font-extrabold hover:bg-indigo-700 active:scale-[0.99] transition-all"
                     >
                       Read full story on Bhaskar
+                      <ExternalLink className="w-4 h-4" />
                     </a>
                   )}
                 </div>

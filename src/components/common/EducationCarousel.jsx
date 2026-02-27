@@ -96,7 +96,7 @@ const EducationCarousel = ({ posts }) => {
             {posts.map((article, index) => (
               <div
                 key={article._id || article.id || index}
-                className="carousel-item snap-start shrink-0 w-[88%]"
+                className="carousel-item snap-start shrink-0 w-full"
               >
                 <WideArticleRowCard article={article} />
               </div>
@@ -108,16 +108,14 @@ const EducationCarousel = ({ posts }) => {
             <>
               <button
                 onClick={goToPrevious}
-                disabled={currentIndex === 0}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 hover:bg-white transition-all"
                 aria-label="Previous slide"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-700" />
               </button>
               <button
                 onClick={goToNext}
-                disabled={currentIndex >= posts.length - 1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 hover:bg-white transition-all"
                 aria-label="Next slide"
               >
                 <ChevronRight className="w-5 h-5 text-gray-700" />

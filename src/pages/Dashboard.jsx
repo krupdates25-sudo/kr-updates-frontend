@@ -792,21 +792,22 @@ const Dashboard = () => {
               <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
                 {[...hindiSchedule.upcoming.slice(0, 6), ...hindiSchedule.completed.slice(0, 4)].map((m) => {
                   const isCompleted = !!m.result;
-                  const accent = isCompleted ? 'emerald' : 'indigo';
                   const badge = isCompleted ? 'Result' : 'Upcoming';
                   const primaryLine = m.result || m.status || '';
 
                   return (
                     <div
                       key={m.id}
-                      className={`snap-start w-[320px] sm:w-[360px] rounded-2xl border bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden ${isCompleted ? 'border-emerald-100' : 'border-indigo-100'
+                      className={`snap-start w-[320px] sm:w-[360px] rounded-2xl border bg-white shadow-sm hover:shadow-md transition-all overflow-hidden ${isCompleted ? 'border-emerald-100' : 'border-indigo-100'
                         }`}
                     >
-                      <div className={`px-4 py-3 bg-gradient-to-br ${isCompleted ? 'from-emerald-50 via-white to-white' : 'from-indigo-50 via-white to-white'
-                        }`}>
+                      {/* minimal accent bar */}
+                      <div className={`h-1 ${isCompleted ? 'bg-emerald-500/70' : 'bg-indigo-500/70'}`} />
+
+                      <div className="px-4 py-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-extrabold text-gray-900 leading-snug whitespace-normal break-words">
+                            <p className="text-[13px] font-extrabold text-gray-900 leading-snug whitespace-normal break-words">
                               {m.matchNumber || 'Match'}
                             </p>
                             <p className="text-[12px] text-gray-600 mt-0.5 whitespace-normal break-words">
@@ -814,9 +815,9 @@ const Dashboard = () => {
                             </p>
                           </div>
                           <span
-                            className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full ${accent === 'emerald'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-indigo-100 text-indigo-700'
+                            className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isCompleted
+                              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                              : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100'
                               }`}
                           >
                             {badge}
@@ -825,7 +826,7 @@ const Dashboard = () => {
 
                         {primaryLine && (
                           <p
-                            className={`mt-3 text-[12px] font-semibold leading-snug whitespace-normal break-words ${accent === 'emerald' ? 'text-emerald-700' : 'text-indigo-700'
+                            className={`mt-3 text-[12px] font-semibold leading-snug whitespace-normal break-words ${isCompleted ? 'text-emerald-700' : 'text-indigo-700'
                               }`}
                           >
                             {primaryLine}
@@ -834,7 +835,7 @@ const Dashboard = () => {
 
                         <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
                           <span className="font-medium">{m.dateIST}</span>
-                          <span className="font-extrabold text-gray-700">{m.timeIST}</span>
+                          <span className="font-extrabold text-gray-900">{m.timeIST}</span>
                         </div>
                       </div>
                     </div>
@@ -845,65 +846,68 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* ── Bhaskar state news (filtered by selected location) ── */}
-        <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-800">
-              Bhaskar state updates
-            </p>
-            {bhaskarStateLoading && (
-              <span className="text-[10px] text-gray-400">Loading…</span>
-            )}
-          </div>
+        {/* ── Bhaskar state news (only render when stories exist for selected state) ── */}
+        {(() => {
+          const block = currentLocation && currentLocation !== 'All' && Array.isArray(bhaskarStateFeed)
+            ? bhaskarStateFeed.find((b) => b.location === currentLocation)
+            : null;
+          const stories = block?.stories || [];
 
-          {bhaskarStateError && (
-            <p className="text-xs text-red-500">{bhaskarStateError}</p>
-          )}
+          // only show section when there is content (or while loading/error)
+          const shouldRender = bhaskarStateLoading || !!bhaskarStateError || stories.length > 0;
+          if (!shouldRender) return null;
 
-          {!bhaskarStateLoading && !bhaskarStateError && Array.isArray(bhaskarStateFeed) && (
-            (() => {
-              const block = currentLocation && currentLocation !== 'All'
-                ? bhaskarStateFeed.find((b) => b.location === currentLocation)
-                : null;
-              const stories = block?.stories || [];
-              if (!block) return null;
-              if (!stories.length) {
-                return <p className="text-[11px] text-gray-500">No Bhaskar stories for {block.location}.</p>;
-              }
-              const StoryCard = ({ story }) => (
-                <button
-                  key={story.id}
-                  type="button"
-                  onClick={() => navigate(`/bhaskar/story/${story.id}`, { state: { story } })}
-                  className="w-full text-left rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-md transition-shadow"
-                  title={story.title}
-                >
-                  <div className="flex gap-3 p-3">
-                    <div className="w-28 h-20 sm:w-32 sm:h-24 rounded-xl bg-gray-100 overflow-hidden shrink-0">
-                      {story.image ? (
-                        <img
-                          src={story.image}
-                          alt={story.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
-                        {story.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-                        {block.location}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              );
+          const StoryCard = ({ story }) => (
+            <button
+              key={story.id}
+              type="button"
+              onClick={() => navigate(`/bhaskar/story/${story.id}`, { state: { story } })}
+              className="w-full text-left rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-md transition-shadow"
+              title={story.title}
+            >
+              <div className="flex gap-3 p-3">
+                <div className="w-28 h-20 sm:w-32 sm:h-24 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                  {story.image ? (
+                    <img
+                      src={story.image}
+                      alt={story.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
+                    {story.title}
+                  </p>
+                  {block?.location && (
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                      {block.location}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </button>
+          );
 
-              return (
+          return (
+            <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-800">
+                  Bhaskar state updates
+                </p>
+                {bhaskarStateLoading && (
+                  <span className="text-[10px] text-gray-400">Loading…</span>
+                )}
+              </div>
+
+              {bhaskarStateError && (
+                <p className="text-xs text-red-500">{bhaskarStateError}</p>
+              )}
+
+              {!bhaskarStateLoading && !bhaskarStateError && stories.length > 0 && (
                 <>
                   {/* Mobile: list */}
                   <div className="sm:hidden space-y-3">
@@ -919,10 +923,10 @@ const Dashboard = () => {
                     ))}
                   </div>
                 </>
-              );
-            })()
-          )}
-        </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Top Ad - Always show */}
         <div className="mb-4 sm:mb-6 w-full">
