@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import postService from '../services/postService';
+import { getHindiSchedule } from '../services/bhaskarService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -78,6 +79,36 @@ const Dashboard = () => {
       window.removeEventListener('setCategoryFilter', handleSetCategoryFilter);
     };
   }, []);
+
+  // ── Match news tab (English / Hindi) ─────────────────────────────────────────
+  const [matchNewsTab, setMatchNewsTab] = useState('english'); // 'english' | 'hindi'
+  const [hindiSchedule, setHindiSchedule] = useState(null);
+  const [hindiScheduleLoading, setHindiScheduleLoading] = useState(false);
+  const [hindiScheduleError, setHindiScheduleError] = useState(null);
+
+  useEffect(() => {
+    if (matchNewsTab !== 'hindi') return;
+    if (hindiSchedule) return;
+
+    let cancelled = false;
+    const loadSchedule = async () => {
+      setHindiScheduleLoading(true);
+      setHindiScheduleError(null);
+      try {
+        const data = await getHindiSchedule();
+        if (!cancelled) setHindiSchedule(data);
+      } catch (e) {
+        if (!cancelled) setHindiScheduleError(e.message || 'Unable to load Hindi match updates.');
+      } finally {
+        if (!cancelled) setHindiScheduleLoading(false);
+      }
+    };
+
+    loadSchedule();
+    return () => {
+      cancelled = true;
+    };
+  }, [matchNewsTab, hindiSchedule]);
 
   // Check if user can create posts
   const canCreatePosts = useMemo(() => {
@@ -656,57 +687,147 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* ── T20 World Cup entry card (single, simple, responsive) ── */}
-        <div
-          onClick={() => navigate('/t20-worldcup')}
-          className="mb-4 sm:mb-6 cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 group"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && navigate('/t20-worldcup')}
-        >
-          <div className="bg-gradient-to-r from-[#0d1117] via-[#161b2e] to-[#1e2a4a] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
-            {/* Decorative glows — no emoji */}
-            <div className="absolute -top-8 right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-purple-500/10 blur-xl pointer-events-none" />
-            {/* Subtle grid */}
-            <div
-              className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }}
-            />
-
-            {/* Left: icon + text */}
-            <div className="relative flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-              {/* Trophy icon — lucide */}
-              <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
-                  <p
-                    className="text-xs sm:text-sm font-extrabold tracking-tight leading-snug"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    ICC Men's T20 World Cup
-                  </p>
-                  {/* Live pulse dot */}
-                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
-                  </span>
-                </div>
-                <p className="text-[10px] sm:text-[11px] text-white/60 font-medium">
-                  T20 World Cup live scores, results & fixtures
-                </p>
-              </div>
-            </div>
-
-            {/* Right: compact button */}
-            <div className="relative flex-shrink-0 flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 border border-white/15 transition-colors text-white text-[11px] sm:text-[12px] font-semibold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap">
-              View scores
-              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </div>
+        {/* ── Match news tabs (English / Hindi) ── */}
+        <div className="mb-2 sm:mb-3 flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.2em]">
+            Match updates
+          </span>
+          <div className="inline-flex items-center rounded-full bg-gray-100 p-1 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setMatchNewsTab('english')}
+              className={`px-3 py-1 rounded-full transition-colors ${matchNewsTab === 'english'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-800'
+                }`}
+            >
+              English scores
+            </button>
+            <button
+              type="button"
+              onClick={() => setMatchNewsTab('hindi')}
+              className={`px-3 py-1 rounded-full transition-colors ${matchNewsTab === 'hindi'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-800'
+                }`}
+            >
+              Hindi मैच
+            </button>
           </div>
         </div>
+
+        {/* ── English: T20 World Cup card ── */}
+        {matchNewsTab === 'english' && (
+          <div
+            onClick={() => navigate('/t20-worldcup')}
+            className="mb-4 sm:mb-6 cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 group"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && navigate('/t20-worldcup')}
+          >
+            <div className="bg-gradient-to-r from-[#0d1117] via-[#161b2e] to-[#1e2a4a] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
+              {/* Decorative glows — no emoji */}
+              <div className="absolute -top-8 right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-purple-500/10 blur-xl pointer-events-none" />
+              {/* Subtle grid */}
+              <div
+                className="absolute inset-0 opacity-[0.04] pointer-events-none"
+                style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }}
+              />
+
+              {/* Left: icon + text */}
+              <div className="relative flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                {/* Trophy icon — lucide */}
+                <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                  <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+                    <p
+                      className="text-xs sm:text-sm font-extrabold tracking-tight leading-snug"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      ICC Men's T20 World Cup
+                    </p>
+                    {/* Live pulse dot */}
+                    <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+                    </span>
+                  </div>
+                  <p className="text-[10px] sm:text-[11px] text-white/60 font-medium">
+                    T20 World Cup live scores, results & fixtures
+                  </p>
+                </div>
+              </div>
+
+              {/* Right: compact button */}
+              <div className="relative flex-shrink-0 flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 border border-white/15 transition-colors text-white text-[11px] sm:text-[12px] font-semibold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap">
+                View scores
+                <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Hindi: schedule cards from Bhaskar ── */}
+        {matchNewsTab === 'hindi' && (
+          <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs sm:text-sm font-semibold text-gray-800">
+                हिंदी मैच अपडेट्स (ICC MT20 WC 2026)
+              </p>
+              {hindiScheduleLoading && (
+                <span className="text-[10px] text-gray-400">Loading…</span>
+              )}
+            </div>
+            {hindiScheduleError && (
+              <p className="text-xs text-red-500">{hindiScheduleError}</p>
+            )}
+            {!hindiScheduleLoading && !hindiScheduleError && hindiSchedule && (
+              <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                {hindiSchedule.upcoming.slice(0, 4).map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 rounded-xl border border-indigo-50 bg-indigo-50/40 px-3 py-2 text-[11px] sm:text-xs"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {m.matchnumber}
+                      </p>
+                      <p className="text-gray-600 truncate">
+                        {m.venue}
+                      </p>
+                    </div>
+                    <div className="text-right text-gray-500 flex-shrink-0">
+                      <p>{m.matchdate_ist}</p>
+                      <p>{m.matchtime_ist}</p>
+                    </div>
+                  </div>
+                ))}
+                {hindiSchedule.completed.slice(0, 4).map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 rounded-xl border border-emerald-50 bg-emerald-50/40 px-3 py-2 text-[11px] sm:text-xs"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {m.matchnumber}
+                      </p>
+                      <p className="text-emerald-700 truncate">
+                        {m.matchresult}
+                      </p>
+                    </div>
+                    <div className="text-right text-gray-500 flex-shrink-0">
+                      <p>{m.matchdate_ist}</p>
+                      <p>{m.matchtime_ist}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Top Ad - Always show */}
         <div className="mb-4 sm:mb-6 w-full">

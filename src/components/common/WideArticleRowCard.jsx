@@ -127,13 +127,13 @@ const WideArticleRowCard = ({ article }) => {
         )}
 
         {/* Title */}
-        <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-gray-900 mb-2.5 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors leading-tight">
           {title}
         </h3>
 
         {/* Description */}
         {description && (
-          <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2 flex-1">
+          <p className="text-sm sm:text-base text-gray-500 mb-3 line-clamp-2 flex-1 leading-relaxed">
             {description}
           </p>
         )}

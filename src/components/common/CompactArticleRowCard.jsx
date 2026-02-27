@@ -115,13 +115,13 @@ const CompactArticleRowCard = ({ article }) => {
         )}
 
         {/* Title */}
-        <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
+        <h3 className="text-base sm:text-lg font-extrabold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors leading-tight">
           {title}
         </h3>
 
         {/* Description - Shorter for compact view */}
         {description && (
-          <p className="text-xs text-gray-600 mb-2 line-clamp-1 flex-1">
+          <p className="text-xs text-gray-500 mb-2 line-clamp-1 flex-1 leading-relaxed">
             {description}
           </p>
         )}

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import postService from '../services/postService';
+import { getStateNewsLocations } from '../services/bhaskarService';
 
 const LanguageLocationContext = createContext({});
 
@@ -18,10 +19,21 @@ export const LanguageLocationProvider = ({ children }) => {
     const refreshLocations = useCallback(async () => {
         setLocationsLoading(true);
         try {
-            const res = await postService.getLocationOptions();
-            const locs = res?.data?.locations || res?.locations || [];
-            const normalized = Array.from(new Set(locs.map((l) => String(l || '').trim()).filter(Boolean)));
-            setAvailableLocations(normalized.length > 0 ? normalized : ['All', 'Kishangarh Renwal']);
+            // Prefer dynamic locations from Bhaskar state-news API
+            const bhaskar = await getStateNewsLocations();
+            const namesFromBhaskar = Array.isArray(bhaskar?.names) ? bhaskar.names : [];
+
+            let finalList = namesFromBhaskar;
+
+            // Fallback to existing postService options if Bhaskar list is empty
+            if (!finalList.length) {
+                const res = await postService.getLocationOptions();
+                const locs = res?.data?.locations || res?.locations || [];
+                finalList = Array.from(new Set(locs.map((l) => String(l || '').trim()).filter(Boolean)));
+            }
+
+            const withAll = ['All', ...finalList];
+            setAvailableLocations(withAll.length > 0 ? withAll : ['All', 'Kishangarh Renwal']);
         } catch (e) {
             // Keep existing list on error
         } finally {
