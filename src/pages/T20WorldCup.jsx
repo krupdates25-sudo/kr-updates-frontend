@@ -83,7 +83,7 @@ const TeamLogo = ({ team }) => {
             <img
                 src={team.img}
                 alt={team.name || team.shortName}
-                className="w-8 h-8 rounded object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                className="w-8 h-8 rounded object-cover border border-gray-200 flex-shrink-0"
                 onError={() => setImgErr(true)}
             />
         );
@@ -100,8 +100,8 @@ const TeamLogo = ({ team }) => {
         );
     }
     return (
-        <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-            <span className="text-[9px] font-semibold text-gray-600 dark:text-gray-300">{initials}</span>
+        <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
+            <span className="text-[9px] font-semibold text-gray-600">{initials}</span>
         </div>
     );
 };
@@ -111,26 +111,26 @@ const TeamRow = ({ team, inning, isBatting }) => (
     <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
             <TeamLogo team={team} />
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+            <span className="text-sm font-semibold text-gray-900 truncate">
                 {team.shortName || team.name}
             </span>
             {isBatting && (
-                <span className="text-[9px] font-medium text-amber-600 dark:text-amber-400">
+                <span className="text-[9px] font-medium text-amber-600">
                     BAT
                 </span>
             )}
         </div>
         {inning ? (
             <div className="text-right">
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <span className="text-sm font-semibold text-gray-900">
                     {inning.runs}/{inning.wickets}
                 </span>
-                <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-1">
+                <span className="text-[10px] text-gray-500 ml-1">
                     ({inning.overs} ov)
                 </span>
             </div>
         ) : (
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">—</span>
+            <span className="text-[10px] text-gray-400">—</span>
         )}
     </div>
 );
@@ -159,70 +159,74 @@ const MatchCard = ({ match }) => {
     const isBatting1 = isLive && battingInning.toLowerCase().includes((team1.name || 'zzz').toLowerCase());
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 m-2 pt-3">
+        <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 m-2 pt-3">
             {/* Only show LIVE badge when live */}
             {isLive && (
-                <div className="px-3 py-2 mb-2 flex items-center justify-between bg-red-50 dark:bg-red-950/20">
-                    <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400">
+                <div className="px-3 py-2 mb-2 flex items-center justify-between bg-red-50">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                         LIVE
                     </span>
-                    <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">T20</span>
+                    <span className="text-[10px] font-medium text-gray-400 uppercase">T20</span>
                 </div>
             )}
 
             {/* Teams side by side - Flag 1 vs Flag 2 */}
             <div className="px-3 pb-3">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     {/* Team 0 */}
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 flex items-center gap-2 min-w-0">
                         <TeamLogo team={team0} />
                         <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     {team0.shortName || team0.name}
                                 </span>
                                 {isBatting0 && (
-                                    <span className="text-[9px] font-medium text-amber-600 dark:text-amber-400 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20 rounded">
+                                    <span className="text-[9px] font-medium text-amber-600 px-1.5 py-0.5 bg-amber-50 rounded whitespace-nowrap">
                                         BAT
                                     </span>
                                 )}
                             </div>
                             {inn0 ? (
-                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                <div className="text-xs text-gray-600 mt-0.5 whitespace-nowrap">
                                     <span className="font-bold">{inn0.runs}/{inn0.wickets}</span>
                                     <span className="ml-1">({inn0.overs} ov)</span>
                                 </div>
                             ) : (
-                                <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                                <span className="text-xs text-gray-400">—</span>
                             )}
                         </div>
                     </div>
 
-                    {/* VS separator */}
-                    <span className="text-xs font-medium text-gray-400 dark:text-gray-500 flex-shrink-0">vs</span>
+                    {/* VS separator with vertical border */}
+                    <div className="flex flex-col items-center justify-center flex-shrink-0 px-2 sm:px-3">
+                        <div className="h-8 w-px bg-gray-200 mb-1"></div>
+                        <span className="text-xs font-semibold text-gray-500">VS</span>
+                        <div className="h-8 w-px bg-gray-200 mt-1"></div>
+                    </div>
 
                     {/* Team 1 */}
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 flex items-center gap-2 min-w-0">
                         <TeamLogo team={team1} />
                         <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     {team1.shortName || team1.name}
                                 </span>
                                 {isBatting1 && (
-                                    <span className="text-[9px] font-medium text-amber-600 dark:text-amber-400 px-1.5 py-0.5 bg-amber-50 dark:bg-amber-900/20 rounded">
+                                    <span className="text-[9px] font-medium text-amber-600 px-1.5 py-0.5 bg-amber-50 rounded whitespace-nowrap">
                                         BAT
                                     </span>
                                 )}
                             </div>
                             {inn1 ? (
-                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                <div className="text-xs text-gray-600 mt-0.5 whitespace-nowrap">
                                     <span className="font-bold">{inn1.runs}/{inn1.wickets}</span>
                                     <span className="ml-1">({inn1.overs} ov)</span>
                                 </div>
                             ) : (
-                                <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                                <span className="text-xs text-gray-400">—</span>
                             )}
                         </div>
                     </div>
@@ -231,10 +235,10 @@ const MatchCard = ({ match }) => {
 
             {/* Match details - no truncation */}
             <div className="px-3 pb-3 pt-2">
-                <p className="text-xs text-gray-700 dark:text-gray-300 mb-1.5">
+                <p className="text-xs text-gray-700 mb-1.5">
                     {match.status || '—'}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500 dark:text-gray-500">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
                     {match.venue && (
                         <span>{match.venue}</span>
                     )}
@@ -249,29 +253,29 @@ const MatchCard = ({ match }) => {
 
 // ─── Skeleton loader ──────────────────────────────────────────────────────
 const SkeletonCard = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden animate-pulse m-2 pt-3">
+    <div className="bg-white rounded-lg overflow-hidden animate-pulse m-2 pt-3">
         <div className="px-3 pb-3">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
                 <div className="flex-1 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-600" />
+                    <div className="w-8 h-8 rounded bg-gray-200" />
                     <div className="flex-1">
-                        <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded w-20 mb-1" />
-                        <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded w-16" />
+                        <div className="h-3 bg-gray-100 rounded w-20 mb-1" />
+                        <div className="h-2.5 bg-gray-100 rounded w-16" />
                     </div>
                 </div>
-                <div className="w-6 h-3 bg-gray-100 dark:bg-gray-700 rounded" />
+                <div className="w-6 h-3 bg-gray-100 rounded" />
                 <div className="flex-1 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-600" />
+                    <div className="w-8 h-8 rounded bg-gray-200" />
                     <div className="flex-1">
-                        <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded w-20 mb-1" />
-                        <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded w-16" />
+                        <div className="h-3 bg-gray-100 rounded w-20 mb-1" />
+                        <div className="h-2.5 bg-gray-100 rounded w-16" />
                     </div>
                 </div>
             </div>
         </div>
         <div className="px-3 pb-3 pt-2">
-            <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded w-full mb-1.5" />
-            <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded w-2/3" />
+            <div className="h-2.5 bg-gray-100 rounded w-full mb-1.5" />
+            <div className="h-2 bg-gray-100 rounded w-2/3" />
         </div>
     </div>
 );
@@ -279,21 +283,21 @@ const SkeletonCard = () => (
 // ─── Section header ───────────────────────────────────────────────────────
 const SectionHeader = ({ icon, label, count }) => (
     <div className="flex items-center gap-2.5 mb-4">
-        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-800">
+        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gray-100">
             {icon}
         </div>
         <h2
-            className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.14em]"
+            className="text-[11px] font-black text-gray-500 uppercase tracking-[0.14em]"
             style={{ fontFamily: "'Inter', sans-serif" }}
         >
             {label}
         </h2>
         {count != null && (
-            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                 {count}
             </span>
         )}
-        <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+        <div className="flex-1 h-px bg-gray-100" />
     </div>
 );
 
@@ -367,7 +371,7 @@ const T20WorldCup = () => {
 
     // ── render ────────────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="min-h-screen bg-gray-50 overflow-x-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
             {isStaff && (
                 <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(p => !p)} activeTab="" />
             )}
@@ -376,12 +380,12 @@ const T20WorldCup = () => {
                 <Header onSidebarToggle={() => setSidebarOpen(p => !p)} />
 
                 {/* ══ Hero ══════════════════════════════════════════════════════════ */}
-                <div className="bg-white dark:bg-gray-900">
+                <div className="bg-white">
                     <div className="px-4 sm:px-6 lg:px-10 py-4">
                         {/* Back */}
                         <button
                             onClick={() => navigate(-1)}
-                            className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-sm font-medium mb-4 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-medium mb-4 transition-colors"
                         >
                             <ChevronLeft className="w-4 h-4" />
                             Back
@@ -389,12 +393,12 @@ const T20WorldCup = () => {
 
                         <div className="flex items-center justify-between gap-4 mb-4">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <Trophy className="w-5 h-5 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+                                <Trophy className="w-5 h-5 text-gray-700 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+                                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
                                         ICC Men's T20 World Cup
                                     </h1>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                                    <p className="text-sm text-gray-600 mt-0.5">
                                         Live scores & fixtures
                                     </p>
                                 </div>
@@ -402,7 +406,7 @@ const T20WorldCup = () => {
                         </div>
 
                         {/* Filter tabs */}
-                        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-2 border-b border-gray-200 overflow-x-auto">
                             {TABS.map(({ id, label, Icon }) => {
                                 const isActive = activeTab === id;
                                 return (
@@ -410,10 +414,10 @@ const T20WorldCup = () => {
                                         key={id}
                                         onClick={() => setActiveTab(id)}
                                         className={`
-                                            flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors
+                                            flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                                             ${isActive
-                                                ? 'text-gray-900 dark:text-gray-100 border-gray-900 dark:border-gray-100'
-                                                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300'}
+                                                ? 'text-gray-900 border-gray-900'
+                                                : 'text-gray-500 border-transparent hover:text-gray-700'}
                                         `}
                                     >
                                         <Icon className="w-4 h-4" />
@@ -426,11 +430,11 @@ const T20WorldCup = () => {
                 </div>
 
                 {/* ══ Toolbar ═══════════════════════════════════════════════════════ */}
-                <div className="sticky top-14 sm:top-16 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 sm:px-6 lg:px-10 py-2 sm:py-2.5 flex items-center justify-end">
+                <div className="sticky top-14 sm:top-16 z-20 bg-white/95 backdrop-blur-sm px-4 sm:px-6 lg:px-10 py-2 sm:py-2.5 flex items-center justify-end">
                     <button
                         onClick={forceRefresh}
                         disabled={refreshing || loading}
-                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-40 transition-colors"
+                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 disabled:opacity-40 transition-colors"
                     >
                         {refreshing
                             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -453,10 +457,10 @@ const T20WorldCup = () => {
                     {/* Error */}
                     {!loading && error && (
                         <div className="flex flex-col items-center justify-center py-24 text-center">
-                            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+                            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-5">
                                 <WifiOff className="w-8 h-8 text-gray-400" />
                             </div>
-                            <h3 className="text-base font-black text-gray-800 dark:text-gray-200 mb-2"
+                            <h3 className="text-base font-black text-gray-800 mb-2"
                                 style={{ fontFamily: "'Inter', sans-serif" }}>
                                 Couldn't load scores
                             </h3>
@@ -474,10 +478,10 @@ const T20WorldCup = () => {
                     {/* Empty */}
                     {!loading && !error && tabFiltered.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-24 text-center">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center mb-5">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-5">
                                 <Trophy className="w-8 h-8 text-indigo-400" />
                             </div>
-                            <h3 className="text-base font-black text-gray-800 dark:text-gray-200 mb-2"
+                            <h3 className="text-base font-black text-gray-800 mb-2"
                                 style={{ fontFamily: "'Inter', sans-serif" }}>
                                 No {activeTab === 'all' ? '' : activeTab} matches
                             </h3>
@@ -489,7 +493,7 @@ const T20WorldCup = () => {
                             {activeTab !== 'all' && (
                                 <button
                                     onClick={() => setActiveTab('all')}
-                                    className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800"
+                                    className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-600 hover:text-indigo-800"
                                 >
                                     Show all matches
                                     <ArrowRight className="w-4 h-4" />
