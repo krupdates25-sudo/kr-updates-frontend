@@ -28,6 +28,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const PostPage = lazy(() => import('./pages/PostPage'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const VerifyEmailSuccess = lazy(() => import('./pages/VerifyEmailSuccess'));
+const T20WorldCup = lazy(() => import('./pages/T20WorldCup'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -132,166 +133,169 @@ function App() {
                   <Suspense fallback={<PageLoader />}>
                     <div className="App">
                       <Routes>
-                      {/* Public routes */}
-                      <Route path="/auth" element={<AuthPage />} />
-                      <Route path="/verify-email" element={<VerifyEmail />} />
-                      <Route
-                        path="/verify-email-success"
-                        element={<VerifyEmailSuccess />}
-                      />
-                      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                        {/* Public routes */}
+                        <Route path="/auth" element={<AuthPage />} />
+                        <Route path="/verify-email" element={<VerifyEmail />} />
+                        <Route
+                          path="/verify-email-success"
+                          element={<VerifyEmailSuccess />}
+                        />
+                        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-                      {/* Test route without ProtectedRoute */}
-                      <Route
-                        path="/test-dashboard"
-                        element={
-                          <div className="min-h-screen bg-green-50 flex items-center justify-center">
-                            <h1 className="text-2xl font-bold text-green-800">
-                              Test Dashboard - Navigation Working!
-                            </h1>
-                          </div>
-                        }
-                      />
+                        {/* Test route without ProtectedRoute */}
+                        <Route
+                          path="/test-dashboard"
+                          element={
+                            <div className="min-h-screen bg-green-50 flex items-center justify-center">
+                              <h1 className="text-2xl font-bold text-green-800">
+                                Test Dashboard - Navigation Working!
+                              </h1>
+                            </div>
+                          }
+                        />
 
-                      {/* Dashboard route - also accessible at /dashboard for logged-in users */}
-                      <Route
-                        path="/dashboard"
-                        element={<Dashboard />}
-                      />
+                        {/* Dashboard route - also accessible at /dashboard for logged-in users */}
+                        <Route
+                          path="/dashboard"
+                          element={<Dashboard />}
+                        />
 
-                      <Route
-                        path="/new-post"
-                        element={
-                          <ProtectedRoute>
-                            <NewPost />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/new-post"
+                          element={
+                            <ProtectedRoute>
+                              <NewPost />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/edit-post/:postId"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <NewPost />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/edit-post/:postId"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <NewPost />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* Public homepage - Dashboard */}
-                      <Route path="/" element={<Dashboard />} />
+                        {/* Public homepage - Dashboard */}
+                        <Route path="/" element={<Dashboard />} />
 
-                      {/* Public user profile route */}
-                      <Route path="/profile/:userId" element={<UserProfile />} />
+                        {/* Public user profile route */}
+                        <Route path="/profile/:userId" element={<UserProfile />} />
 
-                      {/* Post page route - using ObjectId for faster lookups */}
-                      <Route path="/post/:id" element={<PostPage />} />
+                        {/* Post page route - using ObjectId for faster lookups */}
+                        <Route path="/post/:id" element={<PostPage />} />
 
-                      {/* Breaking News page route */}
-                      <Route path="/breaking-news/:id" element={<BreakingNewsPage />} />
+                        {/* Breaking News page route */}
+                        <Route path="/breaking-news/:id" element={<BreakingNewsPage />} />
 
-                      {/* Current user profile route */}
-                      <Route
-                        path="/profile"
-                        element={
-                          <ProtectedRoute>
-                            <ProfilePage />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* Cricket T20 World Cup live scores (public) */}
+                        <Route path="/t20-worldcup" element={<T20WorldCup />} />
 
-                      {/* Admin only routes */}
-                      <Route
-                        path="/admin/dashboard"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* Current user profile route */}
+                        <Route
+                          path="/profile"
+                          element={
+                            <ProtectedRoute>
+                              <ProfilePage />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/admin/users"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AdminManagement />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* Admin only routes */}
+                        <Route
+                          path="/admin/dashboard"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminDashboard />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/admin/posts"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <PostsManagement />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/admin/users"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AdminManagement />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/admin/breaking-news"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <BreakingNewsManagement />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/breaking-news/create"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <CreateBreakingNews />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/breaking-news/edit/:id"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <CreateBreakingNews />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/admin/posts"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <PostsManagement />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/admin/trending"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <TrendingManagement />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/admin/breaking-news"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <BreakingNewsManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/breaking-news/create"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <CreateBreakingNews />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/breaking-news/edit/:id"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <CreateBreakingNews />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/admin/integrations"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <WhatsAppIntegration />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/admin/trending"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <TrendingManagement />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* WhatsApp integration route */}
-                      <Route
-                        path="/whatsapp-integration"
-                        element={
-                          <ProtectedRoute>
-                            <WhatsAppIntegration />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/admin/integrations"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <WhatsAppIntegration />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* History route */}
-                      <Route
-                        path="/history"
-                        element={
-                          <ProtectedRoute>
-                            <History />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* WhatsApp integration route */}
+                        <Route
+                          path="/whatsapp-integration"
+                          element={
+                            <ProtectedRoute>
+                              <WhatsAppIntegration />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* Trending route - commented out as requested */}
-                      {/* <Route
+                        {/* History route */}
+                        <Route
+                          path="/history"
+                          element={
+                            <ProtectedRoute>
+                              <History />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Trending route - commented out as requested */}
+                        {/* <Route
                   path="/trending"
                   element={
                     <ProtectedRoute>
@@ -300,8 +304,8 @@ function App() {
                   }
                 /> */}
 
-                      {/* Bookmarks route - Removed */}
-                      {/* <Route
+                        {/* Bookmarks route - Removed */}
+                        {/* <Route
                     path="/bookmarks"
                     element={
                       <ProtectedRoute>
@@ -310,45 +314,45 @@ function App() {
                     }
                   /> */}
 
-                      {/* Ad Management route */}
-                      <Route
-                        path="/ads"
-                        element={
-                          <ProtectedRoute>
-                            <AdManagement />
-                          </ProtectedRoute>
-                        }
-                      />
+                        {/* Ad Management route */}
+                        <Route
+                          path="/ads"
+                          element={
+                            <ProtectedRoute>
+                              <AdManagement />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/announcements"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <AnnouncementManagement />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/announcements"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <AnnouncementManagement />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/notifications"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <NotificationManagement />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/notifications"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <NotificationManagement />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      <Route
-                        path="/admin/settings"
-                        element={
-                          <ProtectedRoute requiredRole="admin">
-                            <Settings />
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path="/admin/settings"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <Settings />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* Catch all route - redirect to homepage instead of login */}
-                      <Route path="*" element={<Navigate to="/" replace />} />
+                        {/* Catch all route - redirect to homepage instead of login */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </div>
                   </Suspense>
