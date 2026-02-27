@@ -4,6 +4,8 @@ import {
   Menu,
   LogOut,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Shield,
   MapPin,
   Globe,
@@ -55,6 +57,9 @@ const Header = ({
   } = useLanguageLocation();
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const locationStripRef = useRef(null);
+  const locationStripPausedRef = useRef(false);
+  const locationStripResumeTimeoutRef = useRef(null);
 
   const locations = useMemo(() => {
     const locs = Array.isArray(availableLocations) ? availableLocations : [];
@@ -62,6 +67,73 @@ const Header = ({
     const withoutAll = locs.filter((l) => String(l).toLowerCase() !== 'all');
     return ['All', ...withoutAll];
   }, [availableLocations]);
+
+  // Location strip: smooth auto-scroll, pause on user scroll/touch, infinite loop
+  useEffect(() => {
+    if (locations.length === 0) return;
+    const el = locationStripRef.current;
+    if (!el) return;
+
+    const step = 0.4;
+    const fps = 60;
+    let rafId = null;
+
+    const tick = () => {
+      if (locationStripPausedRef.current) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 0) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      el.scrollLeft += step;
+      if (el.scrollLeft >= max / 2) {
+        el.scrollLeft = 0;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+
+    const pause = (e) => {
+      // Don't pause when user clicks a location pill (so selecting a tab doesn't stop scroll)
+      if (e && e.target && e.target.closest && e.target.closest('button')) return;
+      locationStripPausedRef.current = true;
+      if (locationStripResumeTimeoutRef.current) {
+        clearTimeout(locationStripResumeTimeoutRef.current);
+      }
+      locationStripResumeTimeoutRef.current = setTimeout(() => {
+        locationStripPausedRef.current = false;
+        locationStripResumeTimeoutRef.current = null;
+      }, 2500);
+    };
+
+    el.addEventListener('touchstart', pause, { passive: true });
+    el.addEventListener('wheel', pause, { passive: true });
+    el.addEventListener('mousedown', pause);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (locationStripResumeTimeoutRef.current) clearTimeout(locationStripResumeTimeoutRef.current);
+      el.removeEventListener('touchstart', pause);
+      el.removeEventListener('wheel', pause);
+      el.removeEventListener('mousedown', pause);
+    };
+  }, [locations.length]);
+
+  const scrollLocationStrip = (direction) => {
+    const el = locationStripRef.current;
+    if (!el) return;
+    locationStripPausedRef.current = true;
+    if (locationStripResumeTimeoutRef.current) clearTimeout(locationStripResumeTimeoutRef.current);
+    const amount = Math.min(120, el.clientWidth * 0.5);
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+    locationStripResumeTimeoutRef.current = setTimeout(() => {
+      locationStripPausedRef.current = false;
+      locationStripResumeTimeoutRef.current = null;
+    }, 2500);
+  };
 
   const languages = [
     { code: 'hi', name: 'Hindi' },
@@ -531,50 +603,56 @@ const Header = ({
         </div>
       </div>
 
-      {/* Location strip: full-width infinite slow scroll (no scrollbar, all locations tappable) */}
+      {/* Location strip: scrollable by hand, smooth auto-scroll (does not stop on tab select), small arrows */}
       {(location.pathname === '/' || location.pathname === '/dashboard') && locations.length > 0 && (
-        <>
-          <style>{`
-            @keyframes kr-location-scroll {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(-50%); }
-            }
-            .kr-location-marquee-inner {
-              animation: kr-location-scroll 90s linear infinite;
-            }
-            .kr-location-marquee-inner:hover {
-              animation-play-state: paused;
-            }
-          `}</style>
-          <div className="w-full pb-2 border-b border-gray-50">
-            <div className="flex items-center gap-2 py-1 w-full overflow-hidden">
-              <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
-                <MapPin className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
-              </div>
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="kr-location-marquee-inner flex items-center gap-2 py-0.5 w-max">
-                  {[...locations, ...locations].map((loc, idx) => {
-                    const isActive = currentLocation === loc;
-                    return (
-                      <button
-                        key={`${loc}-${idx}`}
-                        onClick={() => setLocation(loc)}
-                        className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 ${
-                          isActive
-                            ? 'bg-[var(--color-primary)] text-white shadow-md border-[var(--color-primary)]'
-                            : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
-                        }`}
-                      >
-                        {loc}
-                      </button>
-                    );
-                  })}
-                </div>
+        <div className="w-full pb-2 border-b border-gray-50">
+          <div className="flex items-center gap-1 py-1 w-full">
+            <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollLocationStrip('left')}
+              className="flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Scroll locations left"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div
+              ref={locationStripRef}
+              className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden scroll-smooth scrollbar-hide flex items-center gap-2 py-0.5"
+            >
+              <div className="flex items-center gap-2 py-0.5 w-max min-w-full">
+                {[...locations, ...locations].map((loc, idx) => {
+                  const isActive = currentLocation === loc;
+                  return (
+                    <button
+                      key={`${loc}-${idx}`}
+                      type="button"
+                      onClick={() => setLocation(loc)}
+                      className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 ${
+                        isActive
+                          ? 'bg-[var(--color-primary)] text-white shadow-md border-[var(--color-primary)]'
+                          : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
+                      }`}
+                    >
+                      {loc}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => scrollLocationStrip('right')}
+              className="flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              aria-label="Scroll locations right"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-        </>
+        </div>
       )}
 
       {/* Tag chips row (max 5) */}
