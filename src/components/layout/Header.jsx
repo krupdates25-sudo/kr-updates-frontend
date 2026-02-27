@@ -4,6 +4,8 @@ import {
   Menu,
   LogOut,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Shield,
   MapPin,
   Globe,
@@ -63,7 +65,7 @@ const Header = ({
     return ['All', ...withoutAll];
   }, [availableLocations]);
 
-  const locationsRowRef = useRef(null);
+  const [locationCarouselIndex, setLocationCarouselIndex] = useState(0);
 
   const languages = [
     { code: 'hi', name: 'Hindi' },
@@ -214,38 +216,14 @@ const Header = ({
     setPwaToast(isInstalled ? 'No update available' : 'Install not available on this device');
   };
 
-  // Auto-slide locations row on mobile if there are lots of tags
+  // Auto-carousel: cycle through locations every 3s (no scrollbar)
   useEffect(() => {
-    const el = locationsRowRef.current;
-    if (!el) return;
-    if (!Array.isArray(locations) || locations.length <= 10) return;
-    if (typeof window === 'undefined') return;
-
-    const isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
-    if (!isMobile) return;
-
-    let dir = 1;
-    const step = 120;
+    if (!Array.isArray(locations) || locations.length <= 1) return;
     const interval = window.setInterval(() => {
-      if (!el) return;
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0) return;
-      const next = el.scrollLeft + dir * step;
-      if (next >= max - 4) {
-        dir = -1;
-        el.scrollTo({ left: max, behavior: 'smooth' });
-        return;
-      }
-      if (next <= 4) {
-        dir = 1;
-        el.scrollTo({ left: 0, behavior: 'smooth' });
-        return;
-      }
-      el.scrollTo({ left: next, behavior: 'smooth' });
-    }, 2200);
-
+      setLocationCarouselIndex((prev) => (prev + 1) % locations.length);
+    }, 3000);
     return () => window.clearInterval(interval);
-  }, [locations]);
+  }, [locations.length]);
 
   const handleLogout = async () => {
     await logout();
@@ -566,29 +544,42 @@ const Header = ({
         </div>
       </div>
 
-      {/* Location Tabs Row */}
-      {(location.pathname === '/' || location.pathname === '/dashboard') && (
+      {/* Location carousel (auto-rotating, no scrollbar) */}
+      {(location.pathname === '/' || location.pathname === '/dashboard') && locations.length > 0 && (
         <div className="px-3 sm:px-4 md:px-6 pb-2 border-b border-gray-50">
-          <div ref={locationsRowRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center justify-center gap-2 py-1 overflow-hidden">
             <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
               <MapPin className="w-3.5 h-3.5" />
               <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
             </div>
-            {locations.map((loc) => {
-              const isActive = currentLocation === loc;
-              return (
-                <button
-                  key={loc}
-                  onClick={() => setLocation(loc)}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${isActive
-                      ? 'bg-[var(--color-primary)] text-white shadow-md scale-105 border-[var(--color-primary)]'
-                      : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
-                    }`}
-                >
-                  {loc}
-                </button>
-              );
-            })}
+            <div className="flex items-center gap-1 flex-1 min-w-0 justify-center">
+              <button
+                type="button"
+                onClick={() => setLocationCarouselIndex((prev) => (prev - 1 + locations.length) % locations.length)}
+                className="flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label="Previous region"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setLocation(locations[locationCarouselIndex])}
+                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 min-w-[5rem] ${
+                  currentLocation === locations[locationCarouselIndex]
+                    ? 'bg-[var(--color-primary)] text-white shadow-md scale-105 border-[var(--color-primary)]'
+                    : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
+                }`}
+              >
+                {locations[locationCarouselIndex]}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocationCarouselIndex((prev) => (prev + 1) % locations.length)}
+                className="flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label="Next region"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
