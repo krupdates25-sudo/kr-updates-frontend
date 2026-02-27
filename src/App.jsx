@@ -29,6 +29,7 @@ const PostPage = lazy(() => import('./pages/PostPage'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const VerifyEmailSuccess = lazy(() => import('./pages/VerifyEmailSuccess'));
 const T20WorldCup = lazy(() => import('./pages/T20WorldCup'));
+const BhaskarStory = lazy(() => import('./pages/BhaskarStory'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -192,6 +193,9 @@ function App() {
 
                         {/* Cricket T20 World Cup live scores (public) */}
                         <Route path="/t20-worldcup" element={<T20WorldCup />} />
+
+                        {/* Bhaskar story details (public, opens inside our UI) */}
+                        <Route path="/bhaskar/story/:storyId" element={<BhaskarStory />} />
 
                         {/* Current user profile route */}
                         <Route

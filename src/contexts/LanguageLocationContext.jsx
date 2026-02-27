@@ -19,21 +19,35 @@ export const LanguageLocationProvider = ({ children }) => {
     const refreshLocations = useCallback(async () => {
         setLocationsLoading(true);
         try {
-            // Prefer dynamic locations from Bhaskar state-news API
-            const bhaskar = await getStateNewsLocations();
-            const namesFromBhaskar = Array.isArray(bhaskar?.names) ? bhaskar.names : [];
+            // Merge locations from:
+            // - Bhaskar state-news API (Hindi states)
+            // - Our posts API (distinct locations from saved posts)
+            const [bhaskar, res] = await Promise.allSettled([
+                getStateNewsLocations(),
+                postService.getLocationOptions(),
+            ]);
 
-            let finalList = namesFromBhaskar;
+            const namesFromBhaskar =
+                bhaskar.status === 'fulfilled' && Array.isArray(bhaskar.value?.names)
+                    ? bhaskar.value.names
+                    : [];
 
-            // Fallback to existing postService options if Bhaskar list is empty
-            if (!finalList.length) {
-                const res = await postService.getLocationOptions();
-                const locs = res?.data?.locations || res?.locations || [];
-                finalList = Array.from(new Set(locs.map((l) => String(l || '').trim()).filter(Boolean)));
-            }
+            const locsFromPosts = (() => {
+                if (res.status !== 'fulfilled') return [];
+                const locs = res.value?.data?.locations || res.value?.locations || [];
+                return Array.isArray(locs) ? locs : [];
+            })();
+
+            const normalizedPosts = locsFromPosts
+                .map((l) => String(l || '').trim())
+                .filter(Boolean);
+
+            const finalList = Array.from(
+                new Set([...namesFromBhaskar, ...normalizedPosts])
+            );
 
             const withAll = ['All', ...finalList];
-            setAvailableLocations(withAll.length > 0 ? withAll : ['All', 'Kishangarh Renwal']);
+            setAvailableLocations(withAll.length > 1 ? withAll : ['All', 'Kishangarh Renwal']);
         } catch (e) {
             // Keep existing list on error
         } finally {

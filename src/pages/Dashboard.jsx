@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import postService from '../services/postService';
-import { getHindiSchedule } from '../services/bhaskarService';
+import { getHindiSchedule, getStateNewsFeed } from '../services/bhaskarService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -80,16 +80,17 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ── Match news tab (English / Hindi) ─────────────────────────────────────────
-  const [matchNewsTab, setMatchNewsTab] = useState('english'); // 'english' | 'hindi'
   const [hindiSchedule, setHindiSchedule] = useState(null);
   const [hindiScheduleLoading, setHindiScheduleLoading] = useState(false);
   const [hindiScheduleError, setHindiScheduleError] = useState(null);
 
-  useEffect(() => {
-    if (matchNewsTab !== 'hindi') return;
-    if (hindiSchedule) return;
+  const [bhaskarStateFeed, setBhaskarStateFeed] = useState(null);
+  const [bhaskarStateLoading, setBhaskarStateLoading] = useState(false);
+  const [bhaskarStateError, setBhaskarStateError] = useState(null);
 
+  // Load Hindi schedule once for dashboard carousel
+  useEffect(() => {
+    if (hindiSchedule) return;
     let cancelled = false;
     const loadSchedule = async () => {
       setHindiScheduleLoading(true);
@@ -108,7 +109,31 @@ const Dashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [matchNewsTab, hindiSchedule]);
+  }, [hindiSchedule]);
+
+  // Load Bhaskar state-news feed (for filtered Hindi regional stories)
+  useEffect(() => {
+    if (bhaskarStateFeed) return;
+    let cancelled = false;
+
+    const loadStateFeed = async () => {
+      setBhaskarStateLoading(true);
+      setBhaskarStateError(null);
+      try {
+        const data = await getStateNewsFeed();
+        if (!cancelled) setBhaskarStateFeed(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancelled) setBhaskarStateError(e.message || 'Unable to load Bhaskar state news.');
+      } finally {
+        if (!cancelled) setBhaskarStateLoading(false);
+      }
+    };
+
+    loadStateFeed();
+    return () => {
+      cancelled = true;
+    };
+  }, [bhaskarStateFeed]);
 
   // Check if user can create posts
   const canCreatePosts = useMemo(() => {
@@ -202,13 +227,15 @@ const Dashboard = () => {
           case 'python':
             response = await postService.getPostsByCategory(activeTab);
             break;
-          default:
+          default: {
             response = await postService.getAllPosts({
               ...params,
-              location: currentLocation
+              ...(currentLocation && currentLocation !== 'All' ? { location: currentLocation } : {}),
               // Backend optimization: avoid expensive countDocuments; backend computes hasMore via limit+1
-              , noCount: true
+              noCount: true,
             });
+            break;
+          }
         }
 
         // The postService returns the API response object which contains:
@@ -687,147 +714,217 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* ── Match news tabs (English / Hindi) ── */}
+        {/* ── Match updates label ── */}
         <div className="mb-2 sm:mb-3 flex items-center gap-2">
           <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.2em]">
             Match updates
           </span>
-          <div className="inline-flex items-center rounded-full bg-gray-100 p-1 text-xs font-medium">
-            <button
-              type="button"
-              onClick={() => setMatchNewsTab('english')}
-              className={`px-3 py-1 rounded-full transition-colors ${matchNewsTab === 'english'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-800'
-                }`}
-            >
-              English scores
-            </button>
-            <button
-              type="button"
-              onClick={() => setMatchNewsTab('hindi')}
-              className={`px-3 py-1 rounded-full transition-colors ${matchNewsTab === 'hindi'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-800'
-                }`}
-            >
-              Hindi मैच
-            </button>
+        </div>
+
+        {/* ── English: T20 World Cup card (click-through to full scores page) ── */}
+        <div
+          onClick={() => navigate('/t20-worldcup')}
+          className="mb-4 sm:mb-6 cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 group"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/t20-worldcup')}
+        >
+          <div className="bg-gradient-to-r from-[#0d1117] via-[#161b2e] to-[#1e2a4a] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
+            {/* Decorative glows — no emoji */}
+            <div className="absolute -top-8 right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-purple-500/10 blur-xl pointer-events-none" />
+            {/* Subtle grid */}
+            <div
+              className="absolute inset-0 opacity-[0.04] pointer-events-none"
+              style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }}
+            />
+
+            {/* Left: icon + text */}
+            <div className="relative flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+              {/* Trophy icon — lucide */}
+              <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+                  <p
+                    className="text-xs sm:text-sm font-extrabold tracking-tight leading-snug"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    ICC Men's T20 World Cup
+                  </p>
+                  {/* Live pulse dot */}
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-white/60 font-medium">
+                  T20 World Cup live scores, results & fixtures
+                </p>
+              </div>
+            </div>
+
+            {/* Right: compact button */}
+            <div className="relative flex-shrink-0 flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 border border-white/15 transition-colors text-white text-[11px] sm:text-[12px] font-semibold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap">
+              View scores
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </div>
         </div>
 
-        {/* ── English: T20 World Cup card ── */}
-        {matchNewsTab === 'english' && (
-          <div
-            onClick={() => navigate('/t20-worldcup')}
-            className="mb-4 sm:mb-6 cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 group"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && navigate('/t20-worldcup')}
-          >
-            <div className="bg-gradient-to-r from-[#0d1117] via-[#161b2e] to-[#1e2a4a] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
-              {/* Decorative glows — no emoji */}
-              <div className="absolute -top-8 right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-purple-500/10 blur-xl pointer-events-none" />
-              {/* Subtle grid */}
-              <div
-                className="absolute inset-0 opacity-[0.04] pointer-events-none"
-                style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }}
-              />
+        {/* ── Hindi: match updates (carousel, minimal & modern) ── */}
+        <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-800">
+              हिंदी मैच अपडेट्स (ICC MT20 WC 2026)
+            </p>
+            {hindiScheduleLoading && (
+              <span className="text-[10px] text-gray-400">Loading…</span>
+            )}
+          </div>
+          {hindiScheduleError && (
+            <p className="text-xs text-red-500">{hindiScheduleError}</p>
+          )}
 
-              {/* Left: icon + text */}
-              <div className="relative flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                {/* Trophy icon — lucide */}
-                <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                  <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
-                    <p
-                      className="text-xs sm:text-sm font-extrabold tracking-tight leading-snug"
-                      style={{ fontFamily: "'Inter', sans-serif" }}
+          {!hindiScheduleLoading && !hindiScheduleError && hindiSchedule && (
+            <div className="overflow-x-auto no-scrollbar">
+              <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
+                {[...hindiSchedule.upcoming.slice(0, 6), ...hindiSchedule.completed.slice(0, 4)].map((m) => {
+                  const isCompleted = !!m.result;
+                  const accent = isCompleted ? 'emerald' : 'indigo';
+                  const badge = isCompleted ? 'Result' : 'Upcoming';
+                  const primaryLine = m.result || m.status || '';
+
+                  return (
+                    <div
+                      key={m.id}
+                      className={`snap-start w-[320px] sm:w-[360px] rounded-2xl border bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden ${isCompleted ? 'border-emerald-100' : 'border-indigo-100'
+                        }`}
                     >
-                      ICC Men's T20 World Cup
-                    </p>
-                    {/* Live pulse dot */}
-                    <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
-                    </span>
-                  </div>
-                  <p className="text-[10px] sm:text-[11px] text-white/60 font-medium">
-                    T20 World Cup live scores, results & fixtures
-                  </p>
-                </div>
-              </div>
+                      <div className={`px-4 py-3 bg-gradient-to-br ${isCompleted ? 'from-emerald-50 via-white to-white' : 'from-indigo-50 via-white to-white'
+                        }`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-extrabold text-gray-900 leading-snug line-clamp-1">
+                              {m.matchNumber || 'Match'}
+                            </p>
+                            <p className="text-[12px] text-gray-600 mt-0.5 line-clamp-1">
+                              {m.venue}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full ${accent === 'emerald'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-indigo-100 text-indigo-700'
+                              }`}
+                          >
+                            {badge}
+                          </span>
+                        </div>
 
-              {/* Right: compact button */}
-              <div className="relative flex-shrink-0 flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 border border-white/15 transition-colors text-white text-[11px] sm:text-[12px] font-semibold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap">
-                View scores
-                <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        {primaryLine && (
+                          <p
+                            className={`mt-3 text-[12px] font-semibold leading-snug line-clamp-2 ${accent === 'emerald' ? 'text-emerald-700' : 'text-indigo-700'
+                              }`}
+                          >
+                            {primaryLine}
+                          </p>
+                        )}
+
+                        <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
+                          <span className="font-medium">{m.dateIST}</span>
+                          <span className="font-extrabold text-gray-700">{m.timeIST}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* ── Hindi: schedule cards from Bhaskar ── */}
-        {matchNewsTab === 'hindi' && (
-          <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs sm:text-sm font-semibold text-gray-800">
-                हिंदी मैच अपडेट्स (ICC MT20 WC 2026)
-              </p>
-              {hindiScheduleLoading && (
-                <span className="text-[10px] text-gray-400">Loading…</span>
-              )}
-            </div>
-            {hindiScheduleError && (
-              <p className="text-xs text-red-500">{hindiScheduleError}</p>
-            )}
-            {!hindiScheduleLoading && !hindiScheduleError && hindiSchedule && (
-              <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                {hindiSchedule.upcoming.slice(0, 4).map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 rounded-xl border border-indigo-50 bg-indigo-50/40 px-3 py-2 text-[11px] sm:text-xs"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {m.matchnumber}
-                      </p>
-                      <p className="text-gray-600 truncate">
-                        {m.venue}
-                      </p>
-                    </div>
-                    <div className="text-right text-gray-500 flex-shrink-0">
-                      <p>{m.matchdate_ist}</p>
-                      <p>{m.matchtime_ist}</p>
-                    </div>
-                  </div>
-                ))}
-                {hindiSchedule.completed.slice(0, 4).map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 rounded-xl border border-emerald-50 bg-emerald-50/40 px-3 py-2 text-[11px] sm:text-xs"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {m.matchnumber}
-                      </p>
-                      <p className="text-emerald-700 truncate">
-                        {m.matchresult}
-                      </p>
-                    </div>
-                    <div className="text-right text-gray-500 flex-shrink-0">
-                      <p>{m.matchdate_ist}</p>
-                      <p>{m.matchtime_ist}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* ── Bhaskar state news (filtered by selected location) ── */}
+        <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-800">
+              Bhaskar state updates
+            </p>
+            {bhaskarStateLoading && (
+              <span className="text-[10px] text-gray-400">Loading…</span>
             )}
           </div>
-        )}
+
+          {bhaskarStateError && (
+            <p className="text-xs text-red-500">{bhaskarStateError}</p>
+          )}
+
+          {!bhaskarStateLoading && !bhaskarStateError && Array.isArray(bhaskarStateFeed) && (
+            (() => {
+              const block = currentLocation && currentLocation !== 'All'
+                ? bhaskarStateFeed.find((b) => b.location === currentLocation)
+                : null;
+              const stories = block?.stories || [];
+              if (!block) {
+                return <p className="text-[11px] text-gray-500">Select a state in Region to see Bhaskar updates.</p>;
+              }
+              if (!stories.length) {
+                return <p className="text-[11px] text-gray-500">No Bhaskar stories for {block.location}.</p>;
+              }
+              const StoryCard = ({ story }) => (
+                <button
+                  key={story.id}
+                  type="button"
+                  onClick={() => navigate(`/bhaskar/story/${story.id}`, { state: { story } })}
+                  className="w-full text-left rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-md transition-shadow"
+                  title={story.title}
+                >
+                  <div className="flex gap-3 p-3">
+                    <div className="w-28 h-20 sm:w-32 sm:h-24 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                      {story.image ? (
+                        <img
+                          src={story.image}
+                          alt={story.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
+                        {story.title}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                        {block.location}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+
+              return (
+                <>
+                  {/* Mobile: list */}
+                  <div className="sm:hidden space-y-3">
+                    {stories.slice(0, 10).map((s) => (
+                      <StoryCard key={s.id} story={s} />
+                    ))}
+                  </div>
+
+                  {/* Desktop: same grid sizing as custom news */}
+                  <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {stories.slice(0, 10).map((s) => (
+                      <StoryCard key={s.id} story={s} />
+                    ))}
+                  </div>
+                </>
+              );
+            })()
+          )}
+        </div>
 
         {/* Top Ad - Always show */}
         <div className="mb-4 sm:mb-6 w-full">
@@ -1035,13 +1132,17 @@ const Dashboard = () => {
         {/* Empty State */}
         {!loading &&
           filteredAndSortedArticles.length === 0 &&
-          articles.length === 0 && (
+          articles.length === 0 &&
+          !(Array.isArray(bhaskarStateFeed) &&
+            currentLocation &&
+            currentLocation !== 'All' &&
+            bhaskarStateFeed.find((b) => b.location === currentLocation)?.stories?.length > 0) && (
             <div className="flex flex-col items-center justify-center py-20 px-6">
-
               {/* Animated SVG Illustration */}
               <div className="relative mb-8 select-none">
                 <svg
-                  width="220" height="180"
+                  width="220"
+                  height="180"
                   viewBox="0 0 220 180"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -1049,7 +1150,6 @@ const Dashboard = () => {
                 >
                   {/* Background blob */}
                   <ellipse cx="110" cy="155" rx="80" ry="16" fill="#E8ECFF" />
-
                   {/* Newspaper / document */}
                   <rect x="45" y="28" width="130" height="115" rx="12" fill="#ffffff" stroke="#C7D2FE" strokeWidth="2" />
                   {/* Header strip */}
@@ -1063,9 +1163,8 @@ const Dashboard = () => {
                   {/* Newspaper header text (white bars) */}
                   <rect x="62" y="35" width="60" height="5" rx="2.5" fill="white" opacity="0.8" />
                   <rect x="130" y="35" width="28" height="5" rx="2.5" fill="white" opacity="0.5" />
-
                   {/* Magnifying glass — animated */}
-                  <g style={{ transformOrigin: '155px 85px', animation: 'searchBob 2.4s ease-in-out infinite' }}>
+                  <g style={{ transformOrigin: "155px 85px", animation: "searchBob 2.4s ease-in-out infinite" }}>
                     <circle cx="155" cy="72" r="26" fill="#EEF2FF" stroke="#6366F1" strokeWidth="3" />
                     <circle cx="155" cy="72" r="18" fill="white" stroke="#A5B4FC" strokeWidth="2" />
                     {/* X inside glass */}
@@ -1074,13 +1173,11 @@ const Dashboard = () => {
                     {/* Handle */}
                     <line x1="174" y1="91" x2="182" y2="101" stroke="#6366F1" strokeWidth="3.5" strokeLinecap="round" />
                   </g>
-
                   {/* Floating dots */}
-                  <circle cx="38" cy="55" r="6" fill="#A5B4FC" style={{ animation: 'floatA 3s ease-in-out infinite' }} />
-                  <circle cx="185" cy="120" r="5" fill="#FCA5A5" style={{ animation: 'floatB 3.6s ease-in-out infinite' }} />
-                  <circle cx="60" cy="150" r="4" fill="#6EE7B7" style={{ animation: 'floatA 2.8s ease-in-out infinite 0.4s' }} />
+                  <circle cx="38" cy="55" r="6" fill="#A5B4FC" style={{ animation: "floatA 3s ease-in-out infinite" }} />
+                  <circle cx="185" cy="120" r="5" fill="#FCA5A5" style={{ animation: "floatB 3.6s ease-in-out infinite" }} />
+                  <circle cx="60" cy="150" r="4" fill="#6EE7B7" style={{ animation: "floatA 2.8s ease-in-out infinite 0.4s" }} />
                 </svg>
-
                 {/* Inline keyframes */}
                 <style>{`
                   @keyframes searchBob {
@@ -1097,30 +1194,54 @@ const Dashboard = () => {
                   }
                 `}</style>
               </div>
-
               {/* Text */}
               <h3 className="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">
                 No news found
-                {currentLocation && currentLocation !== 'All' ? ` in ${currentLocation}` : ''}
+                {currentLocation && currentLocation !== "All" ? ` in ${currentLocation}` : ""}
               </h3>
               <p className="text-sm sm:text-base text-gray-500 max-w-xs text-center leading-relaxed mb-8">
-                We couldn't find any stories for this location right now. Try a different area or browse all the latest news.
+                We couldn't find any stories for this location right now. Try a different area or browse all the latest
+                news.
               </p>
-
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <button
-                  onClick={() => setLocation('All')}
+                  onClick={() => setLocation("All")}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-indigo-600 text-white text-sm font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition-all duration-200"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
                   Browse All News
                 </button>
                 <button
-                  onClick={() => setLocation('Kishangarh Renwal')}
+                  onClick={() => setLocation("Kishangarh Renwal")}
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-full border-2 border-indigo-200 text-indigo-700 text-sm font-semibold hover:bg-indigo-50 active:scale-95 transition-all duration-200"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
                   Kishangarh Renwal
                 </button>
               </div>

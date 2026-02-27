@@ -31,6 +31,7 @@ function memSet(key, data, ttlMs) {
 
 const BHASKAR_SCHEDULE_KEY = 'bhaskar_schedule_v1';
 const BHASKAR_STATE_KEY = 'bhaskar_states_v1';
+const BHASKAR_STATE_FEED_KEY = 'bhaskar_state_feed_v1';
 const TTL_SHORT = 5 * 60 * 1000; // 5 min
 const TTL_LONG = 60 * 60 * 1000; // 1 hr
 
@@ -102,6 +103,60 @@ export async function getStateNewsLocations() {
 
   memSet(BHASKAR_STATE_KEY, result, TTL_LONG);
   return result;
+}
+
+export async function getStateNewsFeed() {
+  const cached = memGet(BHASKAR_STATE_FEED_KEY);
+  if (cached) return cached;
+
+  const res = await fetch(BHASKAR_STATE_NEWS_URL, {
+    method: 'GET',
+  });
+
+  if (!res.ok) {
+    throw new Error(`Bhaskar state-news responded ${res.status}`);
+  }
+
+  const json = await res.json();
+  const list = Array.isArray(json.list) ? json.list : [];
+
+  // Keep most of the structure but normalize story fields for UI
+  const normalized = list.map((block) => {
+    const feed = Array.isArray(block.feed) ? block.feed : [];
+    const stories = feed
+      .filter((x) => x?.type === 'story' && x?.data?.header?.title)
+      .map((x) => {
+        const data = x.data || {};
+        const header = data.header || {};
+        const media = Array.isArray(header.media) ? header.media : [];
+        const firstImg = media.find((m) => m?.type === 'image')?.url || null;
+        const firstVideoThumb = media.find((m) => m?.type === 'video')?.thumbUrl || null;
+        const img = firstImg || firstVideoThumb || null;
+        return {
+          id: data.storyId || x.id,
+          title: header.title || '',
+          slug: header.slug || '',
+          shortUrl: data.shortUrl || '',
+          shareUri: data.shareUri || '',
+          publishTime: data.publishTime || null,
+          location: block.location || '',
+          category: data.category?.displayName || block.location || '',
+          categoryColor: data.category?.color || '#2563eb',
+          image: img,
+          listingUrl: block.listingUrl || '',
+        };
+      });
+
+    return {
+      id: block.id,
+      location: block.location,
+      listingUrl: block.listingUrl,
+      stories,
+    };
+  });
+
+  memSet(BHASKAR_STATE_FEED_KEY, normalized, TTL_SHORT);
+  return normalized;
 }
 
 
