@@ -139,11 +139,10 @@ const EducationCarousel = ({ posts }) => {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                index === currentIndex
+              className={`h-1.5 rounded-full transition-all duration-300 ${index === currentIndex
                   ? 'bg-[var(--color-primary)] w-8'
                   : 'bg-gray-300 w-1.5 hover:bg-gray-400'
-              }`}
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}

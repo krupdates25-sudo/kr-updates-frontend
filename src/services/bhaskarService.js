@@ -211,4 +211,43 @@ export async function getCricketCategoryFeed({ cursor } = {}) {
   return result;
 }
 
+// Helper function to extract filename from shortUrl
+// Example: "/local/uttar-pradesh/mathura/news/vrindavan-rang-bharai-ekadashi-holika-parikrama-brij-bhakti-137310716.html"
+// Returns: "vrindavan-rang-bharai-ekadashi-holika-parikrama-brij-bhakti-137310716"
+function extractFilenameFromShortUrl(shortUrl) {
+  if (!shortUrl || typeof shortUrl !== "string") return null;
+
+  // Remove leading slash if present
+  let path = shortUrl.startsWith("/") ? shortUrl.slice(1) : shortUrl;
+
+  // Remove .html extension
+  path = path.replace(/\.html$/, "");
+
+  // Extract the last segment (filename)
+  const segments = path.split("/");
+  return segments.length > 0 ? segments[segments.length - 1] : null;
+}
+
+export async function getStoryDetails(shortUrl) {
+  const filename = extractFilenameFromShortUrl(shortUrl);
+  if (!filename) {
+    throw new Error("Invalid shortUrl: cannot extract filename");
+  }
+
+  const key = `story_details:${filename}`;
+  const cached = memGet(key);
+  if (cached) return cached;
+
+  const url = `${API_BASE_URL}/bhaskar/story/${encodeURIComponent(filename)}`;
+
+  const res = await fetch(url, { method: "GET" });
+  if (!res.ok) {
+    throw new Error(`Bhaskar story details responded ${res.status}`);
+  }
+
+  const json = await res.json();
+  memSet(key, json, TTL_SHORT);
+  return json;
+}
+
 
