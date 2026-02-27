@@ -10,7 +10,7 @@
  *   • No-live TTL     : 5 min
  */
 
-const API_KEY = 'd122120b-d289-4cfe-85be-a3817ba4d69c';
+const API_KEY = 'f0626644-690e-4d01-9a7a-7eeea65aa4e6';
 const BASE_URL = 'https://api.cricapi.com/v1';
 const LS_KEY = 'cricapi_t20_matches_v1';
 const MEM = new Map();           // key → { data, expiresAt }

@@ -23,7 +23,6 @@ import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import cricketService from '../services/cricketService';
-import { getCricketCategoryFeed } from '../services/bhaskarService';
 
 // ─── Flag CDN fallback map ────────────────────────────────────────────────
 const ISO_FLAGS = {
@@ -403,11 +402,6 @@ const T20WorldCup = () => {
     const [apiInfo, setApiInfo] = useState(null);
     const [activeTab, setActiveTab] = useState('all');
 
-    // Bhaskar cricket news (fallback when live-scores API is rate-limited)
-    const [cricketNews, setCricketNews] = useState([]);
-    const [cricketNewsLoading, setCricketNewsLoading] = useState(false);
-    const [cricketNewsError, setCricketNewsError] = useState(null);
-
     // ── fetch ────────────────────────────────────────────────────────────────
     const load = useCallback(async (silent = false) => {
         silent ? setRefreshing(true) : setLoading(true);
@@ -443,23 +437,6 @@ const T20WorldCup = () => {
     }, []);
 
     useEffect(() => { load(); }, [load]);
-
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                setCricketNewsLoading(true);
-                setCricketNewsError(null);
-                const data = await getCricketCategoryFeed();
-                if (!cancelled) setCricketNews(Array.isArray(data?.stories) ? data.stories.slice(0, 12) : []);
-            } catch (e) {
-                if (!cancelled) setCricketNewsError(e?.message || 'Unable to load cricket news.');
-            } finally {
-                if (!cancelled) setCricketNewsLoading(false);
-            }
-        })();
-        return () => { cancelled = true; };
-    }, []);
 
     // Auto-refresh every 60 s only when live matches present
     useEffect(() => {
@@ -631,101 +608,6 @@ const T20WorldCup = () => {
 
                 {/* ══ Content ════════════════════════════════════════════════════════ */}
                 <main className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 max-w-full overflow-x-hidden">
-                    {/* Cricket news (Bhaskar) — shows even if scores API is rate-limited */}
-                    {(cricketNewsLoading || cricketNewsError || cricketNews.length > 0) && (
-                        <section className="mb-6 sm:mb-8">
-                            <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#0f1320] shadow-sm p-4 sm:p-5">
-                                <div className="flex items-center justify-between gap-3 mb-3">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <div className="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-                                            <Activity className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-extrabold text-gray-900 dark:text-white leading-tight">
-                                                Cricket news
-                                            </p>
-                                            <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                                                Latest updates from Bhaskar
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {cricketNewsLoading && (
-                                        <span className="text-[11px] text-gray-400">Loading…</span>
-                                    )}
-                                </div>
-
-                                {cricketNewsError && (
-                                    <p className="text-xs text-red-500">{cricketNewsError}</p>
-                                )}
-
-                                {!cricketNewsLoading && !cricketNewsError && cricketNews.length > 0 && (
-                                    <>
-                                        {/* Mobile: list */}
-                                        <div className="sm:hidden space-y-3">
-                                            {cricketNews.slice(0, 8).map((s) => (
-                                                <button
-                                                    key={s.id}
-                                                    type="button"
-                                                    onClick={() => navigate(`/bhaskar/story/${s.id}`, { state: { story: s } })}
-                                                    className="w-full text-left rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#0b0f1a] overflow-hidden hover:shadow-md transition-shadow"
-                                                    title={s.title}
-                                                >
-                                                    <div className="flex gap-3 p-3">
-                                                        <div className="w-28 h-20 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0">
-                                                            {s.image ? (
-                                                                <img src={s.image} alt={s.title} className="w-full h-full object-cover" loading="lazy" />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900" />
-                                                            )}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-sm font-extrabold text-gray-900 dark:text-white leading-snug line-clamp-2">
-                                                                {s.title}
-                                                            </p>
-                                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
-                                                                {s.category || 'Cricket'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        {/* Desktop: grid */}
-                                        <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                            {cricketNews.slice(0, 10).map((s) => (
-                                                <button
-                                                    key={s.id}
-                                                    type="button"
-                                                    onClick={() => navigate(`/bhaskar/story/${s.id}`, { state: { story: s } })}
-                                                    className="w-full text-left rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#0b0f1a] overflow-hidden hover:shadow-md transition-shadow"
-                                                    title={s.title}
-                                                >
-                                                    <div className="flex gap-3 p-3">
-                                                        <div className="w-32 h-24 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0">
-                                                            {s.image ? (
-                                                                <img src={s.image} alt={s.title} className="w-full h-full object-cover" loading="lazy" />
-                                                            ) : (
-                                                                <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900" />
-                                                            )}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-base font-extrabold text-gray-900 dark:text-white leading-snug line-clamp-2">
-                                                                {s.title}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
-                                                                {s.category || 'Cricket'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </section>
-                    )}
 
                     {/* Loading skeletons */}
                     {loading && (

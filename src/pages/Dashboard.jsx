@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import postService from '../services/postService';
-import { getHindiSchedule, getStateNewsFeed } from '../services/bhaskarService';
+import { getHindiSchedule, getStateNewsFeed, getCricketCategoryFeed } from '../services/bhaskarService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -88,6 +88,10 @@ const Dashboard = () => {
   const [bhaskarStateLoading, setBhaskarStateLoading] = useState(false);
   const [bhaskarStateError, setBhaskarStateError] = useState(null);
 
+  const [cricketNews, setCricketNews] = useState([]);
+  const [cricketNewsLoading, setCricketNewsLoading] = useState(false);
+  const [cricketNewsError, setCricketNewsError] = useState(null);
+
   // Load Hindi schedule once for dashboard carousel
   useEffect(() => {
     if (hindiSchedule) return;
@@ -134,6 +138,28 @@ const Dashboard = () => {
       cancelled = true;
     };
   }, [bhaskarStateFeed]);
+
+  // Load Bhaskar cricket news for Sports section
+  useEffect(() => {
+    if (cricketNews.length > 0) return;
+    let cancelled = false;
+    const loadCricketNews = async () => {
+      setCricketNewsLoading(true);
+      setCricketNewsError(null);
+      try {
+        const data = await getCricketCategoryFeed();
+        if (!cancelled) setCricketNews(Array.isArray(data?.stories) ? data.stories.slice(0, 12) : []);
+      } catch (e) {
+        if (!cancelled) setCricketNewsError(e?.message || 'Unable to load cricket news.');
+      } finally {
+        if (!cancelled) setCricketNewsLoading(false);
+      }
+    };
+    loadCricketNews();
+    return () => {
+      cancelled = true;
+    };
+  }, [cricketNews.length]);
 
   // Check if user can create posts
   const canCreatePosts = useMemo(() => {
@@ -990,6 +1016,100 @@ const Dashboard = () => {
                   </div>
                 </div>
               </section>
+
+              {/* Sports (Bhaskar cricket news) */}
+              {cricketNews.length > 0 && (
+                <section className="-mx-3 sm:-mx-4 md:-mx-6 border-y border-green-100 bg-gradient-to-br from-green-50/70 via-white to-emerald-50/50 py-5 sm:py-7">
+                  <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
+                    {/* OUTER header */}
+                    <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+                      <div className="min-w-0">
+                        <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+                          Sports
+                        </h3>
+                        <p className="text-sm sm:text-base text-gray-600">
+                          Latest cricket news & updates
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Inner container (clean white for cards) */}
+                    <div className="rounded-2xl border border-gray-200 bg-white/90 backdrop-blur p-3 sm:p-4 shadow-sm">
+                      {cricketNewsLoading && (
+                        <div className="text-sm text-gray-600">Loading sports news...</div>
+                      )}
+                      {cricketNewsError && (
+                        <div className="text-sm text-red-600">{cricketNewsError}</div>
+                      )}
+                      {!cricketNewsLoading && !cricketNewsError && cricketNews.length > 0 && (
+                        <>
+                          {/* Mobile: list */}
+                          <div className="sm:hidden space-y-3">
+                            {cricketNews.slice(0, 8).map((s) => (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => navigate(`/bhaskar/story/${s.id}`, { state: { story: s } })}
+                                className="w-full text-left rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-md transition-shadow"
+                                title={s.title}
+                              >
+                                <div className="flex gap-3 p-3">
+                                  <div className="w-28 h-20 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                                    {s.image ? (
+                                      <img src={s.image} alt={s.title} className="w-full h-full object-cover" loading="lazy" />
+                                    ) : (
+                                      <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
+                                      {s.title}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                      {s.category || 'Cricket'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Desktop: same grid sizing as custom news */}
+                          <div className="hidden sm:grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {cricketNews.slice(0, 10).map((s) => (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => navigate(`/bhaskar/story/${s.id}`, { state: { story: s } })}
+                                className="w-full text-left rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-md transition-shadow"
+                                title={s.title}
+                              >
+                                <div className="flex gap-3 p-3">
+                                  <div className="w-32 h-24 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                                    {s.image ? (
+                                      <img src={s.image} alt={s.title} className="w-full h-full object-cover" loading="lazy" />
+                                    ) : (
+                                      <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
+                                      {s.title}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                      {s.category || 'Cricket'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               {/* Follow */}
               {followProfiles.length > 0 && (
