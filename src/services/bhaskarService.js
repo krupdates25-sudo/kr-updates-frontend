@@ -11,6 +11,7 @@ import { API_BASE_URL } from '../config/api';
 
 const BHASKAR_SCHEDULE_URL = `${API_BASE_URL}/bhaskar/schedule`;
 const BHASKAR_STATE_NEWS_URL = `${API_BASE_URL}/bhaskar/states`;
+const BHASKAR_CRICKET_FEED_URL = `${API_BASE_URL}/bhaskar/cricket`;
 
 // Small in-memory cache to avoid hitting these APIs too often
 const MEMORY = new Map(); // key -> { data, expiresAt }
@@ -32,6 +33,7 @@ function memSet(key, data, ttlMs) {
 const BHASKAR_SCHEDULE_KEY = 'bhaskar_schedule_v1';
 const BHASKAR_STATE_KEY = 'bhaskar_states_v1';
 const BHASKAR_STATE_FEED_KEY = 'bhaskar_state_feed_v1';
+const BHASKAR_CRICKET_FEED_KEY = 'bhaskar_cricket_feed_v1';
 const TTL_SHORT = 5 * 60 * 1000; // 5 min
 const TTL_LONG = 60 * 60 * 1000; // 1 hr
 
@@ -157,6 +159,56 @@ export async function getStateNewsFeed() {
 
   memSet(BHASKAR_STATE_FEED_KEY, normalized, TTL_SHORT);
   return normalized;
+}
+
+export async function getCricketCategoryFeed({ cursor } = {}) {
+  const key = cursor ? `${BHASKAR_CRICKET_FEED_KEY}:${cursor}` : `${BHASKAR_CRICKET_FEED_KEY}:first`;
+  const cached = memGet(key);
+  if (cached) return cached;
+
+  const url = cursor
+    ? `${BHASKAR_CRICKET_FEED_URL}?cursor=${encodeURIComponent(cursor)}`
+    : BHASKAR_CRICKET_FEED_URL;
+
+  const res = await fetch(url, { method: 'GET' });
+  if (!res.ok) throw new Error(`Bhaskar cricket feed responded ${res.status}`);
+
+  const json = await res.json();
+  const feed = Array.isArray(json.feed) ? json.feed : [];
+
+  const stories = feed
+    .filter((x) => x?.type === 'story' && x?.data?.header?.title)
+    .map((x) => {
+      const data = x.data || {};
+      const header = data.header || {};
+      const media = Array.isArray(header.media) ? header.media : [];
+      const firstImg = media.find((m) => m?.type === 'image')?.url || null;
+      const firstVideoThumb = media.find((m) => m?.type === 'video')?.thumbUrl || null;
+      const img = firstImg || firstVideoThumb || null;
+      return {
+        id: data.storyId || x.id,
+        title: header.title || '',
+        slug: header.slug || '',
+        shortUrl: data.shortUrl || '',
+        shareUri: data.shareUri || '',
+        publishTime: data.publishTime || null,
+        location: data.category?.displayName || '',
+        category: data.category?.displayName || '',
+        categoryColor: data.category?.color || '#2563eb',
+        image: img,
+      };
+    });
+
+  const result = {
+    categoryName: json.categoryName || '',
+    metaTitle: json.metaTitle || '',
+    metaDescription: json.metaDescription || '',
+    cursor: json.cursor || null,
+    stories,
+  };
+
+  memSet(key, result, TTL_SHORT);
+  return result;
 }
 
 

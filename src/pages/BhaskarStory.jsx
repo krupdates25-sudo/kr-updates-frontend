@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
-import { getStateNewsFeed } from '../services/bhaskarService';
+import { getCricketCategoryFeed, getStateNewsFeed } from '../services/bhaskarService';
 
 function safeBhaskarUrl(story) {
   const shortUrl = story?.shortUrl || '';
@@ -33,6 +33,17 @@ export default function BhaskarStory() {
   const initialStory = useMemo(() => {
     const s = loc?.state?.story || null;
     if (s && String(s.id) === String(storyId)) return s;
+
+    // Restore from session cache (supports hard refresh on details page)
+    try {
+      const raw = sessionStorage.getItem(`bhaskar_story_${storyId}`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && String(parsed.id) === String(storyId)) return parsed;
+    } catch {
+      // ignore
+    }
+
     return null;
   }, [loc?.state, storyId]);
 
@@ -48,10 +59,17 @@ export default function BhaskarStory() {
       try {
         setLoading(true);
         setError(null);
-        const feed = await getStateNewsFeed();
-        const found = feed
+        // Try state feed first
+        const stateFeed = await getStateNewsFeed();
+        let found = stateFeed
           .flatMap((b) => (Array.isArray(b?.stories) ? b.stories : []))
           .find((s) => String(s?.id) === String(storyId));
+
+        // Fallback: cricket category feed (first page)
+        if (!found) {
+          const cricketFeed = await getCricketCategoryFeed();
+          found = (cricketFeed?.stories || []).find((s) => String(s?.id) === String(storyId)) || null;
+        }
         if (!cancelled) setStory(found || null);
       } catch (e) {
         if (!cancelled) setError(e?.message || 'Unable to load story.');
@@ -64,6 +82,16 @@ export default function BhaskarStory() {
       cancelled = true;
     };
   }, [initialStory, storyId]);
+
+  // Cache loaded story for refresh
+  useEffect(() => {
+    if (!story?.id) return;
+    try {
+      sessionStorage.setItem(`bhaskar_story_${story.id}`, JSON.stringify(story));
+    } catch {
+      // ignore
+    }
+  }, [story]);
 
   const url = safeBhaskarUrl(story);
 
