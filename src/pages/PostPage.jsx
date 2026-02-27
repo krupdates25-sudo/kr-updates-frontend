@@ -969,9 +969,9 @@ const PostPage = () => {
                   )}
                 </div>
 
-                {/* Article Title - Prominent heading */}
+                {/* Article Title - Extra prominent heading */}
                 <h1
-                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
                   style={{ userSelect: 'none', WebkitUserSelect: 'none', fontWeight: 800 }}
                 >
                   {displayPost?.title}
