@@ -806,10 +806,10 @@ const Dashboard = () => {
                         }`}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-extrabold text-gray-900 leading-snug line-clamp-1">
+                            <p className="text-sm font-extrabold text-gray-900 leading-snug whitespace-normal break-words">
                               {m.matchNumber || 'Match'}
                             </p>
-                            <p className="text-[12px] text-gray-600 mt-0.5 line-clamp-1">
+                            <p className="text-[12px] text-gray-600 mt-0.5 whitespace-normal break-words">
                               {m.venue}
                             </p>
                           </div>
@@ -825,7 +825,7 @@ const Dashboard = () => {
 
                         {primaryLine && (
                           <p
-                            className={`mt-3 text-[12px] font-semibold leading-snug line-clamp-2 ${accent === 'emerald' ? 'text-emerald-700' : 'text-indigo-700'
+                            className={`mt-3 text-[12px] font-semibold leading-snug whitespace-normal break-words ${accent === 'emerald' ? 'text-emerald-700' : 'text-indigo-700'
                               }`}
                           >
                             {primaryLine}
@@ -866,9 +866,7 @@ const Dashboard = () => {
                 ? bhaskarStateFeed.find((b) => b.location === currentLocation)
                 : null;
               const stories = block?.stories || [];
-              if (!block) {
-                return <p className="text-[11px] text-gray-500">Select a state in Region to see Bhaskar updates.</p>;
-              }
+              if (!block) return null;
               if (!stories.length) {
                 return <p className="text-[11px] text-gray-500">No Bhaskar stories for {block.location}.</p>;
               }
