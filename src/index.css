@@ -1,11 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
-/* White-labeling: theme/typography from Site Settings (set by SettingsContext) */
+/* White-labeling: theme/typography/color palette from Site Settings (set by SettingsContext) */
 :root {
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Playfair Display', serif;
   --text-base: 16px;
+  --color-primary: #2563eb;
+  --color-accent: #1d4ed8;
 }
 
 /* Apply news website fonts (use CSS vars from Site Settings when set) */

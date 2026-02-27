@@ -136,6 +136,10 @@ const Settings = () => {
       headingFontFamily: 'Playfair Display',
       baseFontSize: '16px',
     },
+    colorPalette: {
+      primaryColor: '#2563eb',
+      accentColor: '#1d4ed8',
+    },
   });
 
   const [keywordInput, setKeywordInput] = useState('');
@@ -171,6 +175,10 @@ const Settings = () => {
             fontFamily: response.data.typography?.fontFamily || 'Inter',
             headingFontFamily: response.data.typography?.headingFontFamily || 'Playfair Display',
             baseFontSize: response.data.typography?.baseFontSize || '16px',
+          },
+          colorPalette: {
+            primaryColor: response.data.colorPalette?.primaryColor || '#2563eb',
+            accentColor: response.data.colorPalette?.accentColor || '#1d4ed8',
           },
         });
       }
@@ -525,6 +533,77 @@ const Settings = () => {
                         <option key={size} value={size}>{size}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Color palette - User panel (buttons, accents, nav) */}
+              <div className="bg-white dark:bg-white rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-900 mb-6 flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Color palette (user panel)
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-600 mb-4">
+                  Choose colors for the user-facing pages: buttons, category tags, links, and bottom nav. Admin pages keep the default blue.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
+                      Primary color
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        name="colorPalette.primaryColor"
+                        value={settings.colorPalette?.primaryColor ?? '#2563eb'}
+                        onChange={handleInputChange}
+                        className="h-10 w-14 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={settings.colorPalette?.primaryColor ?? '#2563eb'}
+                        onChange={(e) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            colorPalette: {
+                              ...(prev.colorPalette || {}),
+                              primaryColor: e.target.value || '#2563eb',
+                            },
+                          }))
+                        }
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900 font-mono text-sm"
+                        placeholder="#2563eb"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
+                      Accent color
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        name="colorPalette.accentColor"
+                        value={settings.colorPalette?.accentColor ?? '#1d4ed8'}
+                        onChange={handleInputChange}
+                        className="h-10 w-14 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={settings.colorPalette?.accentColor ?? '#1d4ed8'}
+                        onChange={(e) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            colorPalette: {
+                              ...(prev.colorPalette || {}),
+                              accentColor: e.target.value || '#1d4ed8',
+                            },
+                          }))
+                        }
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-white text-gray-900 dark:text-gray-900 font-mono text-sm"
+                        placeholder="#1d4ed8"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

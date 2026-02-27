@@ -219,6 +219,17 @@ npm install --save-dev @testing-library/react @testing-library/jest-dom vitest
 
 ## Troubleshooting
 
+### Blank page on first load / "Expected a JavaScript module but server responded with MIME type text/html"
+
+This happens when the server returns `index.html` for JS/CSS asset requests (e.g. after a deploy or due to SPA fallback rules).
+
+- **In-app fix**: The app shows a "Reload page" message after a few seconds and can auto-reload once. Use a hard refresh (Ctrl+Shift+R / Cmd+Shift+R) if needed.
+- **Server fix (recommended)**:
+  - Serve built files from `dist/` so that requests to `/assets/*.js` and `*.css` return the real files with `Content-Type: application/javascript` and `text/css`.
+  - Apply SPA fallback (rewrite to `index.html`) only for routes that do **not** look like static assets (e.g. do not rewrite paths starting with `/assets/` or containing `.js`/`.css`).
+  - **Nginx**: Use `try_files $uri $uri/ /index.html;` but ensure `location /assets/` serves from `dist/assets` with correct types.
+  - **Vercel/Netlify**: Use the framework’s default for Vite so asset paths are served correctly.
+
 ### Common Issues
 
 **CORS Errors**

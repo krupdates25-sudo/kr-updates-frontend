@@ -833,7 +833,7 @@ const PostPage = () => {
             </p>
             <button
               onClick={() => navigate(user ? '/dashboard' : '/')}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition-colors"
             >
               {user ? 'Back to Dashboard' : 'Back to Home'}
             </button>
@@ -927,7 +927,7 @@ const PostPage = () => {
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
               >
                 {isTranslating && (
-                  <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse z-10">
+                  <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-gray-100 text-[var(--color-primary)] rounded text-[10px] font-bold uppercase tracking-wider animate-pulse z-10">
                     <div className="w-2 h-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                     Translating...
                   </div>
@@ -941,7 +941,7 @@ const PostPage = () => {
                 {user?.role === 'admin' && !isTranslating && !translatedPost && post?._id && (
                   <button
                     onClick={() => navigate(`/edit-post/${post._id}`)}
-                    className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white rounded-full text-xs font-semibold shadow hover:bg-blue-700 transition-colors"
+                    className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-[var(--color-primary)] text-white rounded-full text-xs font-semibold shadow hover:opacity-90 transition-colors"
                     title="Edit this post"
                   >
                     <Edit2 className="w-3 h-3" />
@@ -951,7 +951,7 @@ const PostPage = () => {
                 {/* Category and Tags */}
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                   {displayPost?.category && (
-                    <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded-full">
+                    <span className="px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-full">
                       {displayPost.category}
                     </span>
                   )}
@@ -969,9 +969,9 @@ const PostPage = () => {
                   )}
                 </div>
 
-                {/* Article Title - Bolder heading */}
+                {/* Article Title - Prominent heading */}
                 <h1
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none"
                   style={{ userSelect: 'none', WebkitUserSelect: 'none', fontWeight: 800 }}
                 >
                   {displayPost?.title}
@@ -1068,7 +1068,7 @@ const PostPage = () => {
                     </div>
                     <button
                       onClick={handleOpenShare}
-                      className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors"
+                      className="flex items-center gap-1.5 text-gray-600 hover:text-[var(--color-primary)] transition-colors"
                       aria-label="Share"
                     >
                       <Share2 className="w-4 h-4" />
@@ -1082,7 +1082,7 @@ const PostPage = () => {
                     {displayPost?.author && (
                       <div className="flex items-center gap-2.5">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100">
-                          <User className="w-4 h-4 text-blue-600" />
+                          <User className="w-4 h-4 text-[var(--color-primary)]" />
                         </div>
                         <div className="flex flex-col flex-1">
                           <div className="flex items-center gap-2">
@@ -1317,7 +1317,7 @@ const PostPage = () => {
 
                 {/* Main Content */}
                 <div
-                  className="prose prose-sm sm:prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
+                  className="prose prose-sm sm:prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-[var(--color-primary)] prose-strong:text-gray-900"
                   data-protected-content
                   style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 >
@@ -1357,7 +1357,7 @@ const PostPage = () => {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                   <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50/30">
                     <h3 className="text-base font-black text-blue-900 flex items-center gap-2">
-                      <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                      <div className="w-1 h-4 bg-[var(--color-primary)] rounded-full"></div>
                       Similar Posts
                     </h3>
                   </div>
@@ -1374,11 +1374,11 @@ const PostPage = () => {
                                 className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all group"
                                 onClick={() => navigate(`/post/${item._id}`)}
                           >
-                            <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-blue-600 line-clamp-2 leading-tight">
+                            <p className="text-sm font-bold text-gray-900 mb-2 group-hover:text-[var(--color-primary)] line-clamp-2 leading-tight">
                               {item.title}
                             </p>
                             <div className="flex items-center justify-between">
-                              <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded border border-blue-100">
+                              <span className="px-2 py-0.5 bg-gray-100 text-[var(--color-primary)] text-[10px] font-black uppercase rounded border border-gray-200">
                                 {item.category || 'News'}
                               </span>
                               <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
@@ -1447,7 +1447,7 @@ const PostPage = () => {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50/30">
                   <h3 className="text-lg font-black text-blue-900 tracking-tight flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                    <div className="w-1.5 h-6 bg-[var(--color-primary)] rounded-full"></div>
                     Similar Posts
                   </h3>
                 </div>
@@ -1464,11 +1464,11 @@ const PostPage = () => {
                               className="p-4 hover:bg-blue-50/50 cursor-pointer transition-all duration-300 group"
                               onClick={() => navigate(`/post/${item._id}`)}
                         >
-                          <p className="text-sm font-bold text-gray-900 mb-3 group-hover:text-blue-600 line-clamp-2 leading-tight">
+                          <p className="text-sm font-bold text-gray-900 mb-3 group-hover:text-[var(--color-primary)] line-clamp-2 leading-tight">
                             {item.title}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded border border-blue-100">
+                            <span className="px-2 py-0.5 bg-gray-100 text-[var(--color-primary)] text-[10px] font-black uppercase rounded border border-gray-200">
                               {item.category || 'News'}
                             </span>
                             <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">

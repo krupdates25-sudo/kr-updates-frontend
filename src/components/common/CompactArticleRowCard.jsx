@@ -109,13 +109,13 @@ const CompactArticleRowCard = ({ article }) => {
       <div className="flex-1 flex flex-col p-3 min-w-0">
         {/* Category */}
         {category && (
-          <span className="inline-block px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded-full mb-1.5 w-fit">
+          <span className="inline-block px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-full mb-1.5 w-fit">
             {category}
           </span>
         )}
 
         {/* Title */}
-        <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors">
           {title}
         </h3>
 
@@ -148,7 +148,7 @@ const CompactArticleRowCard = ({ article }) => {
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleEdit}
-                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                className="p-1.5 text-[var(--color-primary)] hover:text-[var(--color-accent)] hover:bg-gray-100 rounded-full transition-colors"
                 title="Edit post"
               >
                 <Pencil className="w-3 h-3" />

@@ -31,6 +31,10 @@ if ('serviceWorker' in navigator) {
   }
 }
 
+try {
+  sessionStorage.removeItem('kr_app_reload_done');
+} catch (_) {}
+
 createRoot(document.getElementById('root')).render(
   <HelmetProvider>
     <ThemeProvider>

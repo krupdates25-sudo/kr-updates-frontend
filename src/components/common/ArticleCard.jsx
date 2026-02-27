@@ -193,7 +193,7 @@ const ArticleCard = ({
               <>
                 <button
                   onClick={handleEdit}
-                  className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                  className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-[var(--color-primary)] hover:bg-gray-100 transition-all duration-200"
                   title="Edit post"
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

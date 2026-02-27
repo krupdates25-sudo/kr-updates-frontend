@@ -474,7 +474,7 @@ const Header = ({
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-1 sm:gap-2 md:gap-3 p-1 sm:p-1.5 md:p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shrink-0">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-lg shrink-0">
                   <span className="text-white font-bold text-xs sm:text-sm">
                     {user?.firstName?.charAt(0) || 'U'}
                   </span>
@@ -505,7 +505,7 @@ const Header = ({
                     {/* User info */}
                     <div className="p-4 border-b border-gray-200 bg-gray-50">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg">
+                        <div className="w-12 h-12 rounded-lg bg-[var(--color-primary)] flex items-center justify-center shadow-lg">
                           <span className="text-white font-bold text-lg">
                             {user?.firstName?.charAt(0) || 'U'}
                           </span>
@@ -581,7 +581,7 @@ const Header = ({
                   key={loc}
                   onClick={() => setLocation(loc)}
                   className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${isActive
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-200 border-blue-600 scale-105'
+                      ? 'bg-[var(--color-primary)] text-white shadow-md scale-105 border-[var(--color-primary)]'
                       : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
                     }`}
                 >
@@ -657,7 +657,7 @@ const Header = ({
             <div className="w-full sm:max-w-md bg-white shadow-2xl rounded-t-2xl sm:rounded-2xl">
               <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-blue-600" />
+                  <Bell className="w-5 h-5 text-[var(--color-primary)]" />
                   <h2 className="text-base font-semibold text-gray-900">Want updates?</h2>
                 </div>
                 <button
@@ -713,7 +713,7 @@ const Header = ({
                       <button
                         onClick={handleUpdatesSubmit}
                         disabled={updatesSubmitting}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition-colors font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {updatesSubmitting ? 'Saving...' : 'Submit'}
                       </button>
@@ -730,7 +730,7 @@ const Header = ({
                     </p>
                     <button
                       onClick={() => setIsUpdatesOpen(false)}
-                      className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                      className="mt-4 w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition-colors font-medium text-sm"
                     >
                       Done
                     </button>
@@ -750,7 +750,7 @@ const Header = ({
               setUpdatesSubmitted(false);
               setIsUpdatesOpen(true);
             }}
-            className="w-full bg-blue-600 text-white rounded-xl shadow-lg px-4 py-3 flex items-center justify-between"
+            className="w-full bg-[var(--color-primary)] text-white rounded-xl shadow-lg px-4 py-3 flex items-center justify-between"
           >
             <span className="text-sm font-semibold">Want updates?</span>
             <span className="text-sm opacity-90">Tap to share details</span>

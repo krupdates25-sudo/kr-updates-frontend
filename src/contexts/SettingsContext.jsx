@@ -59,6 +59,13 @@ export const SettingsProvider = ({ children }) => {
       root.style.setProperty('--font-heading', t.headingFontFamily ? `"${t.headingFontFamily}", serif` : '"Playfair Display", serif');
       root.style.setProperty('--text-base', t.baseFontSize || '16px');
     }
+
+    // Color palette: user panel (buttons, tags, nav) - applied globally, used by user-facing components
+    const cp = data?.colorPalette;
+    if (cp) {
+      root.style.setProperty('--color-primary', cp.primaryColor || '#2563eb');
+      root.style.setProperty('--color-accent', cp.accentColor || '#1d4ed8');
+    }
   }, []);
 
   // Fetch settings on mount

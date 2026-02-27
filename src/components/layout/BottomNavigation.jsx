@@ -195,7 +195,7 @@ const BottomNavigation = () => {
             : 'w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700'
         } ${
           isActive || (isMoreButton && isExpanded)
-                      ? 'text-blue-600 dark:text-blue-400'
+                      ? 'text-[var(--color-primary)]'
             : 'text-gray-600 dark:text-gray-400'
                   }`}
                 >
@@ -204,7 +204,7 @@ const BottomNavigation = () => {
         ) : (
                   <Icon
             className={`${isMain ? 'w-5 h-5 mb-1' : 'w-6 h-6 mb-1.5'} ${
-                      isActive ? 'text-blue-600 dark:text-blue-400' : ''
+                      isActive ? 'text-[var(--color-primary)]' : ''
                     }`}
                   />
         )}
@@ -212,10 +212,10 @@ const BottomNavigation = () => {
                     {item.label}
                   </span>
         {(isActive || (isMoreButton && isExpanded)) && isMain && (
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-0.5 bg-[var(--color-primary)] rounded-full" />
         )}
         {isActive && !isMain && (
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 dark:bg-blue-400 rounded-r-full" />
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-primary)] rounded-r-full" />
                   )}
                 </button>
               );
@@ -259,7 +259,7 @@ const BottomNavigation = () => {
                   onClick={() => handleNavClick(item.path)}
                   className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 relative ${
                     activeTab === item.id
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-[var(--color-primary)]'
                       : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }`}
                 >
@@ -268,7 +268,7 @@ const BottomNavigation = () => {
                     {item.label}
                   </span>
                   {activeTab === item.id && (
-                    <div className="absolute top-1 right-1 w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full" />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-[var(--color-primary)] rounded-full" />
                   )}
                 </button>
               ))}

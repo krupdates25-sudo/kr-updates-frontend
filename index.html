@@ -58,6 +58,24 @@
 
 <body class="light-mode" style="background-color: #ffffff !important;">
   <div id="root"></div>
+  <div id="app-load-fallback" style="display: none; padding: 2rem; text-align: center; font-family: system-ui, sans-serif; max-width: 24rem; margin: 2rem auto;">
+    <p style="margin-bottom: 1rem; color: #374151;">The app didn’t load. This can happen after an update or due to cache.</p>
+    <button type="button" onclick="window.location.reload(true)" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Reload page</button>
+  </div>
+  <script>
+    (function() {
+      var key = 'kr_app_reload_done';
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        var fallback = document.getElementById('app-load-fallback');
+        if (root && root.children.length === 0 && fallback && !sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          fallback.style.display = 'block';
+          setTimeout(function() { window.location.reload(); }, 800);
+        }
+      }, 6000);
+    })();
+  </script>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
