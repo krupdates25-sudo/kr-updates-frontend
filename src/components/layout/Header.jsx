@@ -4,8 +4,6 @@ import {
   Menu,
   LogOut,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Shield,
   MapPin,
   Globe,
@@ -64,8 +62,6 @@ const Header = ({
     const withoutAll = locs.filter((l) => String(l).toLowerCase() !== 'all');
     return ['All', ...withoutAll];
   }, [availableLocations]);
-
-  const [locationCarouselIndex, setLocationCarouselIndex] = useState(0);
 
   const languages = [
     { code: 'hi', name: 'Hindi' },
@@ -215,15 +211,6 @@ const Header = ({
     // Quiet UX: no blocking alert
     setPwaToast(isInstalled ? 'No update available' : 'Install not available on this device');
   };
-
-  // Auto-carousel: cycle through locations every 3s (no scrollbar)
-  useEffect(() => {
-    if (!Array.isArray(locations) || locations.length <= 1) return;
-    const interval = window.setInterval(() => {
-      setLocationCarouselIndex((prev) => (prev + 1) % locations.length);
-    }, 3000);
-    return () => window.clearInterval(interval);
-  }, [locations.length]);
 
   const handleLogout = async () => {
     await logout();
@@ -544,44 +531,50 @@ const Header = ({
         </div>
       </div>
 
-      {/* Location carousel (auto-rotating, no scrollbar) */}
+      {/* Location strip: full-width infinite slow scroll (no scrollbar, all locations tappable) */}
       {(location.pathname === '/' || location.pathname === '/dashboard') && locations.length > 0 && (
-        <div className="px-3 sm:px-4 md:px-6 pb-2 border-b border-gray-50">
-          <div className="flex items-center justify-center gap-2 py-1 overflow-hidden">
-            <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
-              <MapPin className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
-            </div>
-            <div className="flex items-center gap-1 flex-1 min-w-0 justify-center">
-              <button
-                type="button"
-                onClick={() => setLocationCarouselIndex((prev) => (prev - 1 + locations.length) % locations.length)}
-                className="flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                aria-label="Previous region"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setLocation(locations[locationCarouselIndex])}
-                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 min-w-[5rem] ${
-                  currentLocation === locations[locationCarouselIndex]
-                    ? 'bg-[var(--color-primary)] text-white shadow-md scale-105 border-[var(--color-primary)]'
-                    : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
-                }`}
-              >
-                {locations[locationCarouselIndex]}
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocationCarouselIndex((prev) => (prev + 1) % locations.length)}
-                className="flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                aria-label="Next region"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+        <>
+          <style>{`
+            @keyframes kr-location-scroll {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .kr-location-marquee-inner {
+              animation: kr-location-scroll 90s linear infinite;
+            }
+            .kr-location-marquee-inner:hover {
+              animation-play-state: paused;
+            }
+          `}</style>
+          <div className="w-full pb-2 border-b border-gray-50">
+            <div className="flex items-center gap-2 py-1 w-full overflow-hidden">
+              <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-gray-400">
+                <MapPin className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Region</span>
+              </div>
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="kr-location-marquee-inner flex items-center gap-2 py-0.5 w-max">
+                  {[...locations, ...locations].map((loc, idx) => {
+                    const isActive = currentLocation === loc;
+                    return (
+                      <button
+                        key={`${loc}-${idx}`}
+                        onClick={() => setLocation(loc)}
+                        className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 ${
+                          isActive
+                            ? 'bg-[var(--color-primary)] text-white shadow-md border-[var(--color-primary)]'
+                            : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
+                        }`}
+                      >
+                        {loc}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Tag chips row (max 5) */}
