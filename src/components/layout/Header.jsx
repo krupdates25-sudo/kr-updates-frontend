@@ -12,6 +12,7 @@ import {
   Check,
   Download,
   RefreshCw,
+  Search,
 } from 'lucide-react';
 import { useLanguageLocation } from '../../contexts/LanguageLocationContext';
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -51,6 +52,8 @@ const Header = ({
   const {
     location: currentLocation,
     setLocation,
+    selectedLocations,
+    toggleSelectedLocation,
     language: currentLanguage,
     setLanguage,
     availableLocations,
@@ -360,8 +363,35 @@ const Header = ({
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 w-full shadow-sm">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center h-14 sm:h-16 px-3 sm:px-4 md:px-6 w-full gap-2">
-        {/* Left side */}
+        {/* Left side: Search (dashboard/home) + Burger for staff */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
+          {/* Search (expanded with placeholder) – show on dashboard/home; click goes to Location & search */}
+          {(location.pathname === '/' || location.pathname === '/dashboard') && (
+            <>
+              {/* Mobile: icon only */}
+              <button
+                onClick={() => navigate('/explore-location')}
+                className="sm:hidden flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 active:scale-95 transition-all duration-200 shrink-0"
+                aria-label="Search"
+                title="Search"
+              >
+                <Search className="w-5 h-5 text-gray-600" />
+              </button>
+
+              {/* Desktop/tablet: expanded pill with placeholder */}
+              <button
+                onClick={() => navigate('/explore-location')}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors min-w-0 w-full max-w-[360px]"
+                aria-label="Search posts and location"
+                title="Search posts and change location"
+              >
+                <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="text-sm text-gray-500 truncate">
+                  Search posts or location…
+                </span>
+              </button>
+            </>
+          )}
           {/* Burger Menu Button - Desktop only (only for authenticated users) */}
           {isStaff && (
             <button
@@ -624,14 +654,27 @@ const Header = ({
             >
               <div className="flex items-center gap-2 py-0.5 w-max min-w-full">
                 {locations.map((loc) => {
-                  const isActive = currentLocation === loc;
+                  const name = String(loc);
+                  const isAll = name === 'All';
+                  const multi = Array.isArray(selectedLocations) && selectedLocations.length > 0;
+                  const isSelected = isAll
+                    ? !multi && currentLocation === 'All'
+                    : (multi ? selectedLocations.includes(name) : currentLocation === name);
                   return (
                     <button
                       key={loc}
                       type="button"
-                      onClick={() => setLocation(loc)}
+                      onClick={() => {
+                        if (isAll) {
+                          setLocation('All');
+                        } else if (typeof toggleSelectedLocation === 'function') {
+                          toggleSelectedLocation(name);
+                        } else {
+                          setLocation(name);
+                        }
+                      }}
                       className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 ${
-                        isActive
+                        isSelected
                           ? 'bg-[var(--color-primary)] text-white shadow-md border-[var(--color-primary)]'
                           : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 hover:border-gray-200'
                       }`}

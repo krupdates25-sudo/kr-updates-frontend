@@ -5,8 +5,24 @@ import { getStateNewsLocations } from '../services/bhaskarService';
 const LanguageLocationContext = createContext({});
 
 export const LanguageLocationProvider = ({ children }) => {
-    const [location, setLocation] = useState(() => {
+    const [location, setLocationValue] = useState(() => {
         return localStorage.getItem('kr_user_location') || 'Kishangarh Renwal';
+    });
+
+    // Multi-location selection (used for filtering feed). Empty array = All.
+    const [selectedLocations, setSelectedLocations] = useState(() => {
+        try {
+            const raw = localStorage.getItem('kr_user_locations_v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed.filter(Boolean);
+            }
+        } catch {
+            // ignore
+        }
+        const single = localStorage.getItem('kr_user_location') || '';
+        if (single && single !== 'All') return [single];
+        return [];
     });
 
     const [language, setLanguage] = useState(() => {
@@ -60,6 +76,14 @@ export const LanguageLocationProvider = ({ children }) => {
     }, [location]);
 
     useEffect(() => {
+        try {
+            localStorage.setItem('kr_user_locations_v1', JSON.stringify(selectedLocations || []));
+        } catch {
+            // ignore
+        }
+    }, [selectedLocations]);
+
+    useEffect(() => {
         localStorage.setItem('kr_user_language', language);
     }, [language]);
 
@@ -71,19 +95,59 @@ export const LanguageLocationProvider = ({ children }) => {
     useEffect(() => {
         if (!availableLocations || availableLocations.length === 0) return;
         if (!availableLocations.includes(location)) {
-            setLocation('All');
+            setLocationValue('All');
         }
     }, [availableLocations, location]);
+
+    // Keep single `location` in sync (for older parts of the UI)
+    useEffect(() => {
+        if (!Array.isArray(selectedLocations) || selectedLocations.length === 0) {
+            if (location !== 'All') setLocationValue('All');
+            return;
+        }
+        const first = String(selectedLocations[0] || '').trim();
+        if (first && first !== location) setLocationValue(first);
+    }, [selectedLocations, location]);
+
+    // Single-select setter used by existing UI (header strip, etc.)
+    const setLocation = useCallback((loc) => {
+        const next = String(loc || '').trim() || 'All';
+        setLocationValue(next);
+        setSelectedLocations(next && next !== 'All' ? [next] : []);
+    }, []);
+
+    const toggleSelectedLocation = useCallback((loc) => {
+        const name = String(loc || '').trim();
+        if (!name || name === 'All') {
+            setLocation('All');
+            return;
+        }
+        setSelectedLocations((prev) => {
+            const arr = Array.isArray(prev) ? prev : [];
+            const exists = arr.includes(name);
+            const next = exists ? arr.filter((x) => x !== name) : [...arr, name];
+            return next;
+        });
+    }, [setLocation]);
+
+    const clearSelectedLocations = useCallback(() => {
+        setSelectedLocations([]);
+        setLocationValue('All');
+    }, []);
 
     const value = useMemo(() => ({
         location,
         setLocation,
+        selectedLocations,
+        setSelectedLocations,
+        toggleSelectedLocation,
+        clearSelectedLocations,
         language,
         setLanguage,
         availableLocations,
         locationsLoading,
         refreshLocations,
-    }), [location, language, availableLocations, locationsLoading, refreshLocations]);
+    }), [location, setLocation, selectedLocations, setSelectedLocations, toggleSelectedLocation, clearSelectedLocations, language, availableLocations, locationsLoading, refreshLocations, setLanguage]);
 
     return (
         <LanguageLocationContext.Provider value={value}>

@@ -159,91 +159,89 @@ const MatchCard = ({ match }) => {
     const isBatting1 = isLive && battingInning.toLowerCase().includes((team1.name || 'zzz').toLowerCase());
 
     return (
-        <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 m-2 pt-3">
+        <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 m-2 pt-3 w-full max-w-full min-w-0 box-border">
             {/* Only show LIVE badge when live */}
             {isLive && (
                 <div className="px-3 py-2 mb-2 flex items-center justify-between bg-red-50">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
                         LIVE
                     </span>
-                    <span className="text-[10px] font-medium text-gray-400 uppercase">T20</span>
+                    <span className="text-[10px] font-medium text-gray-400 uppercase flex-shrink-0">T20</span>
                 </div>
             )}
 
             {/* Teams side by side - Flag 1 vs Flag 2 */}
-            <div className="px-3 pb-3">
-                <div className="flex items-center gap-2 sm:gap-3">
+            <div className="px-3 pb-3 min-w-0 overflow-hidden">
+                <div className="flex items-stretch gap-1.5 sm:gap-2 min-w-0">
                     {/* Team 0 */}
-                    <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <div className="flex-1 flex items-center gap-1.5 min-w-0 overflow-hidden">
                         <TeamLogo team={team0} />
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                            <div className="flex items-center gap-1 flex-wrap min-w-0">
+                                <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate block min-w-0">
                                     {team0.shortName || team0.name}
                                 </span>
                                 {isBatting0 && (
-                                    <span className="text-[9px] font-medium text-amber-600 px-1.5 py-0.5 bg-amber-50 rounded whitespace-nowrap">
+                                    <span className="text-[9px] font-medium text-amber-600 px-1 py-0.5 bg-amber-50 rounded flex-shrink-0">
                                         BAT
                                     </span>
                                 )}
                             </div>
                             {inn0 ? (
-                                <div className="text-xs text-gray-600 mt-0.5 whitespace-nowrap">
+                                <div className="text-[11px] sm:text-xs text-gray-600 mt-0.5 truncate">
                                     <span className="font-bold">{inn0.runs}/{inn0.wickets}</span>
-                                    <span className="ml-1">({inn0.overs} ov)</span>
+                                    <span className="ml-0.5">({inn0.overs} ov)</span>
                                 </div>
                             ) : (
-                                <span className="text-xs text-gray-400">—</span>
+                                <span className="text-[11px] text-gray-400">—</span>
                             )}
                         </div>
                     </div>
 
-                    {/* VS separator with vertical border */}
-                    <div className="flex flex-col items-center justify-center flex-shrink-0 px-2 sm:px-3">
-                        <div className="h-8 w-px bg-gray-200 mb-1"></div>
-                        <span className="text-xs font-semibold text-gray-500">VS</span>
-                        <div className="h-8 w-px bg-gray-200 mt-1"></div>
+                    {/* VS separator */}
+                    <div className="flex flex-col items-center justify-center flex-shrink-0 px-1">
+                        <span className="text-[10px] font-semibold text-gray-400">VS</span>
                     </div>
 
                     {/* Team 1 */}
-                    <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <div className="flex-1 flex items-center gap-1.5 min-w-0 overflow-hidden">
                         <TeamLogo team={team1} />
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                            <div className="flex items-center gap-1 flex-wrap min-w-0">
+                                <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate block min-w-0">
                                     {team1.shortName || team1.name}
                                 </span>
                                 {isBatting1 && (
-                                    <span className="text-[9px] font-medium text-amber-600 px-1.5 py-0.5 bg-amber-50 rounded whitespace-nowrap">
+                                    <span className="text-[9px] font-medium text-amber-600 px-1 py-0.5 bg-amber-50 rounded flex-shrink-0">
                                         BAT
                                     </span>
                                 )}
                             </div>
                             {inn1 ? (
-                                <div className="text-xs text-gray-600 mt-0.5 whitespace-nowrap">
+                                <div className="text-[11px] sm:text-xs text-gray-600 mt-0.5 truncate">
                                     <span className="font-bold">{inn1.runs}/{inn1.wickets}</span>
-                                    <span className="ml-1">({inn1.overs} ov)</span>
+                                    <span className="ml-0.5">({inn1.overs} ov)</span>
                                 </div>
                             ) : (
-                                <span className="text-xs text-gray-400">—</span>
+                                <span className="text-[11px] text-gray-400">—</span>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Match details - no truncation */}
-            <div className="px-3 pb-3 pt-2">
-                <p className="text-xs text-gray-700 mb-1.5">
+            {/* Match details - wrap and contain for small screens */}
+            <div className="px-3 pb-3 pt-2 min-w-0 overflow-hidden">
+                <p className="text-[11px] sm:text-xs text-gray-700 mb-1.5 break-words line-clamp-2">
                     {match.status || '—'}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-gray-500 min-w-0">
                     {match.venue && (
-                        <span>{match.venue}</span>
+                        <span className="truncate max-w-full">{match.venue}</span>
                     )}
                     {match.date && (
-                        <span>{fmtDate(match.date)}</span>
+                        <span className="flex-shrink-0">{fmtDate(match.date)}</span>
                     )}
                 </div>
             </div>
@@ -376,7 +374,7 @@ const T20WorldCup = () => {
                 <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(p => !p)} activeTab="" />
             )}
 
-            <div className={`transition-all duration-300 w-full max-w-full overflow-x-hidden ${isStaff && sidebarOpen ? 'lg:ml-72' : 'lg:ml-0'}`}>
+            <div className={`transition-all duration-300 w-full max-w-full overflow-x-hidden box-border ${isStaff && sidebarOpen ? 'lg:ml-72' : 'lg:ml-0'}`} style={{ minWidth: 0 }}>
                 <Header onSidebarToggle={() => setSidebarOpen(p => !p)} />
 
                 {/* ══ Hero ══════════════════════════════════════════════════════════ */}
@@ -405,8 +403,8 @@ const T20WorldCup = () => {
                             </div>
                         </div>
 
-                        {/* Filter tabs */}
-                        <div className="flex items-center gap-2 border-b border-gray-200 overflow-x-auto">
+                        {/* Filter tabs - scroll on small screens without expanding page */}
+                        <div className="flex items-center gap-2 border-b border-gray-200 overflow-x-auto overflow-y-hidden min-h-0 -mx-4 px-4 sm:mx-0 sm:px-0" style={{ WebkitOverflowScrolling: 'touch' }}>
                             {TABS.map(({ id, label, Icon }) => {
                                 const isActive = activeTab === id;
                                 return (
@@ -445,7 +443,7 @@ const T20WorldCup = () => {
                 </div>
 
                 {/* ══ Content ════════════════════════════════════════════════════════ */}
-                <main className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 max-w-full overflow-x-hidden">
+                <main className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 w-full max-w-full overflow-x-hidden box-border" style={{ minWidth: 0 }}>
 
                     {/* Loading skeletons */}
                     {loading && (
@@ -502,9 +500,9 @@ const T20WorldCup = () => {
                         </div>
                     )}
 
-                    {/* Match cards */}
+                    {/* Match cards - minmax(0,1fr) prevents overflow on Android */}
                     {!loading && !error && tabFiltered.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))' }}>
                             {tabFiltered.map(m => <MatchCard key={m.id} match={m} />)}
                         </div>
                     )}

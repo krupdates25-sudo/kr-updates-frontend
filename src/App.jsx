@@ -30,6 +30,7 @@ const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const VerifyEmailSuccess = lazy(() => import('./pages/VerifyEmailSuccess'));
 const T20WorldCup = lazy(() => import('./pages/T20WorldCup'));
 const BhaskarStory = lazy(() => import('./pages/BhaskarStory'));
+const StateExplorer = lazy(() => import('./pages/StateExplorer'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -196,6 +197,9 @@ function App() {
 
                         {/* Bhaskar story details (public, opens inside our UI) */}
                         <Route path="/bhaskar/story/:storyId" element={<BhaskarStory />} />
+
+                        {/* State / Location explorer (search, tabs, famous places) */}
+                        <Route path="/explore-location" element={<StateExplorer />} />
 
                         {/* Current user profile route */}
                         <Route

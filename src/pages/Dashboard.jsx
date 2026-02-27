@@ -29,12 +29,16 @@ import { useNavigate } from 'react-router-dom';
 import postService from '../services/postService';
 import { getHindiSchedule, getStateNewsFeed, getCricketCategoryFeed } from '../services/bhaskarService';
 
+function escapeRegex(str) {
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, refreshProfile } = useAuth();
   const { settings } = useSettings();
-  const { location: currentLocation, setLocation } = useLanguageLocation();
+  const { location: currentLocation, setLocation, selectedLocations } = useLanguageLocation();
   const [activeTab, setActiveTab] = useState('feed');
   const [sortBy, setSortBy] = useState('latest');
   const [filterBy, setFilterBy] = useState('all');
@@ -254,9 +258,18 @@ const Dashboard = () => {
             response = await postService.getPostsByCategory(activeTab);
             break;
           default: {
+            const multi = Array.isArray(selectedLocations) && selectedLocations.length > 0;
+            const locationParam = multi
+              ? selectedLocations.map(escapeRegex).join('|')
+              : currentLocation;
             response = await postService.getAllPosts({
               ...params,
-              ...(currentLocation && currentLocation !== 'All' ? { location: currentLocation } : {}),
+              ...(locationParam && locationParam !== 'All'
+                ? {
+                  location: locationParam,
+                  ...(multi ? { locationMode: 'contains' } : {}),
+                }
+                : {}),
               // Backend optimization: avoid expensive countDocuments; backend computes hasMore via limit+1
               noCount: true,
             });
@@ -329,7 +342,7 @@ const Dashboard = () => {
         throw error;
       }
     },
-    [activeTab, currentLocation]
+    [activeTab, currentLocation, selectedLocations]
   );
 
   // Use pagination hook with 8 posts per page
@@ -345,7 +358,7 @@ const Dashboard = () => {
     refresh,
   } = usePagination(fetchPosts, {
     limit: 20,
-    dependencies: [activeTab, currentLocation],
+    dependencies: [activeTab, currentLocation, selectedLocations],
     transformData: transformArticleData,
   });
 
@@ -874,10 +887,17 @@ const Dashboard = () => {
 
         {/* ── Bhaskar state news (only render when stories exist for selected state) ── */}
         {(() => {
-          const block = currentLocation && currentLocation !== 'All' && Array.isArray(bhaskarStateFeed)
-            ? bhaskarStateFeed.find((b) => b.location === currentLocation)
-            : null;
-          const stories = block?.stories || [];
+          const selected =
+            Array.isArray(selectedLocations) && selectedLocations.length > 0
+              ? selectedLocations
+              : (currentLocation && currentLocation !== 'All' ? [currentLocation] : []);
+
+          const stories = Array.isArray(bhaskarStateFeed) && selected.length > 0
+            ? selected.flatMap((loc) => {
+              const block = bhaskarStateFeed.find((b) => b.location === loc);
+              return Array.isArray(block?.stories) ? block.stories : [];
+            })
+            : [];
 
           // only show section when there is content (or while loading/error)
           const shouldRender = bhaskarStateLoading || !!bhaskarStateError || stories.length > 0;
@@ -908,9 +928,9 @@ const Dashboard = () => {
                   <p className="text-base font-extrabold text-gray-900 leading-snug line-clamp-2">
                     {story.title}
                   </p>
-                  {block?.location && (
+                  {story?.location && (
                     <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-                      {block.location}
+                      {story.location}
                     </p>
                   )}
                 </div>
