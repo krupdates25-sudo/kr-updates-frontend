@@ -5,6 +5,13 @@ import { getStateNewsLocations } from '../services/bhaskarService';
 const LanguageLocationContext = createContext({});
 
 export const LanguageLocationProvider = ({ children }) => {
+    const normalizeLocation = (value) =>
+        String(value || '')
+            .normalize('NFKC')
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
     const [location, setLocationValue] = useState(() => {
         return localStorage.getItem('kr_user_location') || 'Kishangarh Renwal';
     });
@@ -55,7 +62,7 @@ export const LanguageLocationProvider = ({ children }) => {
             })();
 
             const normalizedCombined = [...namesFromBhaskar, ...locsFromPosts]
-                .map((l) => String(l || '').trim())
+                .map((l) => normalizeLocation(l))
                 .filter(Boolean);
 
             const seen = new Set();
@@ -115,13 +122,13 @@ export const LanguageLocationProvider = ({ children }) => {
 
     // Single-select setter used by existing UI (header strip, etc.)
     const setLocation = useCallback((loc) => {
-        const next = String(loc || '').trim() || 'All';
+        const next = normalizeLocation(loc) || 'All';
         setLocationValue(next);
         setSelectedLocations(next && next !== 'All' ? [next] : []);
     }, []);
 
     const toggleSelectedLocation = useCallback((loc) => {
-        const name = String(loc || '').trim();
+        const name = normalizeLocation(loc);
         if (!name || name === 'All') {
             setLocation('All');
             return;

@@ -65,11 +65,18 @@ const Header = ({
   const locationStripResumeTimeoutRef = useRef(null);
 
   const locations = useMemo(() => {
+    const normalizeLocation = (value) =>
+      String(value || '')
+        .normalize('NFKC')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
     const locs = Array.isArray(availableLocations) ? availableLocations : [];
     // Ensure "All" is always first and remove case-insensitive duplicates
     const seen = new Set();
     const deduped = locs
-      .map((l) => String(l || '').trim())
+      .map((l) => normalizeLocation(l))
       .filter(Boolean)
       .filter((l) => {
         const key = l.toLowerCase();

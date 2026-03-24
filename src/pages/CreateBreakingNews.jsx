@@ -8,6 +8,7 @@ import {
   Calendar,
   Tag,
   MapPin,
+  Plus,
 } from 'lucide-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
 import PageLayout from '../components/layout/PageLayout';
@@ -39,14 +40,30 @@ const CreateBreakingNews = () => {
     tags: [],
   });
   const [errors, setErrors] = useState({});
+  const [customLocations, setCustomLocations] = useState([]);
 
   const suggestedLocations = useMemo(() => {
     const locs = Array.isArray(availableLocations) ? availableLocations : [];
-    return locs
-      .map((l) => String(l || '').trim())
+    const normalizeLocation = (value) =>
+      String(value || '')
+        .normalize('NFKC')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const combined = [...locs, ...customLocations];
+    const seen = new Set();
+    return combined
+      .map((l) => normalizeLocation(l))
       .filter((l) => l && l.toLowerCase() !== 'all')
+      .filter((l) => {
+        const key = l.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .slice(0, 10);
-  }, [availableLocations]);
+  }, [availableLocations, customLocations]);
 
   // Check if user is admin
   useEffect(() => {
@@ -106,6 +123,20 @@ const CreateBreakingNews = () => {
         [field]: '',
       }));
     }
+  };
+
+  const handleAddLocation = () => {
+    const normalized = String(formData.location || '')
+      .normalize('NFKC')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized || normalized.toLowerCase() === 'all') return;
+    setCustomLocations((prev) => {
+      const exists = prev.some((loc) => String(loc).toLowerCase() === normalized.toLowerCase());
+      return exists ? prev : [normalized, ...prev];
+    });
+    handleInputChange('location', normalized);
   };
 
   const handleSave = async () => {
@@ -389,13 +420,24 @@ const CreateBreakingNews = () => {
                     <MapPin className="w-4 h-4 inline mr-2" />
                     News Location
                   </label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    placeholder="Where did this happen?"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      placeholder="Where did this happen?"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddLocation}
+                      className="px-3 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors text-xs font-semibold inline-flex items-center gap-1.5"
+                      title="Add location"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {suggestedLocations.map((loc) => (
                       <button

@@ -22,6 +22,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Clock,
+  Plus,
 } from 'lucide-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
 import PageLayout from '../components/layout/PageLayout';
@@ -64,14 +65,30 @@ const NewPost = () => {
   const [errors, setErrors] = useState({});
   const [currentTag, setCurrentTag] = useState('');
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [customLocations, setCustomLocations] = useState([]);
 
   const suggestedLocations = useMemo(() => {
     const locs = Array.isArray(availableLocations) ? availableLocations : [];
-    return locs
-      .map((l) => String(l || '').trim())
+    const normalizeLocation = (value) =>
+      String(value || '')
+        .normalize('NFKC')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const combined = [...locs, ...customLocations];
+    const seen = new Set();
+    return combined
+      .map((l) => normalizeLocation(l))
       .filter((l) => l && l.toLowerCase() !== 'all')
+      .filter((l) => {
+        const key = l.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .slice(0, 12);
-  }, [availableLocations]);
+  }, [availableLocations, customLocations]);
 
   // NOTE: The breaking news ticker should only appear on the home feed, not on the editor.
 
@@ -184,6 +201,20 @@ const NewPost = () => {
       }
     }
   }, [formData.title, formData.content, handleInputChange]);
+
+  const handleAddLocation = useCallback(() => {
+    const normalized = String(formData.location || '')
+      .normalize('NFKC')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized || normalized.toLowerCase() === 'all') return;
+    setCustomLocations((prev) => {
+      const exists = prev.some((loc) => String(loc).toLowerCase() === normalized.toLowerCase());
+      return exists ? prev : [normalized, ...prev];
+    });
+    handleInputChange('location', normalized);
+  }, [formData.location, handleInputChange]);
 
   const handleAddTag = useCallback(() => {
     if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
@@ -841,13 +872,24 @@ const NewPost = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      placeholder="Where did this happen?"
-                      className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) => handleInputChange('location', e.target.value)}
+                        placeholder="Where did this happen?"
+                        className="flex-1 p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddLocation}
+                        className="px-3 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xs font-semibold inline-flex items-center gap-1.5"
+                        title="Add location"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add
+                      </button>
+                    </div>
 
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {suggestedLocations.map((loc) => (
