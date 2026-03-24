@@ -51,7 +51,8 @@ const CreateBreakingNews = () => {
         .replace(/\s+/g, ' ')
         .trim();
 
-    const combined = [...locs, ...customLocations];
+    // Keep user-added locations first so they are always visible immediately.
+    const combined = [...customLocations, ...locs];
     const seen = new Set();
     return combined
       .map((l) => normalizeLocation(l))
