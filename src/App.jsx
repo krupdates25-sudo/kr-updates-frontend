@@ -23,6 +23,7 @@ const WhatsAppIntegration = lazy(() => import('./pages/WhatsAppIntegration'));
 const History = lazy(() => import('./pages/History'));
 const AdManagement = lazy(() => import('./pages/AdManagement'));
 const AnnouncementManagement = lazy(() => import('./pages/AnnouncementManagement'));
+const ObituaryManagement = lazy(() => import('./pages/ObituaryManagement'));
 const NotificationManagement = lazy(() => import('./pages/NotificationManagement'));
 const Settings = lazy(() => import('./pages/Settings'));
 const PostPage = lazy(() => import('./pages/PostPage'));
@@ -337,6 +338,15 @@ function App() {
                           element={
                             <ProtectedRoute requiredRole="admin">
                               <AnnouncementManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        <Route
+                          path="/admin/obituaries"
+                          element={
+                            <ProtectedRoute requiredRole="admin">
+                              <ObituaryManagement />
                             </ProtectedRoute>
                           }
                         />

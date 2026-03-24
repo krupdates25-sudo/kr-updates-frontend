@@ -37,6 +37,7 @@ const BottomNavigation = () => {
     if (path === '/admin/breaking-news') return 'admin-breaking-news';
     if (path === '/admin/trending') return 'admin-trending';
     if (path === '/announcements') return 'admin-announcements';
+    if (path === '/admin/obituaries') return 'admin-obituaries';
     if (path === '/admin/settings') return 'admin-settings';
     if (path === '/ads') return 'ads';
     if (path === '/new-post') return 'new-post';
@@ -110,6 +111,12 @@ const BottomNavigation = () => {
       label: 'Announce',
       icon: Bell,
       path: '/announcements',
+    },
+    {
+      id: 'admin-obituaries',
+      label: 'शोक',
+      icon: Bell,
+      path: '/admin/obituaries',
     },
     {
       id: 'admin-settings',

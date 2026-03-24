@@ -168,6 +168,12 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
       icon: Bell,
       path: '/announcements',
     },
+    {
+      id: 'admin-obituaries',
+      label: 'शोक संदेश',
+      icon: Bell,
+      path: '/admin/obituaries',
+    },
     // {
     //   id: 'admin-notifications',
     //   label: 'Notifications',
