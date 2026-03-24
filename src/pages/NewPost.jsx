@@ -50,6 +50,7 @@ const NewPost = () => {
     location: 'Kishangarh Renwal', // Where the news happened
     tags: [],
     featuredImage: null,
+    images: [],
     featuredVideo: null,
     // Flags for feed filtering
     isTrending: false,
@@ -104,6 +105,7 @@ const NewPost = () => {
           location: post.location || 'Kishangarh Renwal',
           tags: Array.isArray(post.tags) ? post.tags : [],
           featuredImage: post.featuredImage || null,
+          images: Array.isArray(post.images) ? post.images : [],
           featuredVideo: post.featuredVideo || null,
           isTrending: !!post.isTrending,
           isFeatured: !!post.isFeatured,
@@ -208,6 +210,18 @@ const NewPost = () => {
   };
 
   const handleImageUpload = (imageData) => {
+    if (Array.isArray(imageData)) {
+      const newImages = imageData.map((url) => ({
+        url,
+        alt: formData.title || 'Post image',
+        caption: '',
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        images: [...(prev.images || []), ...newImages].slice(0, 8),
+      }));
+      return;
+    }
     // Convert string URL to proper featuredImage object structure
     const featuredImageObj = {
       url: imageData,
@@ -226,6 +240,13 @@ const NewPost = () => {
     setFormData((prev) => ({
       ...prev,
       featuredImage: null,
+    }));
+  };
+
+  const handleRemoveGalleryImage = (indexToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: (prev.images || []).filter((_, idx) => idx !== indexToRemove),
     }));
   };
 
@@ -307,6 +328,7 @@ const NewPost = () => {
         excerpt: resolvedExcerpt,
         status: finalStatus,
         publishedAt: finalStatus === 'published' ? new Date().toISOString() : null,
+        images: Array.isArray(formData.images) ? formData.images : [],
       };
 
       if (isEditing) {
@@ -772,12 +794,24 @@ const NewPost = () => {
 
                   {/* Media Upload Component */}
                   {mediaType === 'image' ? (
-                    <CloudinaryUpload
-                      onUpload={handleImageUpload}
-                      currentImage={formData.featuredImage}
-                      onRemove={handleImageRemove}
-                      type="image"
-                    />
+                    <>
+                      <CloudinaryUpload
+                        onUpload={handleImageUpload}
+                        currentImage={formData.featuredImage}
+                        onRemove={handleImageRemove}
+                        type="image"
+                      />
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <CloudinaryUpload
+                          onUpload={handleImageUpload}
+                          currentImages={formData.images}
+                          onRemoveImage={handleRemoveGalleryImage}
+                          type="image"
+                          multiple
+                          maxFiles={8}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <CloudinaryUpload
                       onUpload={handleVideoUpload}
@@ -821,7 +855,7 @@ const NewPost = () => {
                           key={loc}
                           type="button"
                           onClick={() => handleInputChange('location', loc)}
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${formData.location === loc
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${String(formData.location || '').trim().toLowerCase() === String(loc || '').trim().toLowerCase()
                             ? 'bg-blue-600 text-white shadow-sm'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}

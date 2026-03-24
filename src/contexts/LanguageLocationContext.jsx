@@ -54,13 +54,17 @@ export const LanguageLocationProvider = ({ children }) => {
                 return Array.isArray(locs) ? locs : [];
             })();
 
-            const normalizedPosts = locsFromPosts
+            const normalizedCombined = [...namesFromBhaskar, ...locsFromPosts]
                 .map((l) => String(l || '').trim())
                 .filter(Boolean);
 
-            const finalList = Array.from(
-                new Set([...namesFromBhaskar, ...normalizedPosts])
-            );
+            const seen = new Set();
+            const finalList = normalizedCombined.filter((loc) => {
+                const key = loc.toLowerCase();
+                if (key === 'all' || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
 
             const withAll = ['All', ...finalList];
             setAvailableLocations(withAll.length > 1 ? withAll : ['All', 'Kishangarh Renwal']);

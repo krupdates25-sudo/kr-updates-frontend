@@ -476,6 +476,23 @@ const BreakingNewsPage = () => {
               </div>
             )}
 
+            {Array.isArray(story?.images) && story.images.length > 0 && (
+              <div className="mb-3 sm:mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                {story.images.map((img, idx) => (
+                  <div
+                    key={`${img?.url || idx}-${idx}`}
+                    className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50"
+                  >
+                    <img
+                      src={img?.url}
+                      alt={img?.alt || `Breaking image ${idx + 1}`}
+                      className="w-full h-[220px] sm:h-[260px] object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Article Header Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4">
               <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -528,7 +545,7 @@ const BreakingNewsPage = () => {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Eye className="w-4 h-4" />
-                    <span>{displayStory?.viewCount || story?.views || 0} views</span>
+                    <span>{displayStory?.viewCount ?? displayStory?.views ?? story?.viewCount ?? story?.views ?? 0} views</span>
                   </div>
                   <button
                     onClick={async () => {
@@ -607,7 +624,7 @@ const BreakingNewsPage = () => {
                               {item.category || 'News'}
                             </span>
                             <span className="text-[10px] font-semibold text-gray-400">
-                              {item.viewCount || item.views || 0} views
+                              {item.viewCount ?? item.views ?? 0} views
                             </span>
                           </div>
                         </div>
@@ -697,7 +714,7 @@ const BreakingNewsPage = () => {
                             {item.category || 'News'}
                           </span>
                           <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
-                            {item.viewCount || item.views || 0} views
+                            {item.viewCount ?? item.views ?? 0} views
                           </span>
                         </div>
                       </div>

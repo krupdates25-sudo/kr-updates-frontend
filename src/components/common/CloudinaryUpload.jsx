@@ -10,8 +10,12 @@ import {
 const CloudinaryUpload = ({
   onUpload,
   currentImage,
+  currentImages = [],
   onRemove,
+  onRemoveImage,
   type = 'image',
+  multiple = false,
+  maxFiles = 8,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -41,7 +45,7 @@ const CloudinaryUpload = ({
         cloudName,
         uploadPreset,
         sources: ['local', 'url', 'camera'],
-        multiple: false,
+        multiple,
         resourceType: isVideo ? 'video' : 'image',
         clientAllowedFormats: isVideo
           ? ['mp4', 'mov', 'wmv', 'flv', 'avi', 'webm']
@@ -137,43 +141,47 @@ const CloudinaryUpload = ({
   };
 
   const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
 
-    // Validate file type
-    if (isVideo) {
-      if (!file.type.startsWith('video/')) {
-        setUploadError('Please select a video file');
-        return;
-      }
-      // Validate file size (100MB for video)
-      if (file.size > 100 * 1024 * 1024) {
-        setUploadError('File size must be less than 100MB');
-        return;
-      }
-    } else {
-      if (!file.type.startsWith('image/')) {
-        setUploadError('Please select an image file');
-        return;
-      }
-      // Validate file size (10MB for image)
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('File size must be less than 10MB');
+    if (multiple && !isVideo) {
+      const existingCount = Array.isArray(currentImages) ? currentImages.length : 0;
+      if (existingCount + files.length > maxFiles) {
+        setUploadError(`You can upload up to ${maxFiles} images`);
         return;
       }
     }
 
-    // Create a local URL for preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    const readOne = (file) => new Promise((resolve, reject) => {
       if (isVideo) {
-        onUpload({ url: e.target.result, thumbnail: e.target.result });
+        if (!file.type.startsWith('video/')) return reject(new Error('Please select a video file'));
+        if (file.size > 100 * 1024 * 1024) return reject(new Error('File size must be less than 100MB'));
       } else {
-        onUpload(e.target.result);
+        if (!file.type.startsWith('image/')) return reject(new Error('Please select an image file'));
+        if (file.size > 10 * 1024 * 1024) return reject(new Error('File size must be less than 10MB'));
       }
-      setUploadError('');
-    };
-    reader.readAsDataURL(file);
+
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+
+    Promise.all(files.map(readOne))
+      .then((payloads) => {
+        if (multiple && !isVideo) {
+          onUpload(payloads);
+        } else {
+          const first = payloads[0];
+          if (isVideo) {
+            onUpload({ url: first, thumbnail: first });
+          } else {
+            onUpload(first);
+          }
+        }
+        setUploadError('');
+      })
+      .catch((e) => setUploadError(e.message || 'Failed to upload file'));
   };
 
   const getMediaUrl = () => {
@@ -181,6 +189,10 @@ const CloudinaryUpload = ({
     if (typeof currentImage === 'string') return currentImage;
     return currentImage.url;
   };
+
+  const uploadedImages = Array.isArray(currentImages)
+    ? currentImages.filter((img) => img && (img.url || typeof img === 'string'))
+    : [];
 
   return (
     <div className="space-y-4">
@@ -200,7 +212,61 @@ const CloudinaryUpload = ({
         </div>
       )}
 
-      {currentImage ? (
+      {multiple && !isVideo ? (
+        <div className="space-y-3">
+          {uploadedImages.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {uploadedImages.map((img, index) => {
+                const url = typeof img === 'string' ? img : img.url;
+                return (
+                  <div key={`${url}-${index}`} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Uploaded ${index + 1}`}
+                      className="w-full h-28 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onRemoveImage?.(index)}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-90 hover:opacity-100"
+                      title="Remove image"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="text-xs text-gray-500">
+            {uploadedImages.length}/{maxFiles} images
+          </div>
+          <div className="w-full">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              id={`file-upload-${type}-multiple`}
+              multiple
+            />
+            <label
+              htmlFor={`file-upload-${type}-multiple`}
+              className="w-full h-24 border-2 border-dashed border-purple-300 rounded-xl cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all duration-200 flex flex-col items-center justify-center text-gray-600"
+            >
+              <Upload className="w-5 h-5 mb-1" />
+              <span className="text-sm font-medium">Upload Multiple Images</span>
+            </label>
+          </div>
+          <button
+            onClick={openCloudinaryWidget}
+            disabled={isUploading || uploadedImages.length >= maxFiles}
+            className="w-full py-2 px-4 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUploading ? 'Uploading...' : 'Upload via Cloudinary'}
+          </button>
+        </div>
+      ) : currentImage ? (
         <div className="relative group">
           {isVideo ? (
             <div className="relative">
@@ -253,6 +319,7 @@ const CloudinaryUpload = ({
               onChange={handleFileUpload}
               className="hidden"
               id={`file-upload-${type}`}
+              multiple={multiple && !isVideo}
             />
             <label
               htmlFor={`file-upload-${type}`}

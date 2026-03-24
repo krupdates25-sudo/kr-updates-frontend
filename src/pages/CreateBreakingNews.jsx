@@ -31,6 +31,7 @@ const CreateBreakingNews = () => {
       alt: '',
       caption: '',
     },
+    images: [],
     category: 'General',
     priority: 1,
     expiresAt: '',
@@ -77,6 +78,7 @@ const CreateBreakingNews = () => {
           excerpt: story.excerpt || '',
           content: story.content || '',
           image: story.image || { url: '', alt: '', caption: '' },
+          images: Array.isArray(story.images) ? story.images : [],
           category: story.category || 'General',
           priority: story.priority || 1,
           expiresAt: expiresAtFormatted,
@@ -148,6 +150,7 @@ const CreateBreakingNews = () => {
           alt: formData.image.alt || formData.title.trim(),
           caption: formData.image.caption || '',
         },
+        images: Array.isArray(formData.images) ? formData.images : [],
         category: formData.category,
         priority: formData.priority || 1,
         expiresAt: expiresAtDate,
@@ -321,6 +324,32 @@ const CreateBreakingNews = () => {
                     }}
                     currentImage={formData.image.url}
                   />
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <CloudinaryUpload
+                      onUpload={(uploaded) => {
+                        const urls = Array.isArray(uploaded) ? uploaded : [uploaded];
+                        const newImages = urls.map((u) => ({
+                          url: typeof u === 'string' ? u : u.url,
+                          alt: formData.title || 'Breaking news image',
+                          caption: '',
+                        }));
+                        handleInputChange(
+                          'images',
+                          [...(formData.images || []), ...newImages].slice(0, 8)
+                        );
+                      }}
+                      currentImages={formData.images}
+                      onRemoveImage={(idx) => {
+                        handleInputChange(
+                          'images',
+                          (formData.images || []).filter((_, i) => i !== idx)
+                        );
+                      }}
+                      type="image"
+                      multiple
+                      maxFiles={8}
+                    />
+                  </div>
                   {formData.image.url && (
                     <div className="mt-4">
                       <img
@@ -373,7 +402,7 @@ const CreateBreakingNews = () => {
                         key={loc}
                         type="button"
                         onClick={() => handleInputChange('location', loc)}
-                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${formData.location === loc
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${String(formData.location || '').trim().toLowerCase() === String(loc || '').trim().toLowerCase()
                             ? 'bg-purple-600 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}

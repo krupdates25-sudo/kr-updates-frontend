@@ -66,9 +66,18 @@ const Header = ({
 
   const locations = useMemo(() => {
     const locs = Array.isArray(availableLocations) ? availableLocations : [];
-    // Ensure "All" is always first (and not duplicated)
-    const withoutAll = locs.filter((l) => String(l).toLowerCase() !== 'all');
-    return ['All', ...withoutAll];
+    // Ensure "All" is always first and remove case-insensitive duplicates
+    const seen = new Set();
+    const deduped = locs
+      .map((l) => String(l || '').trim())
+      .filter(Boolean)
+      .filter((l) => {
+        const key = l.toLowerCase();
+        if (key === 'all' || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    return ['All', ...deduped];
   }, [availableLocations]);
 
   // Location strip: smooth auto-scroll, pause on user scroll/touch, loop without duplicate tabs

@@ -971,13 +971,13 @@ const PostPage = () => {
 
                 {/* Article Title - Very large, dominant heading */}
                 <h1
-                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none tracking-tight"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-3 sm:mb-4 select-none tracking-tight"
                   style={{
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     fontWeight: 800,
                     // Force very large responsive size regardless of base html font size
-                    fontSize: 'clamp(2.6rem, 3.6vw + 1.4rem, 5.2rem)',
+                    fontSize: 'clamp(2.1rem, 2.6vw + 1.1rem, 4.2rem)',
                     lineHeight: 1.08,
                   }}
                 >
@@ -987,7 +987,7 @@ const PostPage = () => {
                 {/* Subheading - Bigger font size */}
                 {(displayPost?.subheading || displayPost?.description || displayPost?.excerpt) && (
                   <p
-                    className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed mb-3 sm:mb-4 font-medium select-none"
+                    className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 leading-relaxed mb-3 sm:mb-4 font-bold select-none"
                     style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                   >
                     {displayPost.subheading || displayPost.description || displayPost.excerpt}
@@ -1051,6 +1051,24 @@ const PostPage = () => {
                 </div>
               )}
 
+              {Array.isArray(displayPost?.images) && displayPost.images.length > 0 && (
+                <div className="mb-3 sm:mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {displayPost.images.map((img, idx) => (
+                    <div
+                      key={`${img?.url || idx}-${idx}`}
+                      className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
+                    >
+                      <OptimisticImage
+                        src={img?.url}
+                        alt={img?.alt || `Post image ${idx + 1}`}
+                        className="w-full h-[220px] sm:h-[260px]"
+                        imgClassName="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Metadata Section */}
               <div
                 className="bg-white rounded-lg shadow-sm p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 relative"
@@ -1071,7 +1089,7 @@ const PostPage = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Eye className="w-4 h-4" />
-                      <span>{displayPost?.viewCount || 0} views</span>
+                      <span>{displayPost?.viewCount ?? displayPost?.views ?? 0} views</span>
                     </div>
                     <button
                       onClick={handleOpenShare}
@@ -1389,7 +1407,7 @@ const PostPage = () => {
                                 {item.category || 'News'}
                               </span>
                               <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
-                                {item.viewCount || item.views || 0} views
+                                {item.viewCount ?? item.views ?? 0} views
                               </span>
                             </div>
                           </div>
@@ -1479,7 +1497,7 @@ const PostPage = () => {
                               {item.category || 'News'}
                             </span>
                             <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
-                              {item.viewCount || item.views || 0} views
+                              {item.viewCount ?? item.views ?? 0} views
                             </span>
                           </div>
                         </div>
