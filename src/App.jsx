@@ -32,6 +32,8 @@ const VerifyEmailSuccess = lazy(() => import('./pages/VerifyEmailSuccess'));
 const T20WorldCup = lazy(() => import('./pages/T20WorldCup'));
 const BhaskarStory = lazy(() => import('./pages/BhaskarStory'));
 const StateExplorer = lazy(() => import('./pages/StateExplorer'));
+const PollsPage = lazy(() => import('./pages/PollsPage'));
+const PollManagement = lazy(() => import('./pages/PollManagement'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -47,6 +49,7 @@ import { SocketProvider } from './contexts/SocketContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AdProvider } from './contexts/AdContext';
 import { LanguageLocationProvider } from './contexts/LanguageLocationContext';
+import { PollsAvailabilityProvider } from './contexts/PollsAvailabilityContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import './App.css';
 
@@ -133,6 +136,7 @@ function App() {
             <SocketProvider>
               <AdProvider>
                 <Router>
+                  <PollsAvailabilityProvider>
                   <Suspense fallback={<PageLoader />}>
                     <div className="App">
                       <Routes>
@@ -201,6 +205,8 @@ function App() {
 
                         {/* State / Location explorer (search, tabs, famous places) */}
                         <Route path="/explore-location" element={<StateExplorer />} />
+
+                        <Route path="/polls" element={<PollsPage />} />
 
                         {/* Current user profile route */}
                         <Route
@@ -352,6 +358,15 @@ function App() {
                         />
 
                         <Route
+                          path="/admin/polls"
+                          element={
+                            <ProtectedRoute requiredRole={['admin', 'moderator']}>
+                              <PollManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        <Route
                           path="/notifications"
                           element={
                             <ProtectedRoute requiredRole="admin">
@@ -374,6 +389,7 @@ function App() {
                       </Routes>
                     </div>
                   </Suspense>
+                  </PollsAvailabilityProvider>
                 </Router>
               </AdProvider>
             </SocketProvider>

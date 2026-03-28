@@ -66,7 +66,11 @@ const CompactArticleRowCard = ({ article }) => {
     return date.toLocaleDateString();
   };
 
-  const imageUrl = article.featuredImage?.url || article.image;
+  const galleryFirst =
+    Array.isArray(article.images) && article.images.length > 0
+      ? article.images[0]?.url
+      : null;
+  const imageUrl = article.featuredImage?.url || article.image || galleryFirst;
   const title = article.title || '';
   const description = article.excerpt || article.description || article.subheading || '';
   const category = article.category || '';
@@ -84,16 +88,16 @@ const CompactArticleRowCard = ({ article }) => {
           {article.featuredVideo?.url ? (
             <video
               src={article.featuredVideo.url}
-              className="w-full h-full object-cover"
-              muted
-              playsInline
-              poster={article.featuredVideo.thumbnail || imageUrl}
-            />
-          ) : (
-            <img
-              src={imageUrl}
-              alt={article.featuredImage?.alt || title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain"
+                  muted
+                  playsInline
+                  poster={article.featuredVideo.thumbnail || imageUrl}
+                />
+              ) : (
+                <img
+                  src={imageUrl}
+                  alt={article.featuredImage?.alt || title}
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
               decoding="async"
               onError={(e) => {

@@ -46,6 +46,13 @@ const ArticleCard = ({
     navigate(`/edit-post/${postId}`);
   };
 
+  const galleryFirst =
+    Array.isArray(article.images) && article.images.length > 0
+      ? article.images[0]?.url
+      : null;
+  const thumbSrc =
+    article.featuredImage?.url || article.image || galleryFirst || null;
+
   const handleDelete = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -74,14 +81,15 @@ const ArticleCard = ({
         {/* Featured Media (Image or Video) */}
         {(article.featuredImage?.url ||
           article.featuredVideo?.url ||
-          article.image) && (
+          article.image ||
+          galleryFirst) && (
             <div
               className="aspect-video overflow-hidden flex-shrink-0 relative bg-gray-100 flex items-center justify-center"
             >
               {article.featuredVideo?.url ? (
                 <video
                   src={article.featuredVideo.url}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   muted
                   playsInline
                   poster={
@@ -90,9 +98,9 @@ const ArticleCard = ({
                 />
               ) : (
                 <img
-                  src={article.featuredImage?.url || article.image}
+                  src={thumbSrc}
                   alt={article.featuredImage?.alt || article.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                   decoding="async"
                   onError={(e) => {
@@ -120,7 +128,8 @@ const ArticleCard = ({
         {/* Placeholder for posts without media */}
         {!article.featuredImage?.url &&
           !article.featuredVideo?.url &&
-          !article.image && (
+          !article.image &&
+          !galleryFirst && (
             <div
               className="h-28 sm:h-32 md:h-36 overflow-hidden flex-shrink-0 relative flex items-center justify-center bg-white"
             >

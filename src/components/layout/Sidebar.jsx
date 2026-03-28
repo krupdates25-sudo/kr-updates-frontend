@@ -19,15 +19,18 @@ import {
   LogOut,
   Target,
   Bell,
+  BarChart2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePollsAvailability } from '../../contexts/PollsAvailabilityContext';
 import Logo from '../common/Logo';
 import { useEffect, useMemo } from 'react';
 
 const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
+  const { hasActivePolls } = usePollsAvailability();
 
   // Refresh user data when component mounts to get latest permissions
   useEffect(() => {
@@ -105,6 +108,13 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
     //   path: '/bookmarks',
     // },
     {
+      id: 'polls',
+      label: 'Polls',
+      icon: BarChart2,
+      count: null,
+      path: '/polls',
+    },
+    {
       id: 'history',
       label: 'History',
       icon: History,
@@ -131,10 +141,13 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
     },
   ];
 
-  // Combine navigation items based on user role
+  // Combine navigation items based on user role (hide Polls until there is at least one active poll)
+  const filteredBase = hasActivePolls
+    ? baseNavigationItems
+    : baseNavigationItems.filter((item) => item.id !== 'polls');
   const navigationItems = canManageAds
-    ? [...baseNavigationItems, ...adminNavigationItems]
-    : baseNavigationItems;
+    ? [...filteredBase, ...adminNavigationItems]
+    : filteredBase;
 
   // Admin navigation items
   const adminItems = [
@@ -173,6 +186,12 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
       label: 'शोक संदेश',
       icon: Bell,
       path: '/admin/obituaries',
+    },
+    {
+      id: 'admin-polls',
+      label: 'Manage polls',
+      icon: BarChart2,
+      path: '/admin/polls',
     },
     // {
     //   id: 'admin-notifications',
@@ -312,6 +331,25 @@ const Sidebar = ({ isOpen, onToggle, activeTab, onTabChange }) => {
               </div>
               <div className="space-y-1">
                 {adminItems.map((item) => renderAdminItem(item))}
+              </div>
+            </div>
+          )}
+
+          {isModerator && !isAdmin && (
+            <div className="mt-8">
+              <div className="px-6 py-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-2">
+                  <BarChart2 className="w-3 h-3" />
+                  Tools
+                </h3>
+              </div>
+              <div className="space-y-1">
+                {renderAdminItem({
+                  id: 'admin-polls',
+                  label: 'Manage polls',
+                  icon: BarChart2,
+                  path: '/admin/polls',
+                })}
               </div>
             </div>
           )}

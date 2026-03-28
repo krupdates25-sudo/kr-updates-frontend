@@ -917,64 +917,69 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* ── शोक संदेश updates (carousel) ── */}
-        <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-800">
-              शोक संदेश
-            </p>
-            {obituaryLoading && (
-              <span className="text-[10px] text-gray-400">Loading…</span>
+        {/* ── शोक संदेश updates (carousel) — hidden when there are no active entries */}
+        {(obituaryLoading || obituaryError || (obituaryUpdates && obituaryUpdates.length > 0)) && (
+          <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-800">
+                शोक संदेश
+              </p>
+              {obituaryLoading && (
+                <span className="text-[10px] text-gray-400">Loading…</span>
+              )}
+            </div>
+
+            {obituaryError && (
+              <p className="text-xs text-red-500">{obituaryError}</p>
             )}
-          </div>
 
-          {obituaryError && (
-            <p className="text-xs text-red-500">{obituaryError}</p>
-          )}
-
-          {!obituaryLoading && !obituaryError && obituaryUpdates.length > 0 && (
-            <div className="overflow-x-auto no-scrollbar">
-              <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
-                {obituaryUpdates.map((item) => {
-                  const when = item?.eventDate
-                    ? new Date(item.eventDate).toLocaleDateString('hi-IN')
-                    : '';
-                  return (
-                    <div
-                      key={item._id}
-                      className="snap-start w-[300px] sm:w-[340px] rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
-                    >
-                      {item?.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title || 'Obituary'}
-                          className="w-full h-28 object-cover"
-                          loading="lazy"
-                        />
-                      ) : null}
-                      <div className="p-3">
-                        <p className="text-sm font-bold text-gray-900 line-clamp-2">
-                          {item.title}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-600 line-clamp-3">
-                          {item.message}
-                        </p>
-                        <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
-                          <span>{item.location || 'स्थानीय'}</span>
-                          <span>{when}</span>
+            {!obituaryLoading && !obituaryError && obituaryUpdates.length > 0 && (
+              <div className="overflow-x-auto no-scrollbar">
+                <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
+                  {obituaryUpdates.map((item) => {
+                    const when = item?.eventDate
+                      ? new Date(item.eventDate).toLocaleDateString('hi-IN')
+                      : '';
+                    const loc = typeof item?.location === 'string' ? item.location.trim() : '';
+                    return (
+                      <div
+                        key={item._id}
+                        className="snap-start w-[300px] sm:w-[340px] rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-row gap-0"
+                      >
+                        {item?.imageUrl ? (
+                          <div className="shrink-0 w-[108px] sm:w-[120px] h-[120px] sm:h-[128px] border-r border-gray-100 bg-gray-100 flex items-center justify-center p-1.5">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title || 'Obituary'}
+                              className="max-w-full max-h-full w-auto h-auto object-contain"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : null}
+                        <div className="p-3 min-w-0 flex-1 flex flex-col justify-center">
+                          <p className="text-sm font-bold text-gray-900 line-clamp-2">
+                            {item.title}
+                          </p>
+                          {item.message ? (
+                            <p className="mt-1 text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">
+                              {item.message}
+                            </p>
+                          ) : null}
+                          {(loc || when) && (
+                            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-gray-500">
+                              {loc ? <span className="truncate min-w-0">{loc}</span> : <span />}
+                              {when ? <span className="shrink-0">{when}</span> : null}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-
-          {!obituaryLoading && !obituaryError && obituaryUpdates.length === 0 && (
-            <p className="text-xs text-gray-500">अभी कोई शोक संदेश उपलब्ध नहीं है।</p>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* ── Bhaskar state news (only render when stories exist for selected state) ── */}
         {(() => {

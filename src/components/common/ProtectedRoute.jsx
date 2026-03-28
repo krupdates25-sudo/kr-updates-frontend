@@ -31,12 +31,15 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Check role-based access if required
-  if (requiredRole && user?.role !== requiredRole) {
-    console.log(
-      'ProtectedRoute redirecting to /unauthorized - insufficient role'
-    );
-    return <Navigate to="/unauthorized" replace />;
+  // Check role-based access if required (single role or array of allowed roles)
+  if (requiredRole) {
+    const allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!user || !allowed.includes(user.role)) {
+      console.log(
+        'ProtectedRoute redirecting to /unauthorized - insufficient role'
+      );
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   console.log('ProtectedRoute rendering children');

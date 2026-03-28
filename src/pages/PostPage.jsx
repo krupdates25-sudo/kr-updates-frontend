@@ -1005,7 +1005,7 @@ const PostPage = () => {
                     <video
                       src={displayPost.featuredVideo.url}
                       controls
-                      className="w-full object-cover select-none"
+                      className="w-full max-h-[min(70vh,520px)] object-contain select-none bg-black"
                       style={{
                         userSelect: 'none',
                         WebkitUserSelect: 'none',
@@ -1030,7 +1030,7 @@ const PostPage = () => {
                         src={displayPost?.featuredImage?.url}
                         alt={displayPost?.title || 'Post image'}
                         className="w-full h-[240px] sm:h-[340px] md:h-[420px]"
-                        imgClassName="w-full h-full object-cover select-none"
+                        imgClassName="w-full h-full object-contain select-none"
                         loading="eager"
                         style={{
                           userSelect: 'none',
@@ -1062,7 +1062,7 @@ const PostPage = () => {
                         src={img?.url}
                         alt={img?.alt || `Post image ${idx + 1}`}
                         className="w-full h-[220px] sm:h-[260px]"
-                        imgClassName="w-full h-full object-cover"
+                        imgClassName="w-full h-full object-contain"
                       />
                     </div>
                   ))}
@@ -1347,7 +1347,7 @@ const PostPage = () => {
                   style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 >
                   <div
-                    className="text-gray-800 leading-relaxed text-sm sm:text-base select-none"
+                    className="text-gray-800 leading-relaxed text-sm sm:text-base select-none [&_p]:mb-4 [&_p:last-child]:mb-0 [&_p:empty]:min-h-[1em] [&_br]:block [&_ul]:my-4 [&_ol]:my-4 [&_blockquote]:my-4 [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:mt-6 [&_h3]:mb-2 [&_img]:max-w-full [&_img]:h-auto [&_img]:object-contain"
                     style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                     dangerouslySetInnerHTML={{
                       __html: displayPost?.content || 'Loading content...',

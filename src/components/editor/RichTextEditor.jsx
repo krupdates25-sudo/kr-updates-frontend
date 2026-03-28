@@ -67,7 +67,7 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
       }),
       Image.configure({
         HTMLAttributes: {
-          class: 'rounded-lg max-w-full h-auto object-cover',
+          class: 'rounded-lg max-w-full h-auto object-contain',
           style: 'max-height: 400px; min-height: 200px;',
         },
       }),
@@ -256,7 +256,7 @@ const RichTextEditor = ({ content, onChange, placeholder }) => {
 
   const insertImageWithLink = () => {
     if (imageLinkUrl && window.tempImageUrl) {
-      const imageHtml = `<a href="${imageLinkUrl}" target="_blank" rel="noopener noreferrer"><img src="${window.tempImageUrl}" alt="Linked Image" class="rounded-lg max-w-full h-auto object-cover" style="max-height: 400px; min-height: 200px;" /></a>`;
+      const imageHtml = `<a href="${imageLinkUrl}" target="_blank" rel="noopener noreferrer"><img src="${window.tempImageUrl}" alt="Linked Image" class="rounded-lg max-w-full h-auto object-contain" style="max-height: 400px; min-height: 200px;" /></a>`;
       editor.chain().focus().insertContent(imageHtml).run();
       setImageLinkUrl('');
       setShowImageLinkDialog(false);

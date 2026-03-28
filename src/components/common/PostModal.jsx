@@ -808,8 +808,25 @@ const PostModal = ({ isOpen, onClose, postId, post: initialPost }) => {
                     <img
                       src={post.featuredImage.url}
                       alt={post.title}
-                      className="w-full h-48 sm:h-64 object-cover"
+                      className="w-full h-48 sm:h-64 object-contain bg-gray-100"
                     />
+                  </div>
+                )}
+
+                {Array.isArray(post?.images) && post.images.length > 0 && (
+                  <div className="mb-4 grid grid-cols-2 gap-2">
+                    {post.images.map((img, idx) => (
+                      <div
+                        key={`${img?.url || idx}-${idx}`}
+                        className="rounded-xl overflow-hidden border border-gray-200/80 bg-gray-100"
+                      >
+                        <img
+                          src={img?.url}
+                          alt={img?.alt || `Post image ${idx + 1}`}
+                          className="w-full h-36 sm:h-44 object-contain bg-gray-100"
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -1025,7 +1042,7 @@ const PostModal = ({ isOpen, onClose, postId, post: initialPost }) => {
 
                 <div className="prose prose-sm sm:prose max-w-none">
                   <div
-                    className="text-gray-800 leading-relaxed"
+                    className="text-gray-800 leading-relaxed [&_p]:mb-4 [&_p:last-child]:mb-0 [&_p:empty]:min-h-[1em] [&_br]:block [&_ul]:my-4 [&_ol]:my-4 [&_blockquote]:my-4 [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:mt-6 [&_h3]:mb-2 [&_img]:max-w-full [&_img]:h-auto [&_img]:object-contain"
                     dangerouslySetInnerHTML={{
                       __html: post?.content || 'Loading content...',
                     }}

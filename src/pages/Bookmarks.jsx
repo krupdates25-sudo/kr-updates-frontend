@@ -290,11 +290,11 @@ const Bookmarks = () => {
                   >
                     {/* Featured Image */}
                     {post.featuredImage?.url && (
-                      <div className="aspect-video overflow-hidden">
+                      <div className="aspect-video overflow-hidden bg-gray-100 flex items-center justify-center">
                         <img
                           src={post.featuredImage.url}
                           alt={post.featuredImage.alt || post.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                     )}

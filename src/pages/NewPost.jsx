@@ -241,30 +241,53 @@ const NewPost = () => {
     }
   };
 
-  const handleImageUpload = (imageData) => {
-    if (Array.isArray(imageData)) {
-      const newImages = imageData.map((url) => ({
-        url,
-        alt: formData.title || 'Post image',
-        caption: '',
-      }));
-      setFormData((prev) => ({
-        ...prev,
-        images: [...(prev.images || []), ...newImages].slice(0, 8),
-      }));
-      return;
-    }
-    // Convert string URL to proper featuredImage object structure
+  /** Featured image only (single). Gallery uploads must use handleGalleryImageUpload so Cloudinary multi-file does not overwrite this. */
+  const handleFeaturedImageUpload = (imageData) => {
+    if (Array.isArray(imageData)) return;
+    const raw = typeof imageData === 'string' ? imageData : imageData?.url;
+    if (!raw) return;
     const featuredImageObj = {
-      url: imageData,
+      url: raw,
       alt: formData.title || 'Featured image',
       caption: '',
     };
-
     setFormData((prev) => ({
       ...prev,
       featuredImage: featuredImageObj,
-      featuredVideo: null, // Clear video when image is uploaded
+      featuredVideo: null,
+    }));
+  };
+
+  /** Additional gallery images (multi-upload / Cloudinary callbacks append one URL at a time). */
+  const handleGalleryImageUpload = (imageData) => {
+    if (Array.isArray(imageData)) {
+      setFormData((prev) => {
+        const newImages = imageData
+          .map((entry) => {
+            const url = typeof entry === 'string' ? entry : entry?.url;
+            if (!url) return null;
+            return {
+              url,
+              alt: prev.title || 'Post image',
+              caption: '',
+            };
+          })
+          .filter(Boolean);
+        return {
+          ...prev,
+          images: [...(prev.images || []), ...newImages].slice(0, 8),
+        };
+      });
+      return;
+    }
+    const raw = typeof imageData === 'string' ? imageData : imageData?.url;
+    if (!raw) return;
+    setFormData((prev) => ({
+      ...prev,
+      images: [
+        ...(prev.images || []),
+        { url: raw, alt: prev.title || 'Post image', caption: '' },
+      ].slice(0, 8),
     }));
   };
 
@@ -828,14 +851,14 @@ const NewPost = () => {
                   {mediaType === 'image' ? (
                     <>
                       <CloudinaryUpload
-                        onUpload={handleImageUpload}
+                        onUpload={handleFeaturedImageUpload}
                         currentImage={formData.featuredImage}
                         onRemove={handleImageRemove}
                         type="image"
                       />
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <CloudinaryUpload
-                          onUpload={handleImageUpload}
+                          onUpload={handleGalleryImageUpload}
                           currentImages={formData.images}
                           onRemoveImage={handleRemoveGalleryImage}
                           type="image"

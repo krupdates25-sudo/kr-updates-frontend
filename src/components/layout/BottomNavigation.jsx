@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   TrendingUp,
+  BarChart2,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,6 +39,8 @@ const BottomNavigation = () => {
     if (path === '/admin/trending') return 'admin-trending';
     if (path === '/announcements') return 'admin-announcements';
     if (path === '/admin/obituaries') return 'admin-obituaries';
+    if (path === '/admin/polls') return 'admin-polls';
+    if (path === '/polls') return 'polls';
     if (path === '/admin/settings') return 'admin-settings';
     if (path === '/ads') return 'ads';
     if (path === '/new-post') return 'new-post';
@@ -117,6 +120,12 @@ const BottomNavigation = () => {
       label: 'शोक',
       icon: Bell,
       path: '/admin/obituaries',
+    },
+    {
+      id: 'admin-polls',
+      label: 'Manage polls',
+      icon: BarChart2,
+      path: '/admin/polls',
     },
     {
       id: 'admin-settings',

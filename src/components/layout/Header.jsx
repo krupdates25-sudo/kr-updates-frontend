@@ -13,11 +13,13 @@ import {
   Download,
   RefreshCw,
   Search,
+  BarChart2,
 } from 'lucide-react';
 import { useLanguageLocation } from '../../contexts/LanguageLocationContext';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePollsAvailability } from '../../contexts/PollsAvailabilityContext';
 import AnnouncementDropdown from '../common/AnnouncementDropdown';
 import updatesService from '../../services/updatesService';
 import Logo from '../common/Logo';
@@ -49,6 +51,7 @@ const Header = ({
     email: '',
   });
   const { user, logout } = useAuth();
+  const { hasActivePolls, loading: pollsLoading } = usePollsAvailability();
   const {
     location: currentLocation,
     setLocation,
@@ -381,10 +384,28 @@ const Header = ({
       <div className="grid grid-cols-[1fr_auto_1fr] items-center h-14 sm:h-16 px-3 sm:px-4 md:px-6 w-full gap-2">
         {/* Left side: Search (dashboard/home) + Burger for staff */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
-          {/* Search (expanded with placeholder) – show on dashboard/home; click goes to Location & search */}
+          {/* Polls — only when at least one active poll exists */}
+          {!pollsLoading && hasActivePolls && (
+            <button
+              type="button"
+              onClick={() => navigate('/polls')}
+              className={`flex items-center justify-center sm:gap-1.5 p-2 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl text-sm font-semibold shrink-0 border transition-colors ${
+                location.pathname === '/polls' ||
+                location.pathname.startsWith('/admin/polls')
+                  ? 'bg-[var(--color-primary)]/15 border-[var(--color-primary)]/45 text-[var(--color-primary)] shadow-sm ring-1 ring-[var(--color-primary)]/20'
+                  : 'border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/16 shadow-sm'
+              }`}
+              title="Polls"
+              aria-label="Polls"
+            >
+              <BarChart2 className="w-5 h-5 sm:w-4 sm:h-4 shrink-0" strokeWidth={2.25} />
+              <span className="hidden sm:inline">Polls</span>
+            </button>
+          )}
+
+          {/* Search — dashboard/home only */}
           {(location.pathname === '/' || location.pathname === '/dashboard') && (
             <>
-              {/* Mobile: icon only */}
               <button
                 onClick={() => navigate('/explore-location')}
                 className="sm:hidden flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 active:scale-95 transition-all duration-200 shrink-0"
@@ -393,8 +414,6 @@ const Header = ({
               >
                 <Search className="w-5 h-5 text-gray-600" />
               </button>
-
-              {/* Desktop/tablet: expanded pill with placeholder */}
               <button
                 onClick={() => navigate('/explore-location')}
                 className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors min-w-0 w-full max-w-[360px]"
