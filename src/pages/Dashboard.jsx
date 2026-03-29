@@ -5,6 +5,7 @@ import ArticleCard from '../components/common/ArticleCard';
 import CompactArticleRowCard from '../components/common/CompactArticleRowCard';
 import WideArticleRowCard from '../components/common/WideArticleRowCard';
 import EducationCarousel from '../components/common/EducationCarousel';
+import CommunityNoticesCarousel from '../components/common/CommunityNoticesCarousel';
 // import PostModal from '../components/common/PostModal'; // Commented out - posts now navigate directly to details page
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingSkeleton } from '../components/common/LoadMoreButton';
@@ -612,6 +613,13 @@ const Dashboard = () => {
     );
   }, [settings]);
 
+  /** Shown above community notices; set in Admin → Settings → “Community section title”. */
+  const communitySectionHeading = useMemo(() => {
+    const t = settings?.communitySectionTitle;
+    if (typeof t === 'string' && t.trim()) return t.trim();
+    return 'Community remembrances';
+  }, [settings?.communitySectionTitle]);
+
   const followLine = useMemo(() => {
     const names = followProfiles
       .map((p) => String(p.platform || '').toLowerCase())
@@ -783,199 +791,159 @@ const Dashboard = () => {
 
         {false && (
           <>
-        {/* ── Match updates label ── */}
-        <div className="mb-2 sm:mb-3 flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.2em]">
-            Match updates
-          </span>
-        </div>
+            {/* ── Match updates label ── */}
+            <div className="mb-2 sm:mb-3 flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-[0.2em]">
+                Match updates
+              </span>
+            </div>
 
-        {/* ── English: T20 World Cup card (click-through to full scores page) ── */}
-        <div
-          onClick={() => navigate('/t20-worldcup')}
-          className="mb-4 sm:mb-6 cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 group"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && navigate('/t20-worldcup')}
-        >
-          <div className="bg-gradient-to-r from-[#0d1117] via-[#161b2e] to-[#1e2a4a] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
-            {/* Decorative glows — no emoji */}
-            <div className="absolute -top-8 right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-purple-500/10 blur-xl pointer-events-none" />
-            {/* Subtle grid */}
+            {/* ── English: T20 World Cup card (click-through to full scores page) ── */}
             <div
-              className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }}
-            />
+              onClick={() => navigate('/t20-worldcup')}
+              className="mb-4 sm:mb-6 cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 group"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && navigate('/t20-worldcup')}
+            >
+              <div className="bg-gradient-to-r from-[#0d1117] via-[#161b2e] to-[#1e2a4a] text-white px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
+                {/* Decorative glows — no emoji */}
+                <div className="absolute -top-8 right-8 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-purple-500/10 blur-xl pointer-events-none" />
+                {/* Subtle grid */}
+                <div
+                  className="absolute inset-0 opacity-[0.04] pointer-events-none"
+                  style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }}
+                />
 
-            {/* Left: icon + text */}
-            <div className="relative flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-              {/* Trophy icon — lucide */}
-              <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
-                  <p
-                    className="text-xs sm:text-sm font-extrabold tracking-tight leading-snug"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                  >
-                    ICC Men's T20 World Cup
-                  </p>
-                  {/* Live pulse dot */}
-                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
-                  </span>
-                </div>
-                <p className="text-[10px] sm:text-[11px] text-white/60 font-medium">
-                  T20 World Cup live scores, results & fixtures
-                </p>
-              </div>
-            </div>
-
-            {/* Right: compact button */}
-            <div className="relative flex-shrink-0 flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 border border-white/15 transition-colors text-white text-[11px] sm:text-[12px] font-semibold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap">
-              View scores
-              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Hindi: match updates (carousel, minimal & modern) ── */}
-        <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-800">
-              हिंदी मैच अपडेट्स (ICC MT20 WC 2026)
-            </p>
-            {hindiScheduleLoading && (
-              <span className="text-[10px] text-gray-400">Loading…</span>
-            )}
-          </div>
-          {hindiScheduleError && (
-            <p className="text-xs text-red-500">{hindiScheduleError}</p>
-          )}
-
-          {!hindiScheduleLoading && !hindiScheduleError && hindiSchedule && (
-            <div className="overflow-x-auto no-scrollbar">
-              <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
-                {[...hindiSchedule.upcoming.slice(0, 6), ...hindiSchedule.completed.slice(0, 4)].map((m) => {
-                  const isCompleted = !!m.result;
-                  const badge = isCompleted ? 'Result' : 'Upcoming';
-                  const primaryLine = m.result || m.status || '';
-
-                  return (
-                    <div
-                      key={m.id}
-                      className={`snap-start w-[320px] sm:w-[360px] rounded-2xl border bg-white shadow-sm hover:shadow-md transition-all overflow-hidden ${isCompleted ? 'border-emerald-100' : 'border-indigo-100'
-                        }`}
-                    >
-                      {/* minimal accent bar */}
-                      <div className={`h-1 ${isCompleted ? 'bg-emerald-500/70' : 'bg-indigo-500/70'}`} />
-
-                      <div className="px-4 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-extrabold text-gray-900 leading-snug whitespace-normal break-words">
-                              {m.matchNumber || 'Match'}
-                            </p>
-                            <p className="text-[12px] text-gray-600 mt-0.5 whitespace-normal break-words">
-                              {m.venue}
-                            </p>
-                          </div>
-                          <span
-                            className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isCompleted
-                              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
-                              : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100'
-                              }`}
-                          >
-                            {badge}
-                          </span>
-                        </div>
-
-                        {primaryLine && (
-                          <p
-                            className={`mt-3 text-[12px] font-semibold leading-snug whitespace-normal break-words ${isCompleted ? 'text-emerald-700' : 'text-indigo-700'
-                              }`}
-                          >
-                            {primaryLine}
-                          </p>
-                        )}
-
-                        <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
-                          <span className="font-medium">{m.dateIST}</span>
-                          <span className="font-extrabold text-gray-900">{m.timeIST}</span>
-                        </div>
-                      </div>
+                {/* Left: icon + text */}
+                <div className="relative flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                  {/* Trophy icon — lucide */}
+                  <div className="flex-shrink-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+                      <p
+                        className="text-xs sm:text-sm font-extrabold tracking-tight leading-snug"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        ICC Men's T20 World Cup
+                      </p>
+                      {/* Live pulse dot */}
+                      <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+                      </span>
                     </div>
-                  );
-                })}
+                    <p className="text-[10px] sm:text-[11px] text-white/60 font-medium">
+                      T20 World Cup live scores, results & fixtures
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right: compact button */}
+                <div className="relative flex-shrink-0 flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 border border-white/15 transition-colors text-white text-[11px] sm:text-[12px] font-semibold px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full whitespace-nowrap">
+                  View scores
+                  <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </div>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* ── Hindi: match updates (carousel, minimal & modern) ── */}
+            <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-800">
+                  हिंदी मैच अपडेट्स (ICC MT20 WC 2026)
+                </p>
+                {hindiScheduleLoading && (
+                  <span className="text-[10px] text-gray-400">Loading…</span>
+                )}
+              </div>
+              {hindiScheduleError && (
+                <p className="text-xs text-red-500">{hindiScheduleError}</p>
+              )}
+
+              {!hindiScheduleLoading && !hindiScheduleError && hindiSchedule && (
+                <div className="overflow-x-auto no-scrollbar">
+                  <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
+                    {[...hindiSchedule.upcoming.slice(0, 6), ...hindiSchedule.completed.slice(0, 4)].map((m) => {
+                      const isCompleted = !!m.result;
+                      const badge = isCompleted ? 'Result' : 'Upcoming';
+                      const primaryLine = m.result || m.status || '';
+
+                      return (
+                        <div
+                          key={m.id}
+                          className={`snap-start w-[320px] sm:w-[360px] rounded-2xl border bg-white shadow-sm hover:shadow-md transition-all overflow-hidden ${isCompleted ? 'border-emerald-100' : 'border-indigo-100'
+                            }`}
+                        >
+                          {/* minimal accent bar */}
+                          <div className={`h-1 ${isCompleted ? 'bg-emerald-500/70' : 'bg-indigo-500/70'}`} />
+
+                          <div className="px-4 py-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-extrabold text-gray-900 leading-snug whitespace-normal break-words">
+                                  {m.matchNumber || 'Match'}
+                                </p>
+                                <p className="text-[12px] text-gray-600 mt-0.5 whitespace-normal break-words">
+                                  {m.venue}
+                                </p>
+                              </div>
+                              <span
+                                className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isCompleted
+                                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                                  : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100'
+                                  }`}
+                              >
+                                {badge}
+                              </span>
+                            </div>
+
+                            {primaryLine && (
+                              <p
+                                className={`mt-3 text-[12px] font-semibold leading-snug whitespace-normal break-words ${isCompleted ? 'text-emerald-700' : 'text-indigo-700'
+                                  }`}
+                              >
+                                {primaryLine}
+                              </p>
+                            )}
+
+                            <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
+                              <span className="font-medium">{m.dateIST}</span>
+                              <span className="font-extrabold text-gray-900">{m.timeIST}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
 
-        {/* ── शोक संदेश updates (carousel) — hidden when there are no active entries */}
+        {/* ── Community notices (obituaries / mixed) — carousel; heading from Admin → Settings */}
         {(obituaryLoading || obituaryError || (obituaryUpdates && obituaryUpdates.length > 0)) && (
-          <div className="mb-4 sm:mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-3 sm:p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-gray-800">
-                शोक संदेश
+          <div className="mb-4 sm:mb-6 w-full border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
+            <div className="w-full px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white">
+              <p className="w-full text-center text-sm sm:text-base font-semibold text-slate-800 leading-snug">
+                {communitySectionHeading}
               </p>
               {obituaryLoading && (
-                <span className="text-[10px] text-gray-400">Loading…</span>
+                <p className="text-center text-[11px] text-gray-500 mt-1">Loading…</p>
               )}
             </div>
 
             {obituaryError && (
-              <p className="text-xs text-red-500">{obituaryError}</p>
+              <p className="text-xs text-red-600 px-4 py-3">{obituaryError}</p>
             )}
 
             {!obituaryLoading && !obituaryError && obituaryUpdates.length > 0 && (
-              <div className="overflow-x-auto no-scrollbar">
-                <div className="flex gap-3 w-max min-w-full snap-x snap-mandatory pb-0.5">
-                  {obituaryUpdates.map((item) => {
-                    const when = item?.eventDate
-                      ? new Date(item.eventDate).toLocaleDateString('hi-IN')
-                      : '';
-                    const loc = typeof item?.location === 'string' ? item.location.trim() : '';
-                    return (
-                      <div
-                        key={item._id}
-                        className="snap-start w-[300px] sm:w-[340px] rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-row gap-0"
-                      >
-                        {item?.imageUrl ? (
-                          <div className="shrink-0 w-[108px] sm:w-[120px] h-[120px] sm:h-[128px] border-r border-gray-100 bg-gray-100 flex items-center justify-center p-1.5">
-                            <img
-                              src={item.imageUrl}
-                              alt={item.title || 'Obituary'}
-                              className="max-w-full max-h-full w-auto h-auto object-contain"
-                              loading="lazy"
-                            />
-                          </div>
-                        ) : null}
-                        <div className="p-3 min-w-0 flex-1 flex flex-col justify-center">
-                          <p className="text-sm font-bold text-gray-900 line-clamp-2">
-                            {item.title}
-                          </p>
-                          {item.message ? (
-                            <p className="mt-1 text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">
-                              {item.message}
-                            </p>
-                          ) : null}
-                          {(loc || when) && (
-                            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-gray-500">
-                              {loc ? <span className="truncate min-w-0">{loc}</span> : <span />}
-                              {when ? <span className="shrink-0">{when}</span> : null}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="p-3 sm:p-4">
+                <CommunityNoticesCarousel items={obituaryUpdates} />
               </div>
             )}
           </div>

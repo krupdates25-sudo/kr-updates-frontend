@@ -84,11 +84,11 @@ const WideArticleRowCard = ({ article }) => {
     >
       {/* Image on Left */}
       {imageUrl && (
-        <div className="w-32 sm:w-40 md:w-48 aspect-video flex-shrink-0 overflow-hidden bg-gray-100">
+        <div className="relative w-32 sm:w-40 md:w-48 flex-shrink-0 self-stretch min-h-[7.5rem] sm:min-h-[8.5rem] overflow-hidden bg-gray-100">
           {article.featuredVideo?.url ? (
             <video
               src={article.featuredVideo.url}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                   muted
                   playsInline
                   poster={article.featuredVideo.thumbnail || imageUrl}
@@ -97,7 +97,7 @@ const WideArticleRowCard = ({ article }) => {
                 <img
                   src={imageUrl}
                   alt={article.featuredImage?.alt || title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
               loading="lazy"
               decoding="async"
               onError={(e) => {
@@ -131,7 +131,7 @@ const WideArticleRowCard = ({ article }) => {
         )}
 
         {/* Title */}
-        <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-gray-900 mb-2.5 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors leading-tight">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 mb-2.5 line-clamp-2 tracking-tight leading-snug transition-colors group-hover:text-slate-800">
           {title}
         </h3>
 

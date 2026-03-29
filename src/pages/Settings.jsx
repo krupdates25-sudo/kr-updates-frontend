@@ -140,6 +140,7 @@ const Settings = () => {
       primaryColor: '#2563eb',
       accentColor: '#1d4ed8',
     },
+    communitySectionTitle: 'Community remembrances',
   });
 
   const [keywordInput, setKeywordInput] = useState('');
@@ -180,6 +181,10 @@ const Settings = () => {
             primaryColor: response.data.colorPalette?.primaryColor || '#2563eb',
             accentColor: response.data.colorPalette?.accentColor || '#1d4ed8',
           },
+          communitySectionTitle:
+            typeof response.data.communitySectionTitle === 'string' && response.data.communitySectionTitle.trim()
+              ? response.data.communitySectionTitle.trim()
+              : 'Community remembrances',
         });
       }
     } catch (error) {
@@ -441,6 +446,25 @@ const Settings = () => {
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                       {settings.siteDescription.length}/500 characters
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
+                      Community section title (home feed)
+                    </label>
+                    <input
+                      type="text"
+                      name="communitySectionTitle"
+                      value={settings.communitySectionTitle ?? ''}
+                      onChange={handleInputChange}
+                      maxLength={120}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-white text-gray-900 dark:text-gray-900"
+                      placeholder="Community remembrances"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-600 mt-1">
+                      Heading above the community notices block. Use English, Hindi, or any mix—e.g. समुदाय सूचनाएँ or
+                      In memoriam.
                     </p>
                   </div>
                 </div>

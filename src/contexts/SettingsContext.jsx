@@ -99,6 +99,7 @@ export const SettingsProvider = ({ children }) => {
         siteName: 'News Blog',
         siteLogo: null,
         siteFavicon: null,
+        communitySectionTitle: 'Community remembrances',
       });
     } finally {
       setLoading(false);

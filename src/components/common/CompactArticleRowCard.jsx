@@ -84,11 +84,11 @@ const CompactArticleRowCard = ({ article }) => {
     >
       {/* Image on Left - Smaller for compact view */}
       {imageUrl && (
-        <div className="w-24 sm:w-28 aspect-video flex-shrink-0 overflow-hidden bg-gray-100">
+        <div className="relative w-24 sm:w-28 flex-shrink-0 self-stretch min-h-[5.5rem] overflow-hidden bg-gray-100">
           {article.featuredVideo?.url ? (
             <video
               src={article.featuredVideo.url}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                   muted
                   playsInline
                   poster={article.featuredVideo.thumbnail || imageUrl}
@@ -97,7 +97,7 @@ const CompactArticleRowCard = ({ article }) => {
                 <img
                   src={imageUrl}
                   alt={article.featuredImage?.alt || title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
               loading="lazy"
               decoding="async"
               onError={(e) => {
@@ -119,7 +119,7 @@ const CompactArticleRowCard = ({ article }) => {
         )}
 
         {/* Title */}
-        <h3 className="text-base sm:text-lg font-extrabold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors leading-tight">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1.5 line-clamp-2 tracking-tight leading-snug transition-colors group-hover:text-slate-800">
           {title}
         </h3>
 

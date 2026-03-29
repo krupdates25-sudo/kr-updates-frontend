@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Clock,
   Plus,
+  X,
 } from 'lucide-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
 import PageLayout from '../components/layout/PageLayout';
@@ -31,6 +32,19 @@ import postService from '../services/postService';
 import aiService from '../services/aiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguageLocation } from '../contexts/LanguageLocationContext';
+
+const LS_CUSTOM_LOCATIONS = 'kr_editor_custom_locations_v1';
+
+/** Normalize location strings (Unicode, ZWSP, spaces) for storage and comparison. */
+const normalizeLocation = (value) =>
+  String(value || '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Always show these first so local + Hindi defaults are not pushed out by state lists. */
+const DEFAULT_QUICK_LOCATIONS = ['Kishangarh Renwal', 'किशनगढ़ रेनवाल'];
 
 const NewPost = () => {
   const navigate = useNavigate();
@@ -65,31 +79,53 @@ const NewPost = () => {
   const [errors, setErrors] = useState({});
   const [currentTag, setCurrentTag] = useState('');
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [customLocations, setCustomLocations] = useState([]);
+  const [customLocations, setCustomLocations] = useState(() => {
+    try {
+      const raw = localStorage.getItem(LS_CUSTOM_LOCATIONS);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map(normalizeLocation).filter(Boolean);
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_CUSTOM_LOCATIONS, JSON.stringify(customLocations));
+    } catch {
+      // ignore quota / private mode
+    }
+  }, [customLocations]);
 
   const suggestedLocations = useMemo(() => {
     const locs = Array.isArray(availableLocations) ? availableLocations : [];
-    const normalizeLocation = (value) =>
-      String(value || '')
-        .normalize('NFKC')
-        .replace(/[\u200B-\u200D\uFEFF]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    // Keep user-added locations first so they are always visible immediately.
-    const combined = [...customLocations, ...locs];
-    const seen = new Set();
-    return combined
+    const fromApi = locs
       .map((l) => normalizeLocation(l))
-      .filter((l) => l && l.toLowerCase() !== 'all')
-      .filter((l) => {
-        const key = l.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, 12);
-  }, [availableLocations, customLocations]);
+      .filter((l) => l && l.toLowerCase() !== 'all');
+
+    const current = normalizeLocation(formData.location);
+    const priority = [
+      ...customLocations.map(normalizeLocation),
+      ...DEFAULT_QUICK_LOCATIONS.map(normalizeLocation),
+      ...(current && current.toLowerCase() !== 'all' ? [current] : []),
+      ...fromApi,
+    ];
+
+    const seen = new Set();
+    const out = [];
+    for (const raw of priority) {
+      const l = normalizeLocation(raw);
+      if (!l || l.toLowerCase() === 'all') continue;
+      const key = l.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(l);
+      if (out.length >= 48) break;
+    }
+    return out;
+  }, [availableLocations, customLocations, formData.location]);
 
   // NOTE: The breaking news ticker should only appear on the home feed, not on the editor.
 
@@ -184,7 +220,7 @@ const NewPost = () => {
   const handleAutoDetectLocation = useCallback(() => {
     const content = `${formData.title} ${formData.content}`.toLowerCase();
     const possibleLocations = [
-      { name: 'Kishangarh Renwal', keywords: ['kishangarh', 'renwal', 'किशनगढ़', 'रेनवाल'] },
+      { name: 'Kishangarh Renwal', keywords: ['kishangarh', 'renwal', 'किशनगढ़', 'रेनवाल', 'किशनगढ़ रेनवाल'] },
       { name: 'Jaipur', keywords: ['jaipur', 'जयपुर'] },
       { name: 'Rajasthan', keywords: ['rajasthan', 'राजस्थान'] },
       { name: 'New Delhi', keywords: ['delhi', 'दिल्ली'] },
@@ -204,18 +240,37 @@ const NewPost = () => {
   }, [formData.title, formData.content, handleInputChange]);
 
   const handleAddLocation = useCallback(() => {
-    const normalized = String(formData.location || '')
-      .normalize('NFKC')
-      .replace(/[\u200B-\u200D\uFEFF]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const normalized = normalizeLocation(formData.location);
     if (!normalized || normalized.toLowerCase() === 'all') return;
     setCustomLocations((prev) => {
-      const exists = prev.some((loc) => String(loc).toLowerCase() === normalized.toLowerCase());
+      const exists = prev.some((loc) => normalizeLocation(loc).toLowerCase() === normalized.toLowerCase());
       return exists ? prev : [normalized, ...prev];
     });
     handleInputChange('location', normalized);
   }, [formData.location, handleInputChange]);
+
+  /** Remove a mistyped entry from your saved list (browser only; does not delete posts). */
+  const handleRemoveCustomLocation = useCallback((loc) => {
+    const target = normalizeLocation(loc).toLowerCase();
+    if (!target) return;
+    setCustomLocations((prev) =>
+      prev.filter((c) => normalizeLocation(c).toLowerCase() !== target)
+    );
+    setFormData((prev) => {
+      if (normalizeLocation(prev.location).toLowerCase() === target) {
+        return { ...prev, location: DEFAULT_QUICK_LOCATIONS[0] };
+      }
+      return prev;
+    });
+  }, []);
+
+  const isUserSavedLocation = useCallback(
+    (loc) =>
+      customLocations.some(
+        (c) => normalizeLocation(c).toLowerCase() === normalizeLocation(loc).toLowerCase()
+      ),
+    [customLocations]
+  );
 
   const handleAddTag = useCallback(() => {
     if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
@@ -901,7 +956,15 @@ const NewPost = () => {
                         type="text"
                         value={formData.location}
                         onChange={(e) => handleInputChange('location', e.target.value)}
-                        placeholder="Where did this happen?"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddLocation();
+                          }
+                        }}
+                        placeholder="English or Hindi — e.g. Kishangarh Renwal or किशनगढ़ रेनवाल"
+                        dir="auto"
+                        autoComplete="off"
                         className="flex-1 p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
                       />
                       <button
@@ -915,20 +978,59 @@ const NewPost = () => {
                       </button>
                     </div>
 
+                    <p className="text-[11px] text-gray-500 leading-snug">
+                      Type a place name, tap <span className="font-semibold text-gray-600">Add</span> to save it for
+                      next time. On a saved chip, use <span className="font-semibold text-gray-600">×</span> to remove a
+                      typo (this only clears your quick list, not old posts).
+                    </p>
                     <div className="flex flex-wrap gap-1.5 mt-3">
-                      {suggestedLocations.map((loc) => (
-                        <button
-                          key={loc}
-                          type="button"
-                          onClick={() => handleInputChange('location', loc)}
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${String(formData.location || '').trim().toLowerCase() === String(loc || '').trim().toLowerCase()
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      {suggestedLocations.map((loc, idx) => {
+                        const selected =
+                          normalizeLocation(formData.location).toLowerCase() ===
+                          normalizeLocation(loc).toLowerCase();
+                        const removable = isUserSavedLocation(loc);
+                        return (
+                          <div
+                            key={`${loc}-${idx}`}
+                            className={`inline-flex items-stretch rounded-full text-xs font-medium overflow-hidden border max-w-full ${
+                              selected
+                                ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                                : 'border-gray-200 bg-gray-100 text-gray-600'
                             }`}
-                        >
-                          {loc}
-                        </button>
-                      ))}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleInputChange('location', loc)}
+                              dir="auto"
+                              title={loc}
+                              className={`px-2.5 py-0.5 min-w-0 text-left truncate max-w-[220px] sm:max-w-[280px] ${
+                                selected ? 'text-white' : 'hover:bg-gray-200'
+                              }`}
+                            >
+                              {loc}
+                            </button>
+                            {removable ? (
+                              <button
+                                type="button"
+                                aria-label={`Remove ${loc} from saved locations`}
+                                title="Remove from saved list"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleRemoveCustomLocation(loc);
+                                }}
+                                className={`shrink-0 px-1.5 flex items-center justify-center border-l ${
+                                  selected
+                                    ? 'border-blue-500/40 hover:bg-blue-700'
+                                    : 'border-gray-200 hover:bg-gray-200'
+                                }`}
+                              >
+                                <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
