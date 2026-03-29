@@ -86,7 +86,7 @@ const CommunityNoticesCarousel = ({ items }) => {
     const loc = typeof item?.location === 'string' ? item.location.trim() : '';
     return (
       <article
-        className="rounded-xl border border-gray-100 bg-white overflow-hidden flex flex-col sm:flex-row sm:min-h-[10rem] shadow-sm cursor-pointer text-left w-full transition-opacity active:opacity-90 hover:border-slate-200"
+        className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-white to-slate-50/90 shadow-md transition-all duration-300 hover:border-slate-300/90 hover:shadow-lg cursor-pointer w-full active:scale-[0.99]"
         onClick={() => openSheet(item)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -97,36 +97,55 @@ const CommunityNoticesCarousel = ({ items }) => {
         role="button"
         tabIndex={0}
       >
-        {item?.imageUrl ? (
-          <div className="relative w-full aspect-[16/10] max-h-[min(52vh,280px)] sm:max-h-none sm:w-44 sm:aspect-auto sm:flex-shrink-0 sm:self-stretch sm:min-h-[9rem] overflow-hidden bg-slate-100">
-            <img
-              src={item.imageUrl}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover object-center"
-              loading="lazy"
-            />
-          </div>
-        ) : null}
-        <div className="flex-1 flex flex-col justify-center p-3 sm:p-5 min-w-0">
-          {item.title ? (
-            <h3 className="text-[15px] sm:text-lg font-bold text-slate-900 leading-snug line-clamp-2">
-              {item.title}
-            </h3>
-          ) : null}
-          {item.message ? (
-            <p className="mt-2 text-sm sm:text-[15px] leading-relaxed text-slate-600 whitespace-pre-wrap break-words line-clamp-4 sm:line-clamp-6">
-              {item.message}
-            </p>
-          ) : null}
-          {loc ? (
-            <div className="mt-2 sm:mt-3 flex items-start gap-1.5 text-xs text-slate-500">
-              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" aria-hidden />
-              <span className="break-words line-clamp-1">{loc}</span>
+        {/* Accent bar */}
+        <div
+          className="absolute bottom-0 left-0 top-0 hidden w-1 bg-gradient-to-b from-[var(--color-primary)] to-[var(--color-accent)] opacity-90 sm:block"
+          aria-hidden
+        />
+        <div className="flex flex-col sm:flex-row sm:min-h-[11.5rem]">
+          {item?.imageUrl ? (
+            <div className="relative w-full sm:w-[min(40%,13.5rem)] shrink-0 p-0 sm:p-4 sm:pl-5 sm:pr-2">
+              <div className="relative w-full aspect-[16/10] max-h-[min(48vh,260px)] sm:max-h-none sm:aspect-[4/5] sm:h-full sm:min-h-[11rem] overflow-hidden rounded-none sm:rounded-2xl bg-slate-100 shadow-inner ring-1 ring-slate-200/80">
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
+                  loading="lazy"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent sm:bg-gradient-to-r sm:from-black/10 sm:via-transparent sm:to-transparent"
+                  aria-hidden
+                />
+              </div>
             </div>
           ) : null}
-          <p className="mt-2 text-[11px] font-medium text-[var(--color-primary)] sm:hidden">
-            Tap to read full notice
-          </p>
+          <div className="flex min-w-0 flex-1 flex-col justify-center px-4 py-4 sm:px-5 sm:py-5 sm:pl-3">
+            {item.title ? (
+              <div className="w-full text-center sm:px-1">
+                <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-slate-800 sm:text-lg line-clamp-2 [text-wrap:balance]">
+                  {item.title}
+                </h3>
+                <div
+                  className="mx-auto mt-2 h-0.5 w-10 rounded-full bg-[var(--color-primary)]/35"
+                  aria-hidden
+                />
+              </div>
+            ) : null}
+            {item.message ? (
+              <p className="mt-3 text-justify text-sm leading-[1.65] text-slate-600 text-pretty hyphens-auto break-words line-clamp-4 sm:line-clamp-6 sm:text-[15px]">
+                {item.message}
+              </p>
+            ) : null}
+            {loc ? (
+              <div className="mt-3 flex justify-center gap-1.5 text-xs text-slate-500 sm:mt-4">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+                <span className="line-clamp-1 text-center font-medium">{loc}</span>
+              </div>
+            ) : null}
+            <p className="mt-3 text-center text-[11px] font-semibold text-[var(--color-primary)] sm:hidden">
+              Tap to read full notice
+            </p>
+          </div>
         </div>
       </article>
     );
@@ -210,55 +229,63 @@ const CommunityNoticesCarousel = ({ items }) => {
           />
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
             <div
-              className="pointer-events-auto w-full sm:max-w-lg max-h-[min(92vh,800px)] bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
+              className="pointer-events-auto flex max-h-[min(92vh,800px)] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 shadow-2xl sm:max-w-lg"
               role="dialog"
               aria-modal="true"
               aria-labelledby="community-notice-sheet-title"
             >
-              <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 shrink-0 bg-white">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-white/90 px-4 py-3 backdrop-blur-sm">
                 <h2
                   id="community-notice-sheet-title"
-                  className="text-sm font-semibold text-slate-800"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
                 >
                   Notice
                 </h2>
                 <button
                   type="button"
                   onClick={closeSheet}
-                  className="p-2 rounded-full hover:bg-slate-100 text-slate-600 shrink-0"
+                  className="shrink-0 rounded-full p-2 text-slate-600 hover:bg-slate-100"
                   aria-label="Close"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="sm:hidden flex justify-center pt-2 pb-1">
+              <div className="flex justify-center pb-1 pt-2 sm:hidden">
                 <span className="h-1 w-10 rounded-full bg-slate-200" aria-hidden />
               </div>
-              <div className="overflow-y-auto overscroll-contain flex-1 min-h-0">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                 {sheetItem.imageUrl ? (
-                  <div className="w-full max-h-[38vh] sm:max-h-[42vh] bg-slate-100">
-                    <img
-                      src={sheetItem.imageUrl}
-                      alt=""
-                      className="w-full h-full max-h-[38vh] sm:max-h-[42vh] object-cover object-center"
-                    />
+                  <div className="bg-slate-100/80 px-3 pb-2 pt-3 sm:px-4 sm:pt-4">
+                    <div className="overflow-hidden rounded-2xl shadow-md ring-1 ring-slate-200/80">
+                      <img
+                        src={sheetItem.imageUrl}
+                        alt=""
+                        className="max-h-[38vh] w-full object-cover object-center sm:max-h-[42vh]"
+                      />
+                    </div>
                   </div>
                 ) : null}
-                <div className="p-4 sm:p-5 space-y-3">
+                <div className="space-y-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6 sm:pt-4">
                   {sheetItem.title ? (
-                    <h3 className="text-lg font-bold text-slate-900 leading-snug">
-                      {sheetItem.title}
-                    </h3>
+                    <div className="text-center">
+                      <h3 className="text-lg font-semibold leading-snug tracking-tight text-slate-900 sm:text-xl [text-wrap:balance]">
+                        {sheetItem.title}
+                      </h3>
+                      <div
+                        className="mx-auto mt-3 h-0.5 w-12 rounded-full bg-[var(--color-primary)]/40"
+                        aria-hidden
+                      />
+                    </div>
                   ) : null}
                   {sheetItem.message ? (
-                    <p className="text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap break-words">
+                    <p className="text-[15px] leading-[1.75] text-justify text-slate-700 text-pretty hyphens-auto whitespace-pre-wrap break-words sm:text-base">
                       {sheetItem.message}
                     </p>
                   ) : null}
                   {sheetLoc ? (
-                    <div className="flex items-start gap-2 text-sm text-slate-500 pt-2 border-t border-slate-100">
-                      <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-slate-400" />
-                      <span>{sheetLoc}</span>
+                    <div className="flex justify-center gap-2 border-t border-slate-200/80 pt-4 text-sm text-slate-500">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                      <span className="text-center font-medium">{sheetLoc}</span>
                     </div>
                   ) : null}
                 </div>
